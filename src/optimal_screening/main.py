@@ -8,9 +8,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-
-from .datasets.generic import GenericCSVDataset  # noqa: F401
 from .datasets.acs_income import ACSDataset  # noqa: F401
+from .datasets.generic import GenericCSVDataset  # noqa: F401
+
 
 # Optional dotenv import hoisted to top-level
 try:  # pragma: no cover - environment dependent

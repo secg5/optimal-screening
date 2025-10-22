@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import csv
 from abc import ABC, abstractmethod
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any
 
 
 Row = Mapping[str, Any]

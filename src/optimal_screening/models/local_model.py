@@ -4,6 +4,7 @@ from typing import Any
 
 from .base import BaseModel
 
+
 # Optional vLLM imports hoisted to top-level
 try:  # pragma: no cover - optional dependency
     from vllm import LLM, SamplingParams  # type: ignore

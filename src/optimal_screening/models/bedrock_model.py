@@ -6,6 +6,7 @@ from typing import Any
 
 from .base import BaseModel
 
+
 # Optional boto3 import hoisted to top-level
 try:  # pragma: no cover - optional dependency
     import boto3  # type: ignore

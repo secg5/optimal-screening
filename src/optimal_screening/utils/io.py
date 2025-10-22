@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+
 try:  # Conditional import hoisted to module top
     import yaml  # type: ignore
 except ModuleNotFoundError:  # pragma: no cover - surfaced at runtime
