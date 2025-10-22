@@ -44,7 +44,7 @@ class OAModel(BaseModel):
         if self._client is None:
             raise RuntimeError("Model not loaded. Call load_model() first.")
 
-        print(prompt)  # Use Responses API if available; fall back to Chat Completions.
+        # Use Responses API if available; fall back to Chat Completions.
         text: str | None = None
         try:  # Newer SDK
             resp = self._client.responses.create(
