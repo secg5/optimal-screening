@@ -1,9 +1,8 @@
 """optimal_screening package.
 
-Library for quantile prediction experiments driven by LLM prompts.
+Library for LLM-driven screening probability estimation of treatment effectiveness.
 """
 
 __all__ = [
     "main",
 ]
-

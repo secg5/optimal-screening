@@ -8,35 +8,43 @@ from typing import Any
 from .base import BaseModel
 
 
-_NUM_RE = re.compile(r"([01](?:\.\d+)?)\s*[:=]\s*(-?\d+(?:\.\d+)?)")
+# Match a floating point number in [0,1], e.g., 0.42, 1, 0, 1.0
+_PROB_RE = re.compile(r"\b(?:(?:0(?:\.\d+)?)|(?:1(?:\.0+)?))\b")
+
+# Optional OpenAI client import hoisted to top-level
+try:  # pragma: no cover - optional dependency
+    from openai import OpenAI  # type: ignore
+except Exception:  # pragma: no cover
+    OpenAI = None  # type: ignore[assignment]
 
 
 class OAModel(BaseModel):
-    """OpenAI-backed model using the official SDK.
+    """OpenAI-backed model returning a screening probability.
 
-    Expects output either as JSON or simple lines like `0.1: 12.3`.
+    Expects output as either JSON like {"probability": 0.42} or a bare
+    probability number between 0 and 1 in the text.
     """
 
-    def __init__(self, model_name: str, quantiles: list[float], **params: Any) -> None:
-        super().__init__(model_name, quantiles, **params)
+    def __init__(self, model_name: str, **params: Any) -> None:
+        super().__init__(model_name, **params)
         self._client = None
 
     def load_model(self) -> None:
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise RuntimeError("Missing OPENAI_API_KEY for OAModel.")
+        if OpenAI is None:
+            raise RuntimeError("openai package not installed; install 'openai'.")
         try:
-            from openai import OpenAI  # type: ignore
-
             self._client = OpenAI(api_key=api_key)
         except Exception as exc:  # pragma: no cover - SDK optional
             raise RuntimeError("Failed to initialize OpenAI client") from exc
 
-    def predict(self, prompt: str) -> dict[str, float]:
+    def predict(self, prompt: str) -> float:
         if self._client is None:
             raise RuntimeError("Model not loaded. Call load_model() first.")
 
-        # Use Responses API if available; fall back to Chat Completions.
+        print(prompt)  # Use Responses API if available; fall back to Chat Completions.
         text: str | None = None
         try:  # Newer SDK
             resp = self._client.responses.create(
@@ -60,16 +68,17 @@ class OAModel(BaseModel):
             raise RuntimeError("Empty response from OpenAI model")
 
         text = text.strip()
-        # Try JSON first
+        # Try JSON with a 'probability' key
         try:
             data = json.loads(text)
-            return {str(k): float(v) for k, v in data.items()}
+            if isinstance(data, dict) and "probability" in data:
+                return float(data["probability"])  # type: ignore[arg-type]
         except Exception:
             pass
 
-        # Fallback: parse lines like "0.1: 12.3"
-        preds: dict[str, float] = {}
-        for q, v in _NUM_RE.findall(text):
-            preds[str(q)] = float(v)
-        return preds
+        # Fallback: parse a single float in [0,1]
+        m = _PROB_RE.search(text)
+        if m:
+            return float(m.group(0))
 
+        raise RuntimeError("Could not parse probability from model response")

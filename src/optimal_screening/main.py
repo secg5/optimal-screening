@@ -8,57 +8,86 @@ from pathlib import Path
 from typing import Any
 
 
-from .datasets.generic import GenericCSVDataset
+from .datasets.generic import GenericCSVDataset  # noqa: F401
+from .datasets.acs_income import ACSDataset  # noqa: F401
+
+# Optional dotenv import hoisted to top-level
+try:  # pragma: no cover - environment dependent
+    from dotenv import load_dotenv  # type: ignore
+except Exception:  # pragma: no cover - missing optional dep
+    load_dotenv = None  # type: ignore[assignment]
 from .models.base import BaseModel
 from .models.bedrock_model import BedrockModel
 from .models.local_model import LocalModel
 from .models.openai_model import OAModel
 from .prediction_processing import process_predictions
-from .utils.io import ensure_dir, load_yaml_or_json
+from .utils.io import ensure_dir, load_yaml
+
+
+def _import_from_string_under_datasets(short_path: str):
+    """Import a class given a short path under optimal_screening.datasets.
+
+    Expects values like "module.ClassName" (e.g., "acs_income.ACSDataset").
+    """
+    if "." not in short_path:
+        raise ValueError(
+            "dataset.class must be of the form 'module.ClassName' under 'optimal_screening.datasets', e.g. 'acs_income.ACSDataset'",
+        )
+    full_path = f"optimal_screening.datasets.{short_path}"
+    mod, _, attr = full_path.rpartition(".")
+    module = __import__(mod, fromlist=[attr])
+    return getattr(module, attr)
 
 
 def _build_dataset(cfg: dict[str, Any]):
     ds = cfg.get("dataset", {})
-    name = (ds.get("name") or "generic_csv").lower()
     csv_path = ds.get("csv_path")
     variables = ds.get("variables")
+    treatment_col = ds.get("treatment_col")
+    outcome_col = ds.get("outcome_col")
+    cls_path: str | None = ds.get("class")
     if not csv_path:
         raise ValueError("dataset.csv_path is required")
-    if name == "generic_csv":
-        return GenericCSVDataset(csv_path=csv_path, variables=variables)
-    raise ValueError(f"Unknown dataset: {name}")
+
+    if not cls_path:
+        raise ValueError(
+            "dataset.class is required. Provide something like 'acs_income.ACSDataset' (under optimal_screening.datasets).",
+        )
+
+    DatasetClass = _import_from_string_under_datasets(cls_path)
+    return DatasetClass(
+        csv_path=csv_path,
+        variables=variables,
+        treatment_col=treatment_col,
+        outcome_col=outcome_col,
+    )
 
 
 def _build_model(cfg: dict[str, Any]) -> BaseModel:
     m = cfg.get("model", {})
     mtype = (m.get("type") or "openai").lower()
     model_name = m.get("model_name") or "gpt-4.1-mini"
-    quantiles = m.get("quantiles") or [0.1, 0.5, 0.9]
     params = m.get("params") or {}
     if mtype in {"openai", "oa"}:
-        return OAModel(model_name=model_name, quantiles=quantiles, **params)
+        return OAModel(model_name=model_name, **params)
     if mtype in {"bedrock", "aws"}:
-        return BedrockModel(model_name=model_name, quantiles=quantiles, **params)
+        return BedrockModel(model_name=model_name, **params)
     if mtype in {"local", "vllm"}:
-        return LocalModel(model_name=model_name, quantiles=quantiles, **params)
+        return LocalModel(model_name=model_name, **params)
     raise ValueError(f"Unknown model type: {mtype}")
 
 
 def run(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Run optimal-screening experiment")
-    parser.add_argument("--config", type=str, default="config.yaml", help="Path to YAML/JSON config")
+    parser.add_argument("--config", type=str, default="config.yaml", help="Path to YAML config")
     parser.add_argument("--limit", type=int, default=5, help="Max rows to process (debug)")
     args = parser.parse_args(argv)
 
     # Load credentials from .env if python-dotenv is available
-    try:
-        from dotenv import load_dotenv  # type: ignore
-
+    if load_dotenv is not None:
         load_dotenv()
-    except Exception:
-        pass
 
-    cfg = load_yaml_or_json(args.config)
+    cfg = load_yaml(args.config)
     run_cfg = cfg.get("run", {})
     outdir = ensure_dir(run_cfg.get("output_dir") or "runs")
 
@@ -74,18 +103,19 @@ def run(argv: list[str] | None = None) -> None:
         prompt = dataset.get_prompt(row, variables)
         raw = model.predict(prompt)
         preds = process_predictions(raw)
-        predictions.append({"index": i, "predictions": preds})
+        predictions.append({"index": i, "probability": preds})
 
     meta = {
         "dataset": {
             "name": type(dataset).__name__,
             "csv_path": str(getattr(dataset, "csv_path", "")),
             "variables": list(variables),
+            "treatment_col": getattr(dataset, "treatment_col", None),
+            "outcome_col": getattr(dataset, "outcome_col", None),
         },
         "model": {
             "class": type(model).__name__,
             "name": getattr(model, "model_name", ""),
-            "quantiles": getattr(model, "quantiles", []),
             "params": getattr(model, "params", {}),
         },
         "env": {

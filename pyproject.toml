@@ -20,26 +20,20 @@ lines-after-imports = 2
 [project]
 name = "optimal-screening"
 version = "0.1.0"
-description = "LLM-driven quantile prediction experiments"
+description = "LLM-driven screening probability estimation for treatment effectiveness"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [
   { name = "Contributors" }
 ]
 dependencies = [
-  "PyYAML",
-  "python-dotenv",
+  "PyYAML==6.0.3",
+  "python-dotenv==1.1.1",
+  "openai==2.6.0",
+  "boto3==1.40.55",
+  "vllm==0.11.0",
 ]
 
-[project.optional-dependencies]
-# Heavy/optional backends and tools installed on demand
-openai = ["openai"]
-bedrock = ["boto3"]
-local = ["vllm"]
-dev = [
-  "ruff",
-  "pytest",
-]
 
 [project.urls]
 Homepage = "https://github.com/"
