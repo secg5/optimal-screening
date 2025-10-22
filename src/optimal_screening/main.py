@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -124,8 +125,14 @@ def run(argv: list[str] | None = None) -> None:
         },
     }
 
-    stamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
-    outfile = outdir / f"run_{stamp}.json"
+    # Derive output filename from config name; replace dots with underscores.
+    cfg_name = Path(args.config).stem  # e.g., "v55.00" -> "v55.00"
+    base = re.sub(r"[^A-Za-z0-9]", "_", cfg_name)  # -> "v55_00"
+    outfile = outdir / f"{base}.json"
+    if outfile.exists():
+        stamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+        outfile = outdir / f"{base}_{stamp}.json"
+
     payload = {"meta": meta, "predictions": predictions}
     outfile.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     print(f"Saved results -> {outfile}")
