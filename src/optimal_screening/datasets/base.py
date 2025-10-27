@@ -20,12 +20,10 @@ class BaseDataset(ABC):
         self,
         csv_path: str | Path,
         variables: Sequence[str] | None = None,
-        treatment_col: str | None = None,
         outcome_col: str | None = None,
     ) -> None:
         self.csv_path = Path(csv_path)
         self.variables = list(variables) if variables is not None else None
-        self.treatment_col = treatment_col
         self.outcome_col = outcome_col
         self._rows: list[Row] | None = None
 
@@ -47,34 +45,30 @@ class BaseDataset(ABC):
         """Encode a single variable into text suitable for LLM prompts."""
 
     def get_prompt(self, row: Row, variables: Sequence[str] | None = None) -> str:
-        """Generate a prompt with explicit treatment/outcome and remaining covariates.
+        """Generate a prompt for predicting outcome probability.
 
-        - Excludes `treatment_col` and `outcome_col` from the generic variable list.
-        - Adds explicit lines describing treatment and outcome.
+        - Excludes `outcome_col` from the covariate list.
+        - Adds explicit line describing the outcome.
         """
         selected_all = list(variables) if variables is not None else (self.variables or list(row.keys()))
 
-        # Exclude treatment/outcome from the generic covariate list
-        excluded = {c for c in (self.treatment_col, self.outcome_col) if c}
+        # Exclude outcome from the covariate list
+        excluded = {self.outcome_col} if self.outcome_col else set()
         covariates = [k for k in selected_all if k not in excluded]
 
         parts: list[str] = []
-        if self.treatment_col:
-            parts.append(
-                f"Treatment column ({self.treatment_col}): "
-                + self.encode_variable(self.treatment_col, row.get(self.treatment_col))
-            )
         if self.outcome_col:
             # Outcome may be a derived label (e.g., "PINCP > 50k"), so we only state its definition.
-            parts.append(f"Outcome column: {self.outcome_col}")
+            parts.append(f"Outcome: {self.outcome_col}")
 
         # Add remaining covariates
         parts.extend(self.encode_variable(k, row.get(k)) for k in covariates)
 
         header = (
-            "You are an assistant that estimates the probability that this row should be screened "
-            "to determine whether the specified treatment was effective for the outcome. "
-            "Return a single JSON object with a key 'probability' whose value is a number between 0 and 1. "
+            "You are an expert assistant that estimates the probability of the specified outcome "
+            "occurring for individuals with the given characteristics. "
+            "Analyze the features carefully and provide a probability between 0 and 1. "
+            "Return only a JSON object with a key 'probability' and a numeric value. "
             "Do not include explanations."
         )
         return header + "\n\n" + "\n".join(parts)

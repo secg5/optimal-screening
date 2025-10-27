@@ -44,7 +44,6 @@ def _build_dataset(cfg: dict[str, Any]):
     ds = cfg.get("dataset", {})
     csv_path = ds.get("csv_path")
     variables = ds.get("variables")
-    treatment_col = ds.get("treatment_col")
     outcome_col = ds.get("outcome_col")
     cls_path: str | None = ds.get("class")
     if not csv_path:
@@ -59,7 +58,6 @@ def _build_dataset(cfg: dict[str, Any]):
     return DatasetClass(
         csv_path=csv_path,
         variables=variables,
-        treatment_col=treatment_col,
         outcome_col=outcome_col,
     )
 
@@ -102,6 +100,12 @@ def run(argv: list[str] | None = None) -> None:
     predictions: list[dict[str, Any]] = []
     for i, row in enumerate(rows[: args.limit]):
         prompt = dataset.get_prompt(row, variables)
+        if i == 0:
+            print("=" * 80)
+            print(f"PROMPT FOR ROW {i}:")
+            print("=" * 80)
+            print(prompt)
+            print("=" * 80)
         raw = model.predict(prompt)
         preds = process_predictions(raw)
         predictions.append({"index": i, "probability": preds})
@@ -111,7 +115,6 @@ def run(argv: list[str] | None = None) -> None:
             "name": type(dataset).__name__,
             "csv_path": str(getattr(dataset, "csv_path", "")),
             "variables": list(variables),
-            "treatment_col": getattr(dataset, "treatment_col", None),
             "outcome_col": getattr(dataset, "outcome_col", None),
         },
         "model": {

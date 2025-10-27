@@ -1,7 +1,6 @@
 dataset:
   class: acs_income.ACSDataset
   csv_path: data/acs_income_sample.csv
-  treatment_col: RAC1P
   outcome_col: "PINCP > 50k"
   # Common ACS features for income modeling; exclude PINCP from prompt
   variables: [AGEP, SEX, RAC1P, SCHL, MAR, WKHP, ESR, COW]
