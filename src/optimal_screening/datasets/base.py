@@ -45,7 +45,7 @@ class BaseDataset(ABC):
         """Encode a single variable into text suitable for LLM prompts."""
 
     def get_prompt(self, row: Row, variables: Sequence[str] | None = None) -> str:
-        """Generate a prompt for predicting outcome probability.
+        """Generate a prompt for predicting outcome probability and bucket.
 
         - Excludes `outcome_col` from the covariate list.
         - Adds explicit line describing the outcome.
@@ -67,8 +67,9 @@ class BaseDataset(ABC):
         header = (
             "You are an expert assistant that estimates the probability of the specified outcome "
             "occurring for individuals with the given characteristics. "
-            "Analyze the features carefully and provide a probability between 0 and 1. "
-            "Return only a JSON object with a key 'probability' and a numeric value. "
+            "Analyze the features carefully and classify the individual into one of 2 buckets "
+            "(1=low likelihood, 2=high likelihood), and provide a probability between 0 and 1. "
+            "Return only a JSON object with two keys: 'bucket' (integer 1-2) and 'probability' (float 0-1). "
             "Do not include explanations."
         )
         return header + "\n\n" + "\n".join(parts)

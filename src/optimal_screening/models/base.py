@@ -16,5 +16,11 @@ class BaseModel(ABC):
         """Load underlying model/resources and validate credentials if needed."""
 
     @abstractmethod
-    def predict(self, prompt: str) -> float:
-        """Return probability (0..1) that the row should be screened."""
+    def predict(self, prompt: str) -> dict[str, Any]:
+        """Return prediction with bucket and probability.
+
+        Returns:
+            Dictionary with:
+            - 'bucket': int 1-10 (income quantile, 1=lowest, 10=highest)
+            - 'probability': float 0-1 (probability of outcome)
+        """

@@ -106,9 +106,14 @@ def run(argv: list[str] | None = None) -> None:
             print("=" * 80)
             print(prompt)
             print("=" * 80)
-        raw = model.predict(prompt)
-        preds = process_predictions(raw)
-        predictions.append({"index": i, "probability": preds})
+        result = model.predict(prompt)
+        # result is now {"bucket": int, "probability": float}
+        preds = process_predictions(result.get("probability", 0.5))
+        predictions.append({
+            "index": i,
+            "bucket": result.get("bucket", 1),
+            "probability": preds,
+        })
 
     meta = {
         "dataset": {

@@ -1,0 +1,16 @@
+dataset:
+  class: acs_income.ACSDataset
+  csv_path: data/acs_income_sample.csv
+  outcome_col: "PINCP > 50k"
+  # Common ACS features for income modeling
+  variables: [AGEP, SEX, RAC1P, SCHL, MAR, WKHP, COW, OCCP, POBP, RELP]
+
+model:
+  type: openai
+  model_name: gpt-4o-mini
+  params:
+    temperature: 0
+    max_tokens: 256
+
+run:
+  output_dir: runs

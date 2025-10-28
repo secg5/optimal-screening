@@ -233,11 +233,11 @@ def compute_screening_curve(
     # Compute empirical P(Y=1|X) for each stratum
     empirical_probs = compute_empirical_probabilities(rows, outcome_col, strata_features)
 
-    # TEMPORARY: Override with uniform distribution for debugging
-    import random
-    random.seed(42)
-    for key in empirical_probs.keys():
-        empirical_probs[key]['probability'] = random.uniform(0, 1)
+    # # TEMPORARY: Override with uniform distribution for debugging
+    # import random
+    # random.seed(42)
+    # for key in empirical_probs.keys():
+    #     empirical_probs[key]['probability'] = random.uniform(0, 1)
 
     # Assign each row its empirical risk P(Y=1|X)
     rows_with_risk = []
@@ -305,6 +305,8 @@ def compute_optimal_screening_curve(
     alpha_quantiles: Sequence[float] | None = None,
     max_iterations: int = 20,
     tolerance: float = 1e-6,
+    seed: int | None = None,
+    use_custom_risk_col: str | None = None,
 ) -> dict[str, Any]:
     """Compute optimal screening curve with treatment budget β and screening budget α.
 
@@ -325,6 +327,10 @@ def compute_optimal_screening_curve(
         alpha_quantiles: Screening budget levels to evaluate
         max_iterations: Maximum iterations for convergence
         tolerance: Convergence tolerance for avg_risk
+        seed: Random seed for uniform distribution override (for debugging)
+        use_custom_risk_col: If provided, use this column for risk instead of computing
+            empirical probabilities from strata. Useful for comparing LLM predictions
+            with empirical baselines.
 
     Returns:
         Dictionary with screening curves and band information
@@ -333,30 +339,45 @@ def compute_optimal_screening_curve(
         # Default: 10 equally spaced values from 0 to beta
         alpha_quantiles = [beta * i / 9 for i in range(10)]
 
-    # Compute empirical P(Y=1|X) for each stratum
-    empirical_probs = compute_empirical_probabilities(rows, outcome_col, strata_features)
-    # TEMPORARY: Override with uniform distribution for debugging
-    import random
-    random.seed(42)
-    for key in empirical_probs.keys():
-        empirical_probs[key]['probability'] = random.uniform(0, 1)
-
-    # Assign each row its empirical risk
+    # Assign each row its risk (either custom or empirical)
     rows_with_risk = []
-    for row in rows:
-        stratum_key = tuple(row.get(f) for f in strata_features)
-        empirical_risk = empirical_probs.get(stratum_key, {}).get("probability", 0.5)
 
-        rows_with_risk.append(
-            {
-                "row": row,
-                "empirical_risk": empirical_risk,
-                "true_outcome": _is_positive_outcome(row.get(outcome_col)),
-                "model_prediction": row.get(prediction_col, 0.5),
-            }
-        )
-    
-    # Sort by empirical risk (highest to lowest)
+    if use_custom_risk_col is not None:
+        # Use custom risk column directly
+        for row in rows:
+            risk = row.get(use_custom_risk_col, 0.5)
+            rows_with_risk.append(
+                {
+                    "row": row,
+                    "empirical_risk": risk,
+                    "true_outcome": _is_positive_outcome(row.get(outcome_col)),
+                    "model_prediction": row.get(prediction_col, 0.5),
+                }
+            )
+    else:
+        # Compute empirical P(Y=1|X) for each stratum
+        empirical_probs = compute_empirical_probabilities(rows, outcome_col, strata_features)
+        # # TEMPORARY: Override with uniform distribution for debugging
+        # if seed is not None:
+        #     import random
+        #     random.seed(seed)
+        #     for key in empirical_probs.keys():
+        #         empirical_probs[key]['probability'] = random.uniform(0, 1)
+
+        for row in rows:
+            stratum_key = tuple(row.get(f) for f in strata_features)
+            empirical_risk = empirical_probs.get(stratum_key, {}).get("probability", 0.5)
+
+            rows_with_risk.append(
+                {
+                    "row": row,
+                    "empirical_risk": empirical_risk,
+                    "true_outcome": _is_positive_outcome(row.get(outcome_col)),
+                    "model_prediction": row.get(prediction_col, 0.5),
+                }
+            )
+
+    # Sort by risk (highest to lowest)
     rows_with_risk.sort(key=lambda x: x["empirical_risk"], reverse=True)
 
     total_positive = sum(1 for r in rows_with_risk if r["true_outcome"])

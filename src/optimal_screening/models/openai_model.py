@@ -40,7 +40,7 @@ class OAModel(BaseModel):
         except Exception as exc:  # pragma: no cover - SDK optional
             raise RuntimeError("Failed to initialize OpenAI client") from exc
 
-    def predict(self, prompt: str) -> float:
+    def predict(self, prompt: str) -> dict[str, Any]:
         if self._client is None:
             raise RuntimeError("Model not loaded. Call load_model() first.")
 
@@ -68,17 +68,45 @@ class OAModel(BaseModel):
             raise RuntimeError("Empty response from OpenAI model")
 
         text = text.strip()
-        # Try JSON with a 'probability' key
+
+        # Strip markdown code fences if present
+        if text.startswith("```"):
+            lines = text.split("\n")
+            # Remove first line if it's ```json or just ```
+            if lines[0].startswith("```"):
+                lines = lines[1:]
+            # Remove last line if it's ```
+            if lines and lines[-1].strip() == "```":
+                lines = lines[:-1]
+            text = "\n".join(lines).strip()
+
+        # Try JSON parsing (supports both keys, or single key)
         try:
             data = json.loads(text)
-            if isinstance(data, dict) and "probability" in data:
-                return float(data["probability"])  # type: ignore[arg-type]
+            if isinstance(data, dict):
+                result = {}
+
+                # Handle bucket if present
+                if "bucket" in data:
+                    result["bucket"] = int(data["bucket"])
+
+                # Handle probability if present
+                if "probability" in data:
+                    result["probability"] = float(data["probability"])
+
+                # If we got at least one key, return
+                if result:
+                    return result
         except Exception:
             pass
 
-        # Fallback: parse a single float in [0,1]
+        # Fallback: parse a single float in [0,1] and infer bucket
         m = _PROB_RE.search(text)
         if m:
-            return float(m.group(0))
+            prob = float(m.group(0))
+            # Map probability to bucket for 2-bucket system
+            # 0.0-0.5 -> bucket 1, 0.5-1.0 -> bucket 2
+            bucket = 1 if prob < 0.5 else 2
+            return {"bucket": bucket, "probability": prob}
 
-        raise RuntimeError("Could not parse probability from model response")
+        raise RuntimeError(f"Could not parse bucket/probability from model response. Response text: {text[:500]}")
