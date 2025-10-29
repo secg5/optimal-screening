@@ -101,6 +101,8 @@ def main():
             # Convert bucket to probability for 2-bucket system
             # Bucket 1 -> 0.25, Bucket 2 -> 0.75
             df.loc[i, "bucket_probability"] = (bucket - 0.5) / 2.0
+            # Add naive screening score
+            df.loc[i, "naive_score"] = pred.get("naive", 0.5)
 
     # Trim data to match predictions
     if len(predictions) < len(df):
@@ -121,6 +123,7 @@ def main():
     empirical_scores = []
     llm_scores = []
     bucket_scores = []
+    naive_scores = []
 
     for row in rows:
         # Get true outcome
@@ -142,20 +145,24 @@ def main():
         # Get LLM scores
         llm_scores.append(row.get("llm_probability", 0.5))
         bucket_scores.append(row.get("bucket_probability", 0.5))
+        naive_scores.append(row.get("naive_score", 0.5))
 
     y_true = np.array(y_true)
     empirical_scores = np.array(empirical_scores)
     llm_scores = np.array(llm_scores)
     bucket_scores = np.array(bucket_scores)
+    naive_scores = np.array(naive_scores)
 
     print("Computing ROC curves...")
     fpr_emp, tpr_emp, auc_emp = compute_roc_curve(y_true, empirical_scores)
     fpr_llm, tpr_llm, auc_llm = compute_roc_curve(y_true, llm_scores)
     fpr_bucket, tpr_bucket, auc_bucket = compute_roc_curve(y_true, bucket_scores)
+    fpr_naive, tpr_naive, auc_naive = compute_roc_curve(y_true, naive_scores)
 
     print(f"  Empirical AUC: {auc_emp:.4f}")
     print(f"  LLM Probability AUC: {auc_llm:.4f}")
     print(f"  LLM Bucket AUC: {auc_bucket:.4f}")
+    print(f"  Naive Screening AUC: {auc_naive:.4f}")
     print()
 
     # Create plot
@@ -195,6 +202,17 @@ def main():
         alpha=0.8,
     )
 
+    ax.plot(
+        fpr_naive,
+        tpr_naive,
+        marker="d",
+        linewidth=2.5,
+        markersize=4,
+        label=f"Naive Screening (AUC = {auc_naive:.3f})",
+        color="red",
+        alpha=0.8,
+    )
+
     # Plot diagonal (random classifier)
     ax.plot([0, 1], [0, 1], "k--", linewidth=1.5, alpha=0.5, label="Random (AUC = 0.500)")
 
@@ -219,6 +237,7 @@ def main():
         "empirical_auc": float(auc_emp),
         "llm_probability_auc": float(auc_llm),
         "llm_bucket_auc": float(auc_bucket),
+        "naive_auc": float(auc_naive),
         "n_samples": len(y_true),
         "n_positive": int(np.sum(y_true)),
         "n_negative": int(len(y_true) - np.sum(y_true)),

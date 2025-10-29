@@ -45,11 +45,16 @@ class BaseDataset(ABC):
         """Encode a single variable into text suitable for LLM prompts."""
 
     def get_prompt(self, row: Row, variables: Sequence[str] | None = None) -> str:
-        """Generate a prompt for predicting outcome probability and bucket.
+        """Generate dual prompts for bucket and probability prediction.
+
+        Returns a JSON string containing two separate prompts that will be sent
+        as separate API calls by the model's predict() method.
 
         - Excludes `outcome_col` from the covariate list.
         - Adds explicit line describing the outcome.
         """
+        import json
+
         selected_all = list(variables) if variables is not None else (self.variables or list(row.keys()))
 
         # Exclude outcome from the covariate list
@@ -64,12 +69,51 @@ class BaseDataset(ABC):
         # Add remaining covariates
         parts.extend(self.encode_variable(k, row.get(k)) for k in covariates)
 
-        header = (
+        features = "\n".join(parts)
+
+        # Bucket prompt
+        bucket_header = (
+            "You are an expert assistant that classifies individuals based on their likelihood "
+            "of the specified outcome occurring. "
+            "Analyze the features carefully and classify the individual into one of 2 buckets "
+            "(1=low likelihood, 2=high likelihood). "
+            "Return only a JSON object with one key: 'bucket' (integer 1-2). "
+            "Do not include explanations or other fields."
+        )
+        bucket_prompt = bucket_header + "\n\n" + features
+
+        # Probability prompt
+        probability_header = (
             "You are an expert assistant that estimates the probability of the specified outcome "
             "occurring for individuals with the given characteristics. "
-            "Analyze the features carefully and classify the individual into one of 2 buckets "
-            "(1=low likelihood, 2=high likelihood), and provide a probability between 0 and 1. "
-            "Return only a JSON object with two keys: 'bucket' (integer 1-2) and 'probability' (float 0-1). "
-            "Do not include explanations."
+            "Analyze the features carefully and provide a probability estimate between 0 and 1, "
+            "where 0 means the outcome is impossible and 1 means the outcome is certain. "
+            "Return only a JSON object with one key: 'probability' (float 0-1). "
+            "Do not include explanations or other fields."
         )
-        return header + "\n\n" + "\n".join(parts)
+        probability_prompt = probability_header + "\n\n" + features
+
+        # Naive screening prompt
+        naive_header = (
+            "You are an expert assistant helping to optimize a screening strategy. "
+            "Context: We have a limited treatment budget (β) and want to maximize the number of treated individuals "
+            "who actually have a positive outcome (Y=1). We also have a smaller screening budget (α) to obtain true labels. "
+            "Our strategy: (1) Screen α proportion of the population to reveal their true outcomes, "
+            "(2) Treat all screened individuals with Y=1, (3) Use remaining treatment budget for highest risk unscreened individuals. "
+            "\n\n"
+            "Given the individual's features below, provide a screening score between 0 and 1 indicating how valuable "
+            "it would be to screen this person (0=not valuable to screen, 1=very valuable to screen). "
+            "Consider that screening is most valuable when: (a) the person is uncertain (moderate risk), "
+            "(b) screening could change the treatment decision, (c) the person might be Y=1 but not obvious from features. "
+            "\n\n"
+            "Return only a JSON object with one key: 'naive' (float 0-1). "
+            "Do not include explanations or other fields."
+        )
+        naive_prompt = naive_header + "\n\n" + features
+
+        # Return JSON string with all three prompts
+        return json.dumps({
+            "bucket_prompt": bucket_prompt,
+            "probability_prompt": probability_prompt,
+            "naive_prompt": naive_prompt
+        })

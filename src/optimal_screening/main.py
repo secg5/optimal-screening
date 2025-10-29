@@ -107,13 +107,17 @@ def run(argv: list[str] | None = None) -> None:
             print(prompt)
             print("=" * 80)
         result = model.predict(prompt)
-        # result is now {"bucket": int, "probability": float}
+        # result is now {"bucket": int, "probability": float, "naive": float}
         preds = process_predictions(result.get("probability", 0.5))
-        predictions.append({
+        pred_entry = {
             "index": i,
             "bucket": result.get("bucket", 1),
             "probability": preds,
-        })
+        }
+        # Add naive score if present
+        if "naive" in result:
+            pred_entry["naive"] = result.get("naive", 0.5)
+        predictions.append(pred_entry)
 
     meta = {
         "dataset": {

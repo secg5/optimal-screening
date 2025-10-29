@@ -54,6 +54,8 @@ def main():
                     # Convert bucket to probability for 2-bucket system
                     # Bucket 1 -> 0.25, Bucket 2 -> 0.75
                     df.loc[i, "bucket_probability"] = (bucket - 0.5) / 2.0
+                    # Add naive screening score
+                    df.loc[i, "naive_score"] = pred.get("naive", 0.5)
 
         # Trim data to match predictions in comparison mode
         if args.compare_llm and len(predictions) < len(df):
@@ -107,6 +109,16 @@ def main():
                 use_custom_risk_col="bucket_probability",  # Use bucket/10 column
             )
 
+            print("  4. Naive screening scores")
+            results_naive = compute_optimal_screening_curve(
+                rows=rows,
+                outcome_col=args.outcome,
+                strata_features=args.strata,
+                prediction_col="probability",
+                beta=args.beta,
+                use_custom_risk_col="naive_score",  # Use naive screening score column
+            )
+
             # Use empirical results for overall stats
             results = results_empirical
 
@@ -152,19 +164,22 @@ def main():
             total_pos = results["total_positive"]
 
             if args.compare_llm:
-                # Plot all three curves
+                # Plot all four curves
                 alpha_pct_emp = [a * 100 for a in results_empirical["alpha_values"]]
                 alpha_pct_llm = [a * 100 for a in results_llm_prob["alpha_values"]]
                 alpha_pct_bucket = [a * 100 for a in results_bucket["alpha_values"]]
+                alpha_pct_naive = [a * 100 for a in results_naive["alpha_values"]]
 
                 if use_percentage:
                     tp_emp = [tp / total_pos * 100 for tp in results_empirical["true_positives"]]
                     tp_llm = [tp / total_pos * 100 for tp in results_llm_prob["true_positives"]]
                     tp_bucket = [tp / total_pos * 100 for tp in results_bucket["true_positives"]]
+                    tp_naive = [tp / total_pos * 100 for tp in results_naive["true_positives"]]
                 else:
                     tp_emp = results_empirical["true_positives"]
                     tp_llm = results_llm_prob["true_positives"]
                     tp_bucket = results_bucket["true_positives"]
+                    tp_naive = results_naive["true_positives"]
 
                 ax.plot(
                     alpha_pct_emp,
@@ -194,6 +209,16 @@ def main():
                     markersize=7,
                     label="LLM bucket (quantile)",
                     color="green",
+                )
+
+                ax.plot(
+                    alpha_pct_naive,
+                    tp_naive,
+                    marker="d",
+                    linewidth=2.5,
+                    markersize=7,
+                    label="Naive screening",
+                    color="red",
                 )
             else:
                 # Plot single curve
@@ -281,6 +306,10 @@ def main():
                 "llm_bucket_results": {
                     "alpha_values": [float(a) for a in results_bucket["alpha_values"]],
                     "true_positives": [int(tp) for tp in results_bucket["true_positives"]],
+                },
+                "naive_results": {
+                    "alpha_values": [float(a) for a in results_naive["alpha_values"]],
+                    "true_positives": [int(tp) for tp in results_naive["true_positives"]],
                 },
             }
         else:

@@ -44,6 +44,33 @@ class OAModel(BaseModel):
         if self._client is None:
             raise RuntimeError("Model not loaded. Call load_model() first.")
 
+        # Check if prompt is multi-prompt format (JSON with bucket_prompt, probability_prompt, naive_prompt)
+        try:
+            multi_prompts = json.loads(prompt)
+            if isinstance(multi_prompts, dict) and "bucket_prompt" in multi_prompts and "probability_prompt" in multi_prompts:
+                # Make separate API calls for each prompt
+                bucket_result = self._single_predict(multi_prompts["bucket_prompt"])
+                probability_result = self._single_predict(multi_prompts["probability_prompt"])
+
+                result = {
+                    "bucket": bucket_result.get("bucket", 1),
+                    "probability": probability_result.get("probability", 0.5),
+                }
+
+                # Add naive score if present
+                if "naive_prompt" in multi_prompts:
+                    naive_result = self._single_predict(multi_prompts["naive_prompt"])
+                    result["naive"] = naive_result.get("naive", 0.5)
+
+                return result
+        except (json.JSONDecodeError, KeyError):
+            pass  # Not multi-prompt format, continue with single prediction
+
+        # Single prediction mode (backward compatible)
+        return self._single_predict(prompt)
+
+    def _single_predict(self, prompt: str) -> dict[str, Any]:
+        """Make a single API call and parse the response."""
         # Use Responses API if available; fall back to Chat Completions.
         text: str | None = None
         try:  # Newer SDK

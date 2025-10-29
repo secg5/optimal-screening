@@ -36,16 +36,46 @@ class LocalModel(BaseModel):
             raise RuntimeError("Model not loaded. Call load_model() first.")
         if SamplingParams is None:
             raise RuntimeError("vllm package not installed; install 'vllm'.")
+
+        import json
+        import re
+
+        # Check if prompt is multi-prompt format (JSON with bucket_prompt, probability_prompt, naive_prompt)
+        try:
+            multi_prompts = json.loads(prompt)
+            if isinstance(multi_prompts, dict) and "bucket_prompt" in multi_prompts and "probability_prompt" in multi_prompts:
+                # Make separate API calls for each prompt
+                bucket_result = self._single_predict(multi_prompts["bucket_prompt"])
+                probability_result = self._single_predict(multi_prompts["probability_prompt"])
+
+                result = {
+                    "bucket": bucket_result.get("bucket", 1),
+                    "probability": probability_result.get("probability", 0.5),
+                }
+
+                # Add naive score if present
+                if "naive_prompt" in multi_prompts:
+                    naive_result = self._single_predict(multi_prompts["naive_prompt"])
+                    result["naive"] = naive_result.get("naive", 0.5)
+
+                return result
+        except (json.JSONDecodeError, KeyError):
+            pass  # Not multi-prompt format, continue with single prediction
+
+        # Single prediction mode (backward compatible)
+        return self._single_predict(prompt)
+
+    def _single_predict(self, prompt: str) -> dict[str, Any]:
+        """Make a single vLLM generation and parse the response."""
+        import json
+        import re
+
         try:
             sp = SamplingParams(**{k: v for k, v in self.params.items() if k in {"temperature", "max_tokens"}})
             outputs = self._llm.generate([prompt], sp)
             text = outputs[0].outputs[0].text.strip() if outputs and outputs[0].outputs else ""
         except Exception as exc:  # pragma: no cover
             raise RuntimeError("vLLM generation failed") from exc
-
-        # Try JSON parsing (supports both keys, or single key)
-        import json
-        import re
 
         text = text.strip()
 
