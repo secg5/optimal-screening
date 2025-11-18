@@ -18,7 +18,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from optimal_screening.analysis import compute_optimal_screening_curve, compute_screening_curve
+from optimal_screening.analysis import compute_optimal_screening_curve, compute_random_screening_curve, compute_screening_curve
 import numpy as np
 
 
@@ -119,6 +119,16 @@ def main():
                 use_custom_risk_col="naive_score",  # Use naive screening score column
             )
 
+            print("  5. Random screening baseline")
+            results_random = compute_random_screening_curve(
+                rows=rows,
+                outcome_col=args.outcome,
+                strata_features=args.strata,
+                prediction_col="probability",
+                beta=args.beta,
+                seed=42,
+            )
+
             # Use empirical results for overall stats
             results = results_empirical
 
@@ -164,22 +174,25 @@ def main():
             total_pos = results["total_positive"]
 
             if args.compare_llm:
-                # Plot all four curves
+                # Plot all five curves
                 alpha_pct_emp = [a * 100 for a in results_empirical["alpha_values"]]
                 alpha_pct_llm = [a * 100 for a in results_llm_prob["alpha_values"]]
                 alpha_pct_bucket = [a * 100 for a in results_bucket["alpha_values"]]
                 alpha_pct_naive = [a * 100 for a in results_naive["alpha_values"]]
+                alpha_pct_random = [a * 100 for a in results_random["alpha_values"]]
 
                 if use_percentage:
                     tp_emp = [tp / total_pos * 100 for tp in results_empirical["true_positives"]]
                     tp_llm = [tp / total_pos * 100 for tp in results_llm_prob["true_positives"]]
                     tp_bucket = [tp / total_pos * 100 for tp in results_bucket["true_positives"]]
                     tp_naive = [tp / total_pos * 100 for tp in results_naive["true_positives"]]
+                    tp_random = [tp / total_pos * 100 for tp in results_random["true_positives"]]
                 else:
                     tp_emp = results_empirical["true_positives"]
                     tp_llm = results_llm_prob["true_positives"]
                     tp_bucket = results_bucket["true_positives"]
                     tp_naive = results_naive["true_positives"]
+                    tp_random = results_random["true_positives"]
 
                 ax.plot(
                     alpha_pct_emp,
@@ -219,6 +232,18 @@ def main():
                     markersize=7,
                     label="Naive screening",
                     color="red",
+                )
+
+                ax.plot(
+                    alpha_pct_random,
+                    tp_random,
+                    marker="x",
+                    linewidth=2.5,
+                    markersize=8,
+                    label="Random screening (baseline)",
+                    color="gray",
+                    alpha=0.7,
+                    linestyle="--",
                 )
             else:
                 # Plot single curve
@@ -310,6 +335,10 @@ def main():
                 "naive_results": {
                     "alpha_values": [float(a) for a in results_naive["alpha_values"]],
                     "true_positives": [int(tp) for tp in results_naive["true_positives"]],
+                },
+                "random_results": {
+                    "alpha_values": [float(a) for a in results_random["alpha_values"]],
+                    "true_positives": [int(tp) for tp in results_random["true_positives"]],
                 },
             }
         else:

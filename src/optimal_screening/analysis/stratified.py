@@ -534,3 +534,143 @@ def compute_optimal_screening_curve(
         )
 
     return results
+
+
+def compute_random_screening_curve(
+    rows: list[dict[str, Any]],
+    outcome_col: str,
+    strata_features: Sequence[str],
+    prediction_col: str = "probability",
+    beta: float = 0.5,
+    alpha_quantiles: Sequence[float] | None = None,
+    seed: int = 42,
+    use_custom_risk_col: str | None = None,
+) -> dict[str, Any]:
+    """Compute random screening baseline curve.
+
+    This baseline screens α proportion of the population at random (instead of targeting
+    low-risk individuals). It treats:
+    1. All screened individuals with Y=1 (true positive outcome)
+    2. From unscreened, treats top (β + prop_screened_negatives - prop_screened_positives) by risk
+
+    The intuition: by randomly screening, we identify some negatives and don't waste treatment
+    budget on them, allowing us to treat more high-risk unscreened individuals.
+
+    Args:
+        rows: List of data rows with features, outcome, and predictions
+        outcome_col: Name of outcome column
+        strata_features: Features defining strata (used for risk scoring)
+        prediction_col: Column name for model predictions
+        beta: Treatment budget (proportion who can be treated)
+        alpha_quantiles: Screening budget levels to evaluate
+        seed: Random seed for reproducible random screening
+        use_custom_risk_col: If provided, use this column for risk instead of empirical
+
+    Returns:
+        Dictionary with screening curves
+    """
+    if alpha_quantiles is None:
+        alpha_quantiles = [beta * i / 9 for i in range(10)]
+
+    # Assign each row its risk (either custom or empirical)
+    rows_with_risk = []
+
+    if use_custom_risk_col is not None:
+        # Use custom risk column directly
+        for row in rows:
+            risk = row.get(use_custom_risk_col, 0.5)
+            rows_with_risk.append(
+                {
+                    "row": row,
+                    "empirical_risk": risk,
+                    "true_outcome": _is_positive_outcome(row.get(outcome_col)),
+                    "model_prediction": row.get(prediction_col, 0.5),
+                }
+            )
+    else:
+        # Compute empirical P(Y=1|X) for each stratum
+        empirical_probs = compute_empirical_probabilities(rows, outcome_col, strata_features)
+
+        for row in rows:
+            stratum_key = tuple(row.get(f) for f in strata_features)
+            empirical_risk = empirical_probs.get(stratum_key, {}).get("probability", 0.5)
+
+            rows_with_risk.append(
+                {
+                    "row": row,
+                    "empirical_risk": empirical_risk,
+                    "true_outcome": _is_positive_outcome(row.get(outcome_col)),
+                    "model_prediction": row.get(prediction_col, 0.5),
+                }
+            )
+
+    total_positive = sum(1 for r in rows_with_risk if r["true_outcome"])
+    n = len(rows_with_risk)
+
+    # Results storage
+    results = {
+        "beta": beta,
+        "alpha_values": [],
+        "true_positives": [],
+        "total_positive": total_positive,
+        "total_samples": n,
+    }
+
+    # Set random seed for reproducibility
+    rng = np.random.RandomState(seed)
+
+    for alpha in alpha_quantiles:
+        if alpha > beta:
+            continue
+
+        # Randomly select α proportion for screening
+        n_screen = int(alpha * n)
+        screened_indices = set(rng.choice(n, size=n_screen, replace=False))
+
+        # Count screened positives and negatives
+        n_screened_positive = 0
+        n_screened_negative = 0
+
+        for idx in screened_indices:
+            if rows_with_risk[idx]["true_outcome"]:
+                n_screened_positive += 1
+            else:
+                n_screened_negative += 1
+
+        prop_screened_positive = n_screened_positive / n
+        prop_screened_negative = n_screened_negative / n
+
+        # Create list of unscreened individuals sorted by risk (highest to lowest)
+        unscreened_with_risk = [
+            (idx, rows_with_risk[idx]) for idx in range(n) if idx not in screened_indices
+        ]
+        unscreened_with_risk.sort(key=lambda x: x[1]["empirical_risk"], reverse=True)
+
+        # Determine how many to treat from unscreened
+        # Formula: β + prop_screened_negative - prop_screened_positive
+        # This accounts for:
+        # - β: total treatment budget
+        # - Already used: prop_screened_positive (treated screened Y=1)
+        # - Saved budget: prop_screened_negative (didn't treat these negatives)
+        unscreened_treatment_prop = beta + prop_screened_negative - prop_screened_positive
+        n_treat_unscreened = int(unscreened_treatment_prop * n)
+        n_treat_unscreened = max(0, min(n_treat_unscreened, len(unscreened_with_risk)))
+
+        # Count true positives
+        tp_count = 0
+
+        # From screened: all Y=1 get treated (and correctly identified as TP)
+        tp_count += n_screened_positive
+
+        # From unscreened: treat top n_treat_unscreened by risk
+        for i in range(n_treat_unscreened):
+            idx, item = unscreened_with_risk[i]
+            # These are treated based on model prediction
+            predicted_positive = item["empirical_risk"] >= 0.5
+            if predicted_positive and item["true_outcome"]:
+                tp_count += 1
+
+        results["alpha_values"].append(alpha)
+        results["true_positives"].append(tp_count)
+
+    return results
