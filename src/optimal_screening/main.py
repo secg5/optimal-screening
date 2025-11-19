@@ -8,6 +8,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from tqdm import tqdm
+
 from .datasets.acs_income import ACSDataset  # noqa: F401
 from .datasets.generic import GenericCSVDataset  # noqa: F401
 
@@ -98,7 +100,7 @@ def run(argv: list[str] | None = None) -> None:
     model.load_model()
 
     predictions: list[dict[str, Any]] = []
-    for i, row in enumerate(rows[: args.limit]):
+    for i, row in tqdm(enumerate(rows[: args.limit]), total=min(len(rows), args.limit), desc="Processing rows"):
         prompt = dataset.get_prompt(row, variables)
         if i == 0:
             print("=" * 80)
