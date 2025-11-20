@@ -81,7 +81,12 @@ def _build_model(cfg: dict[str, Any]) -> BaseModel:
 def run(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Run optimal-screening experiment")
     parser.add_argument("--config", type=str, default="config.yaml", help="Path to YAML config")
-    parser.add_argument("--limit", type=int, default=5, help="Max rows to process (debug)")
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="Max rows to process (debug). Omit to process the full dataset.",
+    )
     args = parser.parse_args(argv)
 
     # Load credentials from .env if python-dotenv is available
@@ -99,8 +104,15 @@ def run(argv: list[str] | None = None) -> None:
     model = _build_model(cfg)
     model.load_model()
 
+    limit_value = len(rows) if args.limit is None else max(0, min(len(rows), args.limit))
+    rows_to_process = rows[:limit_value]
+
     predictions: list[dict[str, Any]] = []
-    for i, row in tqdm(enumerate(rows[: args.limit]), total=min(len(rows), args.limit), desc="Processing rows"):
+    for i, row in tqdm(
+        enumerate(rows_to_process),
+        total=len(rows_to_process),
+        desc="Processing rows",
+    ):
         prompt = dataset.get_prompt(row, variables)
         if i == 0:
             print("=" * 80)
