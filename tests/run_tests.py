@@ -2,6 +2,7 @@
 """Run tests without pytest."""
 
 import sys
+
 from test_optimal_screening import TestOptimalScreeningCurveUniform
 
 

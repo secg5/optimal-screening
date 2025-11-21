@@ -31,14 +31,33 @@ class LandmineDataset(BaseDataset):
 
     # Columns that represent decile bins in the processed dataset
     DECILE_FEATURES: set[str] = {
-        'elevation', 'rainfall', 'temperature', 'population_2012',
-        'No. Víctimas por Declaración', 'airports_dist', 'seaport_dist',
-        'settlement_dist', 'finance_dist', 'edu_dist', 'buildings_dist',
-        'waterways_dist', 'coca_dist', 'dist_roads_t1', 'dist_roads_t2',
-        'dist_roads_t3', 'dist_old_mine', 'soil_texture15_trans1',
-        'soil_texture15_trans2', 'nighttime_lights_2012', 'hist_mines',
-        'retro_pobl_tot', 'indrural', 'areaoficialkm2', 'altura',
-        'discapital', 'pib_percapita_cons'
+        "elevation",
+        "rainfall",
+        "temperature",
+        "population_2012",
+        "No. Víctimas por Declaración",
+        "airports_dist",
+        "seaport_dist",
+        "settlement_dist",
+        "finance_dist",
+        "edu_dist",
+        "buildings_dist",
+        "waterways_dist",
+        "coca_dist",
+        "dist_roads_t1",
+        "dist_roads_t2",
+        "dist_roads_t3",
+        "dist_old_mine",
+        "soil_texture15_trans1",
+        "soil_texture15_trans2",
+        "nighttime_lights_2012",
+        "hist_mines",
+        "retro_pobl_tot",
+        "indrural",
+        "areaoficialkm2",
+        "altura",
+        "discapital",
+        "pib_percapita_cons",
     }
 
     def __init__(

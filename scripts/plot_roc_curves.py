@@ -9,6 +9,7 @@ Usage:
         --predictions runs/config_acs.json \
         --output runs/roc_curves.png
 """
+
 from __future__ import annotations
 
 import argparse

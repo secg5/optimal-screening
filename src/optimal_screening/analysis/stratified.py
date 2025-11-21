@@ -392,7 +392,7 @@ def compute_optimal_screening_curve(
         "total_positive": total_positive,
         "total_samples": n,
     }
-    
+
     for alpha in alpha_quantiles:
         if alpha > beta:
             # Can't screen more than we treat
@@ -402,7 +402,7 @@ def compute_optimal_screening_curve(
         # Initial guess: Band 3 starts at position corresponding to (beta + alpha)
         band3_start_quantile = beta + alpha
         prev_avg_risk = 0.0
-        
+
         for iteration in range(max_iterations):
             # Compute target mass: ∫ f(risk) d(risk) = target
             # Where f(risk) is the density over risk values
@@ -484,7 +484,9 @@ def compute_optimal_screening_curve(
         band4_pop_prop = (n - band3_end_idx) / n
 
         # Expected negatives in Band 3: ∫ (1 - risk) × f(risk) d(risk) over Band 3
-        band3_expected_negatives = sum((1 - rows_with_risk[i]["empirical_risk"]) / n for i in range(band2_end_idx, band3_end_idx))
+        band3_expected_negatives = sum(
+            (1 - rows_with_risk[i]["empirical_risk"]) / n for i in range(band2_end_idx, band3_end_idx)
+        )
 
         # Count true positives in each band
         tp_count = 0
@@ -641,9 +643,7 @@ def compute_random_screening_curve(
         prop_screened_negative = n_screened_negative / n
 
         # Create list of unscreened individuals sorted by risk (highest to lowest)
-        unscreened_with_risk = [
-            (idx, rows_with_risk[idx]) for idx in range(n) if idx not in screened_indices
-        ]
+        unscreened_with_risk = [(idx, rows_with_risk[idx]) for idx in range(n) if idx not in screened_indices]
         unscreened_with_risk.sort(key=lambda x: x[1]["empirical_risk"], reverse=True)
 
         # Determine how many to treat from unscreened

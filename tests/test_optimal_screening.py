@@ -32,9 +32,7 @@ class TestOptimalScreeningCurveUniform:
             return 0.0
         return (1 - beta - alpha / 2) / (1 - alpha)
 
-    def analytical_band_sizes(
-        self, beta: float, alpha: float, avg_risk_band3: float
-    ) -> dict[str, float]:
+    def analytical_band_sizes(self, beta: float, alpha: float, avg_risk_band3: float) -> dict[str, float]:
         """Compute analytical band population proportions."""
         band1_size = beta - alpha
         band2_size = alpha * (1 - avg_risk_band3)
@@ -48,9 +46,7 @@ class TestOptimalScreeningCurveUniform:
             "band4_pop_prop": band4_size,
         }
 
-    def analytical_band_integrals(
-        self, beta: float, alpha: float, avg_risk_band3: float
-    ) -> dict[str, float]:
+    def analytical_band_integrals(self, beta: float, alpha: float, avg_risk_band3: float) -> dict[str, float]:
         """Compute analytical integrals ∫ risk · f(risk) d(risk) for each band.
 
         For uniform distribution, f(risk) is constant = 1.
@@ -96,10 +92,7 @@ class TestOptimalScreeningCurveUniform:
         outcomes = np.random.binomial(1, risks, n)  # Outcomes match risk probabilities
 
         # Create dataset
-        rows = [
-            {"risk": float(risks[i]), "outcome": bool(outcomes[i]), "stratum": 0}
-            for i in range(n)
-        ]
+        rows = [{"risk": float(risks[i]), "outcome": bool(outcomes[i]), "stratum": 0} for i in range(n)]
 
         # Compute optimal screening curve
         result = compute_optimal_screening_curve(
@@ -121,8 +114,7 @@ class TestOptimalScreeningCurveUniform:
 
         # Verify average risk in Band 3
         assert abs(band_info["avg_risk_band3"] - expected_avg_risk) < params["tolerance"], (
-            f"Band 3 avg risk: expected {expected_avg_risk:.4f}, "
-            f"got {band_info['avg_risk_band3']:.4f}"
+            f"Band 3 avg risk: expected {expected_avg_risk:.4f}, got {band_info['avg_risk_band3']:.4f}"
         )
 
         # Verify band population proportions
@@ -130,9 +122,7 @@ class TestOptimalScreeningCurveUniform:
             key = f"{band_name}_pop_prop"
             expected = expected_sizes[key]
             actual = band_info[key]
-            assert abs(actual - expected) < params["tolerance"], (
-                f"{key}: expected {expected:.4f}, got {actual:.4f}"
-            )
+            assert abs(actual - expected) < params["tolerance"], f"{key}: expected {expected:.4f}, got {actual:.4f}"
 
         # Verify band integrals (within tolerance)
         for band_name in ["band1", "band2", "band3", "band4"]:
@@ -169,10 +159,7 @@ class TestOptimalScreeningCurveUniform:
             risks = np.random.uniform(0, 1, n)
             outcomes = np.random.binomial(1, risks, n)
 
-            rows = [
-                {"risk": float(risks[i]), "outcome": bool(outcomes[i]), "stratum": 0}
-                for i in range(n)
-            ]
+            rows = [{"risk": float(risks[i]), "outcome": bool(outcomes[i]), "stratum": 0} for i in range(n)]
 
             # Compute optimal screening curve
             result = compute_optimal_screening_curve(
@@ -192,21 +179,11 @@ class TestOptimalScreeningCurveUniform:
                 continue
 
             # Collect values across all simulations
-            avg_risks = [
-                res["band_info"][alpha_idx]["avg_risk_band3"] for res in results_summary
-            ]
-            band1_props = [
-                res["band_info"][alpha_idx]["band1_pop_prop"] for res in results_summary
-            ]
-            band2_props = [
-                res["band_info"][alpha_idx]["band2_pop_prop"] for res in results_summary
-            ]
-            band3_props = [
-                res["band_info"][alpha_idx]["band3_pop_prop"] for res in results_summary
-            ]
-            band4_props = [
-                res["band_info"][alpha_idx]["band4_pop_prop"] for res in results_summary
-            ]
+            avg_risks = [res["band_info"][alpha_idx]["avg_risk_band3"] for res in results_summary]
+            band1_props = [res["band_info"][alpha_idx]["band1_pop_prop"] for res in results_summary]
+            band2_props = [res["band_info"][alpha_idx]["band2_pop_prop"] for res in results_summary]
+            band3_props = [res["band_info"][alpha_idx]["band3_pop_prop"] for res in results_summary]
+            band4_props = [res["band_info"][alpha_idx]["band4_pop_prop"] for res in results_summary]
 
             # Compute mean across simulations
             mean_avg_risk = np.mean(avg_risks)
@@ -250,10 +227,7 @@ class TestOptimalScreeningCurveUniform:
         risks = np.random.uniform(0, 1, n)
         outcomes = np.random.binomial(1, risks, n)
 
-        rows = [
-            {"risk": float(risks[i]), "outcome": bool(outcomes[i]), "stratum": 0}
-            for i in range(n)
-        ]
+        rows = [{"risk": float(risks[i]), "outcome": bool(outcomes[i]), "stratum": 0} for i in range(n)]
 
         result = compute_optimal_screening_curve(
             rows=rows,
@@ -272,8 +246,7 @@ class TestOptimalScreeningCurveUniform:
                 + band_info["band4_pop_prop"]
             )
             assert abs(total_mass - 1.0) < 1e-6, (
-                f"Band proportions don't sum to 1: {total_mass:.6f} "
-                f"(alpha={band_info['alpha']})"
+                f"Band proportions don't sum to 1: {total_mass:.6f} (alpha={band_info['alpha']})"
             )
 
         print("\n✓ Band mass conservation verified for all alpha values")
@@ -286,10 +259,7 @@ class TestOptimalScreeningCurveUniform:
         risks = np.random.uniform(0, 1, n)
         outcomes = np.random.binomial(1, risks, n)
 
-        rows = [
-            {"risk": float(risks[i]), "outcome": bool(outcomes[i]), "stratum": 0}
-            for i in range(n)
-        ]
+        rows = [{"risk": float(risks[i]), "outcome": bool(outcomes[i]), "stratum": 0} for i in range(n)]
 
         result = compute_optimal_screening_curve(
             rows=rows,
@@ -312,4 +282,4 @@ class TestOptimalScreeningCurveUniform:
 
         print("\n✓ Edge case α=0 verified")
         print(f"  Band 1: {band_info['band1_pop_prop']:.4f} (expected: {params['beta']:.4f})")
-        print(f"  Band 4: {band_info['band4_pop_prop']:.4f} (expected: {1-params['beta']:.4f})")
+        print(f"  Band 4: {band_info['band4_pop_prop']:.4f} (expected: {1 - params['beta']:.4f})")

@@ -9,6 +9,7 @@ Usage:
         --predictions runs/config_acs.json \
         --output runs/screening_curve.png
 """
+
 from __future__ import annotations
 
 import argparse
@@ -16,10 +17,14 @@ import json
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
-from optimal_screening.analysis import compute_optimal_screening_curve, compute_random_screening_curve, compute_screening_curve
-import numpy as np
+from optimal_screening.analysis import (
+    compute_optimal_screening_curve,
+    compute_random_screening_curve,
+    compute_screening_curve,
+)
 
 
 def main():
@@ -31,12 +36,16 @@ def main():
     parser.add_argument("--output", type=str, default="runs/screening_curve.png", help="Output plot path")
     parser.add_argument("--screen-lowest", action="store_true", default=True, help="Screen lowest risk first")
     parser.add_argument("--beta", type=float, help="Treatment budget for optimal screening (enables optimal mode)")
-    parser.add_argument("--compare-llm", action="store_true", help="Compare empirical vs LLM probabilities (requires --predictions with bucket data)")
+    parser.add_argument(
+        "--compare-llm",
+        action="store_true",
+        help="Compare empirical vs LLM probabilities (requires --predictions with bucket data)",
+    )
     args = parser.parse_args()
 
     # Load data
     df = pd.read_csv(args.csv)
-    
+
     # Load predictions if provided
     if args.predictions:
         with open(args.predictions) as f:
@@ -59,7 +68,7 @@ def main():
 
         # Trim data to match predictions in comparison mode
         if args.compare_llm and len(predictions) < len(df):
-            df = df.iloc[:len(predictions)]
+            df = df.iloc[: len(predictions)]
     else:
         # No predictions: use random baseline
         # TODO Change for uniform probability
@@ -385,7 +394,7 @@ def main():
         print()
         print("Screening Budget → True Positives:")
         for budget, tp in zip(curve_data["screening_budgets"], curve_data["true_positives"]):
-            print(f"  α={budget:.0%} → TP={tp} ({tp/curve_data['total_positive']:.1%} of all positives)")
+            print(f"  α={budget:.0%} → TP={tp} ({tp / curve_data['total_positive']:.1%} of all positives)")
 
         # Helper function to create simple screening plot
         def create_simple_plot(use_percentage=True):
