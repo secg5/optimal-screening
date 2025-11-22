@@ -89,7 +89,17 @@ def main():
                 beta=args.beta,
             )
 
-            print("  2. LLM predicted probabilities")
+            print("  2. Empirical + LLM bucket (strata augmented with LLM quantile)")
+            strata_plus_bucket = args.strata + ["llm_bucket"]
+            results_empirical_augmented = compute_optimal_screening_curve(
+                rows=rows,
+                outcome_col=args.outcome,
+                strata_features=strata_plus_bucket,
+                prediction_col="probability",
+                beta=args.beta,
+            )
+
+            print("  3. LLM predicted probabilities")
             results_llm_prob = compute_optimal_screening_curve(
                 rows=rows,
                 outcome_col=args.outcome,
@@ -99,7 +109,7 @@ def main():
                 use_custom_risk_col="probability",  # Use LLM probability column
             )
 
-            print("  3. LLM bucket-based probabilities (bucket/10)")
+            print("  4. LLM bucket-based probabilities (bucket/10)")
             results_bucket = compute_optimal_screening_curve(
                 rows=rows,
                 outcome_col=args.outcome,
@@ -109,7 +119,7 @@ def main():
                 use_custom_risk_col="bucket_probability",  # Use bucket/10 column
             )
 
-            print("  4. Naive screening scores")
+            print("  5. Naive screening scores")
             results_naive = compute_optimal_screening_curve(
                 rows=rows,
                 outcome_col=args.outcome,
@@ -119,7 +129,7 @@ def main():
                 use_custom_risk_col="naive_score",  # Use naive screening score column
             )
 
-            print("  5. Random screening baseline")
+            print("  6. Random screening baseline")
             results_random = compute_random_screening_curve(
                 rows=rows,
                 outcome_col=args.outcome,
@@ -174,8 +184,9 @@ def main():
             total_pos = results["total_positive"]
 
             if args.compare_llm:
-                # Plot all five curves
+                # Plot all six curves
                 alpha_pct_emp = [a * 100 for a in results_empirical["alpha_values"]]
+                alpha_pct_emp_aug = [a * 100 for a in results_empirical_augmented["alpha_values"]]
                 alpha_pct_llm = [a * 100 for a in results_llm_prob["alpha_values"]]
                 alpha_pct_bucket = [a * 100 for a in results_bucket["alpha_values"]]
                 alpha_pct_naive = [a * 100 for a in results_naive["alpha_values"]]
@@ -183,12 +194,14 @@ def main():
 
                 if use_percentage:
                     tp_emp = [tp / total_pos * 100 for tp in results_empirical["true_positives"]]
+                    tp_emp_aug = [tp / total_pos * 100 for tp in results_empirical_augmented["true_positives"]]
                     tp_llm = [tp / total_pos * 100 for tp in results_llm_prob["true_positives"]]
                     tp_bucket = [tp / total_pos * 100 for tp in results_bucket["true_positives"]]
                     tp_naive = [tp / total_pos * 100 for tp in results_naive["true_positives"]]
                     tp_random = [tp / total_pos * 100 for tp in results_random["true_positives"]]
                 else:
                     tp_emp = results_empirical["true_positives"]
+                    tp_emp_aug = results_empirical_augmented["true_positives"]
                     tp_llm = results_llm_prob["true_positives"]
                     tp_bucket = results_bucket["true_positives"]
                     tp_naive = results_naive["true_positives"]
@@ -202,6 +215,16 @@ def main():
                     markersize=7,
                     label="Empirical (from strata)",
                     color="blue",
+                )
+
+                ax.plot(
+                    alpha_pct_emp_aug,
+                    tp_emp_aug,
+                    marker="*",
+                    linewidth=2.5,
+                    markersize=9,
+                    label="Empirical + LLM bucket",
+                    color="purple",
                 )
 
                 ax.plot(
@@ -323,6 +346,10 @@ def main():
                 "empirical_results": {
                     "alpha_values": [float(a) for a in results_empirical["alpha_values"]],
                     "true_positives": [int(tp) for tp in results_empirical["true_positives"]],
+                },
+                "empirical_augmented_results": {
+                    "alpha_values": [float(a) for a in results_empirical_augmented["alpha_values"]],
+                    "true_positives": [int(tp) for tp in results_empirical_augmented["true_positives"]],
                 },
                 "llm_probability_results": {
                     "alpha_values": [float(a) for a in results_llm_prob["alpha_values"]],

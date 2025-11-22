@@ -3,6 +3,7 @@ from .stratified import (
     compute_empirical_probabilities,
     compute_optimal_screening_curve,
     compute_quantiles,
+    compute_random_screening_curve,
     compute_screening_curve,
 )
 
@@ -13,4 +14,5 @@ __all__ = [
     "compute_quantiles",
     "compute_screening_curve",
     "compute_optimal_screening_curve",
+    "compute_random_screening_curve",
 ]
