@@ -4,6 +4,9 @@ import argparse
 import json
 import os
 import re
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -21,6 +24,7 @@ except Exception:  # pragma: no cover - missing optional dep
     load_dotenv = None  # type: ignore[assignment]
 from .models.base import BaseModel
 from .models.bedrock_model import BedrockModel
+from .models.hf_model import HFModel
 from .models.local_model import LocalModel
 from .models.openai_model import OAModel
 from .prediction_processing import process_predictions
@@ -71,11 +75,72 @@ def _build_model(cfg: dict[str, Any]) -> BaseModel:
     params = m.get("params") or {}
     if mtype in {"openai", "oa"}:
         return OAModel(model_name=model_name, **params)
+    if mtype in {"huggingface", "hf"}:
+        return HFModel(model_name=model_name, **params)
     if mtype in {"bedrock", "aws"}:
         return BedrockModel(model_name=model_name, **params)
     if mtype in {"local", "vllm"}:
         return LocalModel(model_name=model_name, **params)
     raise ValueError(f"Unknown model type: {mtype}")
+
+
+class RateLimiter:
+    """Simple thread-safe rate limiter."""
+
+    def __init__(self, requests_per_second: float | None) -> None:
+        self._interval = 0.0
+        if requests_per_second and requests_per_second > 0:
+            self._interval = 1.0 / requests_per_second
+        self._lock = threading.Lock()
+        self._next_time = 0.0
+
+    def acquire(self) -> None:
+        if self._interval <= 0:
+            return
+        while True:
+            with self._lock:
+                now = time.monotonic()
+                wait_time = self._next_time - now
+                if wait_time <= 0:
+                    self._next_time = now + self._interval
+                    return
+            time.sleep(wait_time if wait_time > 0 else self._interval)
+
+
+def _default_worker_count(model: BaseModel) -> int:
+    if isinstance(model, LocalModel):
+        cpu_count = os.cpu_count() or 1
+        return max(1, min(cpu_count, 4))
+    return 2
+
+
+def _default_rate_limit(model: BaseModel) -> float | None:
+    if isinstance(model, (OAModel, BedrockModel, HFModel)):
+        return 1.0  # Safe default: 1 request per second
+    return None
+
+
+def _parallel_settings(model: BaseModel, run_cfg: dict[str, Any]) -> tuple[int, float | None]:
+    parallel_cfg = run_cfg.get("parallelism") or {}
+    if not isinstance(parallel_cfg, dict):
+        parallel_cfg = {}
+
+    max_workers = parallel_cfg.get("max_workers") or parallel_cfg.get("workers")
+    if max_workers is not None:
+        max_workers = int(max_workers)
+    else:
+        max_workers = _default_worker_count(model)
+
+    requests_per_second = parallel_cfg.get("requests_per_second")
+    if requests_per_second is None and parallel_cfg.get("requests_per_minute"):
+        requests_per_minute = float(parallel_cfg["requests_per_minute"])
+        requests_per_second = requests_per_minute / 60.0 if requests_per_minute > 0 else None
+    if requests_per_second is not None:
+        requests_per_second = max(float(requests_per_second), 0.0)
+    else:
+        requests_per_second = _default_rate_limit(model)
+
+    return max(1, max_workers), requests_per_second
 
 
 def run(argv: list[str] | None = None) -> None:
@@ -107,31 +172,49 @@ def run(argv: list[str] | None = None) -> None:
     limit_value = len(rows) if args.limit is None else max(0, min(len(rows), args.limit))
     rows_to_process = rows[:limit_value]
 
-    predictions: list[dict[str, Any]] = []
-    for i, row in tqdm(
-        enumerate(rows_to_process),
-        total=len(rows_to_process),
-        desc="Processing rows",
-    ):
-        prompt = dataset.get_prompt(row, variables)
-        if i == 0:
-            print("=" * 80)
-            print(f"PROMPT FOR ROW {i}:")
-            print("=" * 80)
-            print(prompt)
-            print("=" * 80)
-        result = model.predict(prompt)
-        # result is now {"bucket": int, "probability": float, "naive": float}
-        preds = process_predictions(result.get("probability", 0.5))
-        pred_entry = {
-            "index": i,
-            "bucket": result.get("bucket", 1),
-            "probability": preds,
-        }
-        # Add naive score if present
-        if "naive" in result:
-            pred_entry["naive"] = result.get("naive", 0.5)
-        predictions.append(pred_entry)
+    predictions: list[dict[str, Any]]
+    if not rows_to_process:
+        predictions = []
+    else:
+        prompt_cache: dict[int, str] = {}
+        # Print prompt for first row to aid debugging
+        first_prompt = dataset.get_prompt(rows_to_process[0], variables)
+        prompt_cache[0] = first_prompt
+        print("=" * 80)
+        print("PROMPT FOR ROW 0:")
+        print("=" * 80)
+        print(first_prompt)
+        print("=" * 80)
+
+        max_workers, requests_per_second = _parallel_settings(model, run_cfg)
+        rate_limiter = RateLimiter(requests_per_second)
+        predictions_by_index: dict[int, dict[str, Any]] = {}
+
+        def _predict_single(idx: int, row: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+            prompt = prompt_cache.get(idx)
+            if prompt is None:
+                prompt = dataset.get_prompt(row, variables)
+            rate_limiter.acquire()
+            result = model.predict(prompt)
+            preds = process_predictions(result.get("probability", 0.5))
+            pred_entry: dict[str, Any] = {
+                "index": idx,
+                "bucket": result.get("bucket", 1),
+                "probability": preds,
+            }
+            if "naive" in result:
+                pred_entry["naive"] = result.get("naive", 0.5)
+            return idx, pred_entry
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [executor.submit(_predict_single, idx, row) for idx, row in enumerate(rows_to_process)]
+            with tqdm(total=len(rows_to_process), desc="Processing rows") as progress:
+                for future in as_completed(futures):
+                    idx, result = future.result()
+                    predictions_by_index[idx] = result
+                    progress.update(1)
+
+        predictions = [predictions_by_index[i] for i in range(len(rows_to_process))]
 
     meta = {
         "dataset": {
@@ -147,6 +230,9 @@ def run(argv: list[str] | None = None) -> None:
         },
         "env": {
             "has_openai_key": bool(os.getenv("OPENAI_API_KEY")),
+            "has_hf_token": bool(
+                os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_API_KEY") or os.getenv("HUGGINGFACEHUB_API_TOKEN")
+            ),
             "has_aws_region": bool(os.getenv("AWS_REGION")),
         },
     }
