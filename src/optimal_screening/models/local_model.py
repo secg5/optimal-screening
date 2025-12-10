@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import torch
+
 from .base import BaseModel
 
 
@@ -21,13 +23,32 @@ class LocalModel(BaseModel):
 
     def __init__(self, model_name: str, **params: Any) -> None:
         super().__init__(model_name, **params)
+        self.engine_params = self._extract_engine_params(self.params)
+        self.sampling_params = self._extract_sampling_params(self.params)
         self._llm = None
+
+    @staticmethod
+    def _extract_engine_params(params: dict[str, Any]) -> dict[str, Any]:
+        engine_params = params.get("engine_params") or params.get("engine")
+        if isinstance(engine_params, dict):
+            return engine_params
+        return {}
+
+    @staticmethod
+    def _extract_sampling_params(params: dict[str, Any]) -> dict[str, Any]:
+        sampling_params = params.get("sampling_params") or params.get("sampling")
+        sampling: dict[str, Any] = sampling_params if isinstance(sampling_params, dict) else {}
+        legacy_sampling = {k: v for k, v in params.items() if k in {"temperature", "max_tokens"}}
+        return {**legacy_sampling, **sampling}
 
     def load_model(self) -> None:
         if LLM is None:
             raise RuntimeError("vllm package not installed; install 'vllm'.")
         try:
-            self._llm = LLM(model=self.model_name)
+            # Check number of GPUs available
+            num_gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
+            print(f"Number of GPUs available: {num_gpus}")
+            self._llm = LLM(model=self.model_name, **self.engine_params)
         except Exception as exc:  # pragma: no cover - optional dependency
             raise RuntimeError("Failed to initialize vLLM model") from exc
 
@@ -75,7 +96,7 @@ class LocalModel(BaseModel):
         import re
 
         try:
-            sp = SamplingParams(**{k: v for k, v in self.params.items() if k in {"temperature", "max_tokens"}})
+            sp = SamplingParams(**self.sampling_params)
             outputs = self._llm.generate([prompt], sp)
             text = outputs[0].outputs[0].text.strip() if outputs and outputs[0].outputs else ""
         except Exception as exc:  # pragma: no cover
