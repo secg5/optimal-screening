@@ -48,7 +48,7 @@ class LocalModel(BaseModel):
             # Check number of GPUs available
             num_gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
             print(f"Number of GPUs available: {num_gpus}")
-            self._llm = LLM(model=self.model_name, **self.engine_params)
+            self._llm = LLM(model=self.model_name, tensor_parallel_size=num_gpus, **self.engine_params)
         except Exception as exc:  # pragma: no cover - optional dependency
             raise RuntimeError("Failed to initialize vLLM model") from exc
 
