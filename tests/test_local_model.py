@@ -120,3 +120,47 @@ def test_local_model_predict_batch_handles_multi_prompts(monkeypatch):
         ["probability prompt 1"],
         ["naive prompt 1"],
     ]
+
+
+def test_local_model_applies_chat_template(monkeypatch):
+    captured: dict[str, object] = {}
+
+    class DummySamplingParams:
+        def __init__(self, **kwargs):
+            pass
+
+    class DummyTokenizer:
+        def apply_chat_template(self, messages, tokenize: bool, add_generation_prompt: bool):
+            captured["messages"] = messages
+            captured["tokenize"] = tokenize
+            captured["add_generation_prompt"] = add_generation_prompt
+            return f"templated::{messages[0]['content']}"
+
+    class DummyOutput:
+        def __init__(self, text: str):
+            self.text = text
+
+    class DummyGenerated:
+        def __init__(self, text: str):
+            self.outputs = [DummyOutput(text)]
+
+    class DummyLLM:
+        def get_tokenizer(self):
+            return DummyTokenizer()
+
+        def generate(self, prompts, sampling_params):
+            captured["prompts"] = list(prompts)
+            return [DummyGenerated("0.3")]
+
+    monkeypatch.setattr(local_model, "SamplingParams", DummySamplingParams)
+
+    model = LocalModel("fake-model")
+    model._llm = DummyLLM()
+
+    result = model.predict_batch(["hello world"])
+
+    assert result == [{"bucket": 1, "probability": 0.3}]
+    assert captured["prompts"] == ["templated::hello world"]
+    assert captured["messages"] == [{"role": "user", "content": "hello world"}]
+    assert captured["tokenize"] is False
+    assert captured["add_generation_prompt"] is True

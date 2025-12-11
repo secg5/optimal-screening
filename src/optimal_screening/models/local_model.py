@@ -148,12 +148,31 @@ class LocalModel(BaseModel):
 
     def _run_generate(self, prompts: list[str]) -> list[str]:
         sp = SamplingParams(**self.sampling_params)
-        outputs = self._llm.generate(prompts, sp)
+        formatted_prompts = [self._apply_chat_template(p) for p in prompts]
+        outputs = self._llm.generate(formatted_prompts, sp)
         texts: list[str] = []
         for output in outputs:
             text = output.outputs[0].text.strip() if output and output.outputs else ""
             texts.append(text.strip())
         return texts
+
+    def _apply_chat_template(self, prompt: str) -> str:
+        tokenizer_getter = getattr(self._llm, "get_tokenizer", None)
+        if tokenizer_getter is None:
+            raise RuntimeError("Could not get tokenizer from LLM instance.")
+
+        tokenizer = tokenizer_getter() if callable(tokenizer_getter) else tokenizer_getter
+        apply_template = getattr(tokenizer, "apply_chat_template", None)
+        if apply_template is None:
+            return prompt
+        templated = apply_template(
+            [{"role": "user", "content": prompt}],
+            tokenize=False,
+            add_generation_prompt=True,
+        )
+        if isinstance(templated, str):
+            return templated
+        raise RuntimeError("Could not apply chat template to prompt.")
 
     def _parse_prediction_text(self, text: str) -> dict[str, Any]:
         cleaned = text.strip()
