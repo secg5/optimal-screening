@@ -26,7 +26,7 @@ class OAModel(BaseModel):
     """
 
     def __init__(self, model_name: str, **params: Any) -> None:
-        super().__init__(model_name, **params)
+        super().__init__(model_name, is_api_model=True, **params)
         self._client = None
 
     def load_model(self) -> None:

@@ -25,7 +25,7 @@ class HFModel(BaseModel):
 
     def __init__(self, model_name: str, base_url: str | None = None, **params: Any) -> None:
         base_url = base_url or params.pop("base_url", _DEFAULT_BASE_URL)
-        super().__init__(model_name, **params)
+        super().__init__(model_name, is_api_model=True, **params)
         self.base_url = base_url
         self._client = None
 

@@ -9,6 +9,7 @@ class BaseModel(ABC):
 
     def __init__(self, model_name: str, **params: Any) -> None:
         self.model_name = model_name
+        self.is_api_model: bool = bool(params.pop("is_api_model", False))
         self.params = params
 
     @abstractmethod

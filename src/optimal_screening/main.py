@@ -17,6 +17,13 @@ from .datasets.acs_income import ACSDataset  # noqa: F401
 from .datasets.generic import GenericCSVDataset  # noqa: F401
 
 
+# Optional datasets import hoisted to top-level
+try:  # pragma: no cover - optional dependency
+    from datasets import Dataset  # type: ignore
+except Exception:  # pragma: no cover - missing optional dep
+    Dataset = None  # type: ignore[assignment]
+
+
 # Optional dotenv import hoisted to top-level
 try:  # pragma: no cover - environment dependent
     from dotenv import load_dotenv  # type: ignore
@@ -186,35 +193,98 @@ def run(argv: list[str] | None = None) -> None:
         print(first_prompt)
         print("=" * 80)
 
-        max_workers, requests_per_second = _parallel_settings(model, run_cfg)
-        rate_limiter = RateLimiter(requests_per_second)
-        predictions_by_index: dict[int, dict[str, Any]] = {}
+        if getattr(model, "is_api_model", False):
+            max_workers, requests_per_second = _parallel_settings(model, run_cfg)
+            rate_limiter = RateLimiter(requests_per_second)
+            predictions_by_index: dict[int, dict[str, Any]] = {}
 
-        def _predict_single(idx: int, row: dict[str, Any]) -> tuple[int, dict[str, Any]]:
-            prompt = prompt_cache.get(idx)
-            if prompt is None:
-                prompt = dataset.get_prompt(row, variables)
-            rate_limiter.acquire()
-            result = model.predict(prompt)
-            preds = process_predictions(result.get("probability", 0.5))
-            pred_entry: dict[str, Any] = {
-                "index": idx,
-                "bucket": result.get("bucket", 1),
-                "probability": preds,
-            }
-            if "naive" in result:
-                pred_entry["naive"] = result.get("naive", 0.5)
-            return idx, pred_entry
+            def _predict_single(idx: int, row: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+                prompt = prompt_cache.get(idx)
+                if prompt is None:
+                    prompt = dataset.get_prompt(row, variables)
+                rate_limiter.acquire()
+                result = model.predict(prompt)
+                preds = process_predictions(result.get("probability", 0.5))
+                pred_entry: dict[str, Any] = {
+                    "index": idx,
+                    "bucket": result.get("bucket", 1),
+                    "probability": preds,
+                }
+                if "naive" in result:
+                    pred_entry["naive"] = result.get("naive", 0.5)
+                return idx, pred_entry
 
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = [executor.submit(_predict_single, idx, row) for idx, row in enumerate(rows_to_process)]
-            with tqdm(total=len(rows_to_process), desc="Processing rows") as progress:
-                for future in as_completed(futures):
-                    idx, result = future.result()
-                    predictions_by_index[idx] = result
-                    progress.update(1)
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                futures = [executor.submit(_predict_single, idx, row) for idx, row in enumerate(rows_to_process)]
+                with tqdm(total=len(rows_to_process), desc="Processing rows") as progress:
+                    for future in as_completed(futures):
+                        idx, result = future.result()
+                        predictions_by_index[idx] = result
+                        progress.update(1)
 
-        predictions = [predictions_by_index[i] for i in range(len(rows_to_process))]
+            predictions = [predictions_by_index[i] for i in range(len(rows_to_process))]
+        else:
+            if Dataset is None:
+                raise RuntimeError("datasets package not installed; install 'datasets' for local batching.")
+
+            rows_with_index = [dict(row, index=idx) for idx, row in enumerate(rows_to_process)]
+            hf_dataset = Dataset.from_list(rows_with_index)
+
+            def _score_batch(batch: dict[str, list[Any]]) -> dict[str, list[Any]]:
+                batch_rows = [
+                    {k: batch[k][i] for k in batch if k != "index"}
+                    for i in range(len(batch["index"]))
+                ]
+
+                prompts: list[str] = []
+                for i, row in enumerate(batch_rows):
+                    cache_idx = batch["index"][i]
+                    prompt = prompt_cache.get(cache_idx)
+                    if prompt is None:
+                        prompt = dataset.get_prompt(row, variables)
+                    prompts.append(prompt)
+
+                if hasattr(model, "predict_batch"):
+                    outputs = model.predict_batch(prompts)
+                else:
+                    outputs = [model.predict(p) for p in prompts]
+
+                buckets: list[int] = []
+                probabilities: list[float] = []
+                naive_scores: list[Any] = []
+                for output in outputs:
+                    probabilities.append(process_predictions(output.get("probability", 0.5)))
+                    buckets.append(output.get("bucket", 1))
+                    naive_scores.append(output.get("naive") if "naive" in output else None)
+
+                return {
+                    "bucket": buckets,
+                    "probability": probabilities,
+                    "naive": naive_scores,
+                }
+
+            batch_size = getattr(model, "params", {}).get("batch_size", 1)
+            try:
+                batch_size_int = max(1, int(batch_size))
+            except (TypeError, ValueError):
+                batch_size_int = 1
+
+            scored_dataset = hf_dataset.map(
+                _score_batch,
+                batched=True,
+                batch_size=batch_size_int,
+            )
+
+            predictions = []
+            for row in scored_dataset:
+                entry: dict[str, Any] = {
+                    "index": row["index"],
+                    "bucket": row["bucket"],
+                    "probability": row["probability"],
+                }
+                if "naive" in row and row["naive"] is not None:
+                    entry["naive"] = row["naive"]
+                predictions.append(entry)
 
     meta = {
         "dataset": {
