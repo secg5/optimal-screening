@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from optimal_screening.models import hf_model
-from optimal_screening.models.hf_model import HFModel
+from optimal_screening.models import hf_api_model
+from optimal_screening.models.hf_api_model import HFAPIModel
 
 
-def test_hf_model_loads_with_token(monkeypatch):
+def test_hf_api_model_loads_with_token(monkeypatch):
     created: dict[str, str] = {}
 
     class DummyOpenAI:
@@ -13,15 +13,15 @@ def test_hf_model_loads_with_token(monkeypatch):
             created["base_url"] = base_url
 
     monkeypatch.setenv("HF_TOKEN", "secret-token")
-    monkeypatch.setattr(hf_model, "OpenAI", DummyOpenAI)
+    monkeypatch.setattr(hf_api_model, "OpenAI", DummyOpenAI)
 
-    model = HFModel("Qwen/Qwen3-Next", base_url="https://custom.example.com/v1")
+    model = HFAPIModel("Qwen/Qwen3-Next", base_url="https://custom.example.com/v1")
     model.load_model()
 
     assert created == {"api_key": "secret-token", "base_url": "https://custom.example.com/v1"}
 
 
-def test_hf_model_predict_parses_probability(monkeypatch):
+def test_hf_api_model_predict_parses_probability(monkeypatch):
     params_capture: dict[str, dict[str, float]] = {}
 
     class FakeResponses:
@@ -51,7 +51,7 @@ def test_hf_model_predict_parses_probability(monkeypatch):
             self.responses = FakeResponses()
             self.chat = FakeChat()
 
-    model = HFModel("Qwen/Qwen3-Next", base_url="https://router.huggingface.co/v1", temperature=0.2)
+    model = HFAPIModel("Qwen/Qwen3-Next", base_url="https://router.huggingface.co/v1", temperature=0.2)
     model._client = FakeClient()
 
     result = model.predict("Return a probability between 0 and 1")

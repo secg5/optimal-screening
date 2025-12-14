@@ -20,7 +20,7 @@ _PROB_RE = re.compile(r"\b(?:(?:0(?:\.\d+)?)|(?:1(?:\.0+)?))\b")
 _DEFAULT_BASE_URL = "https://router.huggingface.co/v1"
 
 
-class HFModel(BaseModel):
+class HFAPIModel(BaseModel):
     """Hugging Face Inference Router model using the OpenAI client."""
 
     def __init__(self, model_name: str, base_url: str | None = None, **params: Any) -> None:
@@ -36,7 +36,7 @@ class HFModel(BaseModel):
             or os.getenv("HUGGINGFACEHUB_API_TOKEN")
         )
         if not api_key:
-            raise RuntimeError("Missing HF_TOKEN or HUGGINGFACE_API_KEY for HFModel.")
+            raise RuntimeError("Missing HF_TOKEN or HUGGINGFACE_API_KEY for HFAPIModel.")
         if OpenAI is None:
             raise RuntimeError("openai package not installed; install 'openai'.")
         try:

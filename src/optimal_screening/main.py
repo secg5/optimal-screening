@@ -31,7 +31,7 @@ except Exception:  # pragma: no cover - missing optional dep
     load_dotenv = None  # type: ignore[assignment]
 from .models.base import BaseModel
 from .models.bedrock_model import BedrockModel
-from .models.hf_model import HFModel
+from .models.hf_api_model import HFAPIModel
 from .models.local_model import LocalModel
 from .models.openai_model import OAModel
 from .prediction_processing import process_predictions
@@ -82,8 +82,8 @@ def _build_model(cfg: dict[str, Any]) -> BaseModel:
     params = m.get("params") or {}
     if mtype in {"openai", "oa"}:
         return OAModel(model_name=model_name, **params)
-    if mtype in {"huggingface", "hf"}:
-        return HFModel(model_name=model_name, **params)
+    if mtype in {"hf_api"}:
+        return HFAPIModel(model_name=model_name, **params)
     if mtype in {"bedrock", "aws"}:
         return BedrockModel(model_name=model_name, **params)
     if mtype in {"local", "vllm"}:
@@ -122,7 +122,7 @@ def _default_worker_count(model: BaseModel) -> int:
 
 
 def _default_rate_limit(model: BaseModel) -> float | None:
-    if isinstance(model, (OAModel, BedrockModel, HFModel)):
+    if isinstance(model, (OAModel, BedrockModel, HFAPIModel)):
         return 1.0  # Safe default: 1 request per second
     return None
 
@@ -231,10 +231,7 @@ def run(argv: list[str] | None = None) -> None:
             hf_dataset = Dataset.from_list(rows_with_index)
 
             def _score_batch(batch: dict[str, list[Any]]) -> dict[str, list[Any]]:
-                batch_rows = [
-                    {k: batch[k][i] for k in batch if k != "index"}
-                    for i in range(len(batch["index"]))
-                ]
+                batch_rows = [{k: batch[k][i] for k in batch if k != "index"} for i in range(len(batch["index"]))]
 
                 prompts: list[str] = []
                 for i, row in enumerate(batch_rows):
