@@ -1,0 +1,16 @@
+dataset:
+  class: landmines.LandmineDataset
+  csv_path: data/landmines_granada_binary.csv
+  outcome_col: "mines_outcome"
+  # Common ACS features for income modeling
+  variables: [coca_within_7km, old_mine_within_250m, warm_weather]
+
+model:
+  type: hf
+  model_name: Qwen/Qwen3-4B-Instruct-2507:nscale
+  params:
+    temperature: 0
+    max_tokens: 256
+
+run:
+  output_dir: runs

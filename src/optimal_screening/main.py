@@ -4,12 +4,24 @@ import argparse
 import json
 import os
 import re
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from tqdm import tqdm
+
 from .datasets.acs_income import ACSDataset  # noqa: F401
 from .datasets.generic import GenericCSVDataset  # noqa: F401
+
+
+# Optional datasets import hoisted to top-level
+try:  # pragma: no cover - optional dependency
+    from datasets import Dataset  # type: ignore
+except Exception:  # pragma: no cover - missing optional dep
+    Dataset = None  # type: ignore[assignment]
 
 
 # Optional dotenv import hoisted to top-level
@@ -19,6 +31,7 @@ except Exception:  # pragma: no cover - missing optional dep
     load_dotenv = None  # type: ignore[assignment]
 from .models.base import BaseModel
 from .models.bedrock_model import BedrockModel
+from .models.hf_api_model import HFAPIModel
 from .models.local_model import LocalModel
 from .models.openai_model import OAModel
 from .prediction_processing import process_predictions
@@ -69,6 +82,8 @@ def _build_model(cfg: dict[str, Any]) -> BaseModel:
     params = m.get("params") or {}
     if mtype in {"openai", "oa"}:
         return OAModel(model_name=model_name, **params)
+    if mtype in {"hf_api"}:
+        return HFAPIModel(model_name=model_name, **params)
     if mtype in {"bedrock", "aws"}:
         return BedrockModel(model_name=model_name, **params)
     if mtype in {"local", "vllm"}:
@@ -76,10 +91,74 @@ def _build_model(cfg: dict[str, Any]) -> BaseModel:
     raise ValueError(f"Unknown model type: {mtype}")
 
 
+class RateLimiter:
+    """Simple thread-safe rate limiter."""
+
+    def __init__(self, requests_per_second: float | None) -> None:
+        self._interval = 0.0
+        if requests_per_second and requests_per_second > 0:
+            self._interval = 1.0 / requests_per_second
+        self._lock = threading.Lock()
+        self._next_time = 0.0
+
+    def acquire(self) -> None:
+        if self._interval <= 0:
+            return
+        while True:
+            with self._lock:
+                now = time.monotonic()
+                wait_time = self._next_time - now
+                if wait_time <= 0:
+                    self._next_time = now + self._interval
+                    return
+            time.sleep(wait_time if wait_time > 0 else self._interval)
+
+
+def _default_worker_count(model: BaseModel) -> int:
+    if isinstance(model, LocalModel):
+        cpu_count = os.cpu_count() or 1
+        return max(1, min(cpu_count, 4))
+    return 2
+
+
+def _default_rate_limit(model: BaseModel) -> float | None:
+    if isinstance(model, (OAModel, BedrockModel, HFAPIModel)):
+        return 1.0  # Safe default: 1 request per second
+    return None
+
+
+def _parallel_settings(model: BaseModel, run_cfg: dict[str, Any]) -> tuple[int, float | None]:
+    parallel_cfg = run_cfg.get("parallelism") or {}
+    if not isinstance(parallel_cfg, dict):
+        parallel_cfg = {}
+
+    max_workers = parallel_cfg.get("max_workers") or parallel_cfg.get("workers")
+    if max_workers is not None:
+        max_workers = int(max_workers)
+    else:
+        max_workers = _default_worker_count(model)
+
+    requests_per_second = parallel_cfg.get("requests_per_second")
+    if requests_per_second is None and parallel_cfg.get("requests_per_minute"):
+        requests_per_minute = float(parallel_cfg["requests_per_minute"])
+        requests_per_second = requests_per_minute / 60.0 if requests_per_minute > 0 else None
+    if requests_per_second is not None:
+        requests_per_second = max(float(requests_per_second), 0.0)
+    else:
+        requests_per_second = _default_rate_limit(model)
+
+    return max(1, max_workers), requests_per_second
+
+
 def run(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Run optimal-screening experiment")
     parser.add_argument("--config", type=str, default="config.yaml", help="Path to YAML config")
-    parser.add_argument("--limit", type=int, default=5, help="Max rows to process (debug)")
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="Max rows to process (debug). Omit to process the full dataset.",
+    )
     args = parser.parse_args(argv)
 
     # Load credentials from .env if python-dotenv is available
@@ -97,27 +176,112 @@ def run(argv: list[str] | None = None) -> None:
     model = _build_model(cfg)
     model.load_model()
 
-    predictions: list[dict[str, Any]] = []
-    for i, row in enumerate(rows[: args.limit]):
-        prompt = dataset.get_prompt(row, variables)
-        if i == 0:
-            print("=" * 80)
-            print(f"PROMPT FOR ROW {i}:")
-            print("=" * 80)
-            print(prompt)
-            print("=" * 80)
-        result = model.predict(prompt)
-        # result is now {"bucket": int, "probability": float, "naive": float}
-        preds = process_predictions(result.get("probability", 0.5))
-        pred_entry = {
-            "index": i,
-            "bucket": result.get("bucket", 1),
-            "probability": preds,
-        }
-        # Add naive score if present
-        if "naive" in result:
-            pred_entry["naive"] = result.get("naive", 0.5)
-        predictions.append(pred_entry)
+    limit_value = len(rows) if args.limit is None else max(0, min(len(rows), args.limit))
+    rows_to_process = rows[:limit_value]
+
+    predictions: list[dict[str, Any]]
+    if not rows_to_process:
+        predictions = []
+    else:
+        prompt_cache: dict[int, str] = {}
+        # Print prompt for first row to aid debugging
+        first_prompt = dataset.get_prompt(rows_to_process[0], variables)
+        prompt_cache[0] = first_prompt
+        print("=" * 80)
+        print("PROMPT FOR ROW 0:")
+        print("=" * 80)
+        print(first_prompt)
+        print("=" * 80)
+
+        if getattr(model, "is_api_model", False):
+            max_workers, requests_per_second = _parallel_settings(model, run_cfg)
+            rate_limiter = RateLimiter(requests_per_second)
+            predictions_by_index: dict[int, dict[str, Any]] = {}
+
+            def _predict_single(idx: int, row: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+                prompt = prompt_cache.get(idx)
+                if prompt is None:
+                    prompt = dataset.get_prompt(row, variables)
+                rate_limiter.acquire()
+                result = model.predict(prompt)
+                preds = process_predictions(result.get("probability", 0.5))
+                pred_entry: dict[str, Any] = {
+                    "index": idx,
+                    "bucket": result.get("bucket", 1),
+                    "probability": preds,
+                }
+                if "naive" in result:
+                    pred_entry["naive"] = result.get("naive", 0.5)
+                return idx, pred_entry
+
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                futures = [executor.submit(_predict_single, idx, row) for idx, row in enumerate(rows_to_process)]
+                with tqdm(total=len(rows_to_process), desc="Processing rows") as progress:
+                    for future in as_completed(futures):
+                        idx, result = future.result()
+                        predictions_by_index[idx] = result
+                        progress.update(1)
+
+            predictions = [predictions_by_index[i] for i in range(len(rows_to_process))]
+        else:
+            if Dataset is None:
+                raise RuntimeError("datasets package not installed; install 'datasets' for local batching.")
+
+            rows_with_index = [dict(row, index=idx) for idx, row in enumerate(rows_to_process)]
+            hf_dataset = Dataset.from_list(rows_with_index)
+
+            def _score_batch(batch: dict[str, list[Any]]) -> dict[str, list[Any]]:
+                batch_rows = [{k: batch[k][i] for k in batch if k != "index"} for i in range(len(batch["index"]))]
+
+                prompts: list[str] = []
+                for i, row in enumerate(batch_rows):
+                    cache_idx = batch["index"][i]
+                    prompt = prompt_cache.get(cache_idx)
+                    if prompt is None:
+                        prompt = dataset.get_prompt(row, variables)
+                    prompts.append(prompt)
+
+                if hasattr(model, "predict_batch"):
+                    outputs = model.predict_batch(prompts)
+                else:
+                    outputs = [model.predict(p) for p in prompts]
+
+                buckets: list[int] = []
+                probabilities: list[float] = []
+                naive_scores: list[Any] = []
+                for output in outputs:
+                    probabilities.append(process_predictions(output.get("probability", 0.5)))
+                    buckets.append(output.get("bucket", 1))
+                    naive_scores.append(output.get("naive") if "naive" in output else None)
+
+                return {
+                    "bucket": buckets,
+                    "probability": probabilities,
+                    "naive": naive_scores,
+                }
+
+            batch_size = getattr(model, "params", {}).get("batch_size", 1)
+            try:
+                batch_size_int = max(1, int(batch_size))
+            except (TypeError, ValueError):
+                batch_size_int = 1
+
+            scored_dataset = hf_dataset.map(
+                _score_batch,
+                batched=True,
+                batch_size=batch_size_int,
+            )
+
+            predictions = []
+            for row in scored_dataset:
+                entry: dict[str, Any] = {
+                    "index": row["index"],
+                    "bucket": row["bucket"],
+                    "probability": row["probability"],
+                }
+                if "naive" in row and row["naive"] is not None:
+                    entry["naive"] = row["naive"]
+                predictions.append(entry)
 
     meta = {
         "dataset": {
@@ -133,6 +297,9 @@ def run(argv: list[str] | None = None) -> None:
         },
         "env": {
             "has_openai_key": bool(os.getenv("OPENAI_API_KEY")),
+            "has_hf_token": bool(
+                os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_API_KEY") or os.getenv("HUGGINGFACEHUB_API_TOKEN")
+            ),
             "has_aws_region": bool(os.getenv("AWS_REGION")),
         },
     }

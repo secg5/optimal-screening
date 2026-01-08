@@ -112,8 +112,6 @@ class BaseDataset(ABC):
         naive_prompt = naive_header + "\n\n" + features
 
         # Return JSON string with all three prompts
-        return json.dumps({
-            "bucket_prompt": bucket_prompt,
-            "probability_prompt": probability_prompt,
-            "naive_prompt": naive_prompt
-        })
+        return json.dumps(
+            {"bucket_prompt": bucket_prompt, "probability_prompt": probability_prompt, "naive_prompt": naive_prompt}
+        )

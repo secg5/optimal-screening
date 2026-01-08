@@ -22,7 +22,7 @@ class BedrockModel(BaseModel):
     """
 
     def __init__(self, model_name: str, **params: Any) -> None:
-        super().__init__(model_name, **params)
+        super().__init__(model_name, is_api_model=True, **params)
         self._client = None
 
     def load_model(self) -> None:
@@ -42,7 +42,11 @@ class BedrockModel(BaseModel):
         # Check if prompt is multi-prompt format (JSON with bucket_prompt, probability_prompt, naive_prompt)
         try:
             multi_prompts = json.loads(prompt)
-            if isinstance(multi_prompts, dict) and "bucket_prompt" in multi_prompts and "probability_prompt" in multi_prompts:
+            if (
+                isinstance(multi_prompts, dict)
+                and "bucket_prompt" in multi_prompts
+                and "probability_prompt" in multi_prompts
+            ):
                 # Make separate API calls for each prompt
                 bucket_result = self._single_predict(multi_prompts["bucket_prompt"])
                 probability_result = self._single_predict(multi_prompts["probability_prompt"])

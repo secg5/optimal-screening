@@ -8,6 +8,7 @@ Usage:
         --strata AGEP SEX \
         --bins 20
 """
+
 from __future__ import annotations
 
 import argparse
@@ -53,11 +54,7 @@ def main():
     print("Top 10 strata by P(Y=1|X):")
     for i, (stratum_key, data) in enumerate(sorted_strata[:10], 1):
         features_str = ", ".join(f"{k}={v}" for k, v in data["features"].items())
-        print(
-            f"  {i}. {features_str}: "
-            f"P(Y=1|X)={data['probability']:.3f} "
-            f"({data['positive_count']}/{data['count']})"
-        )
+        print(f"  {i}. {features_str}: P(Y=1|X)={data['probability']:.3f} ({data['positive_count']}/{data['count']})")
     print()
 
     # Build empirical distribution
@@ -92,9 +89,7 @@ def main():
             "n_strata": len(empirical_probs),
             "distribution": distribution,
             "quantiles": quantiles,
-            "strata": {
-                str(k): v for k, v in empirical_probs.items()
-            },  # Convert tuple keys to strings for JSON
+            "strata": {str(k): v for k, v in empirical_probs.items()},  # Convert tuple keys to strings for JSON
         }
         output_path.write_text(json.dumps(results, indent=2))
         print(f"Results saved to {output_path}")
