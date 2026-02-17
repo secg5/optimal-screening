@@ -1,0 +1,588 @@
+
+\section{Introduction}
+
+Resource allocation under budget constraints is a fundamental challenge across many domains, from social program targeting to medical screening to humanitarian assistance. When faced with limited resources, decision-makers must identify which individuals or units should receive assistance to maximize expected benefits. This challenge is particularly acute when assessing eligibility is not practical as a result the high cost of measuring or just a delayed outcome.
+
+outcomes because features required to assess program eligibility are themselves costly to observe a situation we refer to as \emph{screening}. 
+
+Examples include multidimensional poverty assessments, medical diagnostics, and landmine surveys.
+
+where measuring the relevant outcome requires significant time, expertise, or financial investment or its outcome is concomitant to significant harm for the person doing the measurement.
+
+
+we propose the optimal screening strategy, 
+
+We compare against naive strategies, some of the using generative AI to recreate what an analyst will do.
+
+
+\begin{itemize}
+    \item We are interested in the setting were there is a fixed Machine learning model (to exemplify the best case scenario we use Bayes)
+    \item There is a fixed budget.
+    \item Whats the optimal way to screen people or to use a machine learning prediction
+    \item Whats the marginal benefit over the assignment of $\alpha$
+\end{itemize}
+
+\textbf{Do we continue thinking about unlabeled data?}
+% Our theoretical analysis establishes that this augmentation strategy yields a Pareto improvement: for any screening or treatment budget, LLM-augmented screening dominates the optimal baseline using features $X$ alone. This result has broader implications beyond our specific application—it demonstrates that LLMs can serve as a flexible data augmentation mechanism that eliminates the need for manual feature engineering and can incorporate effectively unbounded contextual information without requiring labeled ground truth for the augmented features.
+
+We validate our framework through both semi-synthetic and real-world experiments.
+
+Our results show that ????? What are the results we want to show
+\begin{itemize}
+    \item Optimal screening strategy against naive
+    \item how LLMs allow to incorporate extra knowledge
+\end{itemize}
+
+% Our results show that LLM-augmented screening consistently outperforms optimal baselines across diverse applications, including income prediction and landmine detection. Importantly, the improvements are not merely due to better classification—they stem from the LLM's ability to flexibly augment data by synthesizing contextual risk signals that would be difficult or impossible to engineer manually.
+
+Our contributions are as follows:
+\begin{itemize}
+    \item We characterize the optimal screening strategy for any budget level and establish theoretical conditions under which it maximizes expected outcomes.
+    \item We prove that LLM-based data augmentation yields a Pareto improvement over the optimal strategy using any fixed feature set, for all feasible screening and treatment budgets.
+    \item We demonstrate the practical effectiveness of our framework through real-world applications in demining operations and income prediction, showing substantial performance gains across different domains and budget regimes.
+\end{itemize}
+
+% Traditional approaches to optimal resource allocation rely on a fixed set of observable features $X$ to stratify the population and compute empirical risk scores. However, these methods are fundamentally limited by the features available in the data. While feature engineering can improve performance, it requires domain expertise and is constrained by what can be directly measured or derived from existing variables. This raises a natural question: \emph{can large language models (LLMs), which have demonstrated remarkable capabilities in understanding complex patterns and leveraging world knowledge, improve screening efficiency by augmenting limited observational data?}
+
+% We propose a framework that uses LLMs to augment feature-based screening strategies. The key insight is that LLMs can leverage additional contextual information—both structured and unstructured—to refine risk assessments beyond what is possible with a fixed feature set alone. Crucially, this augmentation does not replace the empirical risk estimates derived from observed data; rather, it enhances them by incorporating latent variables $Z$ that the LLM can infer from contextual descriptions. This approach raises an important methodological challenge: if the LLM uses additional information beyond the baseline features $X$, what is the appropriate benchmark for evaluation?
+
+\section{Related work}
+
+\section{Problem setup}
+
+
+We consider the problem of optimal resource allocation under budget constraints, modeled by a centralized agent allocating a scarce resource amongst a population to maximize an efficiency objective. 
+
+Formally, consider a population of units with covariates $X \in \mathcal{X}$, where $\mathcal{X}$ represents the feature space. Each unit has a binary outcome of interest $Y \in \{0,1\}$, that determines whether a unit would benefit from receiving the resource. For instance, $Y=1$ may indicate vulnerability to poverty requiring assistance, presence of disease requiring treatment, or land contamination requiring demining. We assume access to a random sample $\{(X_i, Y_i)\}_{i=1}^n$ drawn from the (unknown) joint distribution $\mathbb{P}_{X,Y}$.
+
+Finally, we define the risk score for each unit as the conditional mean function
+\begin{equation}
+  \mu(X) = \mathbb{E}[Y \mid X] = \mathbb{P}(Y=1 \mid X), 
+\end{equation}
+which captures the probability that a unit with covariates $X$ has the outcome of interest $Y=1$. 
+
+
+\subsection{Resource Allocation Problem}
+
+
+A resource allocation rule is a function $T: \mathcal{X} \to \{0,1\}$ that maps covariates to allocation decisions, where $T(X)=1$ indicates that a unit with features $X$ receives the resource. We operate under a budget constraint that limits the proportion of the population that can receive the resource:
+\begin{equation}
+    \mathbb{E}[T(X)] = \int_{\mathcal{X}} T(x) d\mathbb{P}(x) \leq \beta
+\end{equation}
+where $\beta \in (0,1)$ represents the available budget as a fraction of the population.
+
+Our objective is to maximize the expected number of $Y=1$ cases among allocated units, which measures how effectively the resource reaches those who would benefit:
+\begin{equation}
+  \mathbb{E}[Y \cdot T(X)] = \mathbb{E}[T(X) \cdot \mathbb{E}[Y|X]] = \mathbb{E}[T(X) \cdot \mu(X)],  
+\end{equation}
+using iterated expectations. This objective reflects the total expected benefit from the allocation rule $T(X)$ as units with $Y=1$ represent successful resource deployment. The optimization problem is therefore
+\begin{align}
+\max_{T(X) \in \mathcal{H}} &\quad \mathbb{E}[T(X) \cdot \mu(X)] \label{eq:objective}\\
+\text{s.t.} &\quad \mathbb{E}[T(X)] \leq \beta \label{eq:budget}\\
+&\quad T(X) \in \{0,1\} \label{eq:binary}
+\end{align}
+
+Where $\mathcal{H}$ is the space of all such allocation rules.
+
+
+\subsection{Optimal Allocation Based on Risk}
+
+%Consider a population with covariates $X$ and binary outcomes $Y \in \{0,1\}$. We have:
+%\begin{itemize}
+%    \item Conditional mean function: $\mu(X) = \mathbb{E}[Y|X]$
+%    \item Treatment assignment rule: $T(X) \in \{0,1\}$
+%    \item Treatment budget constraint: $\mathbb{E}[T(X)] \leq \beta$
+%    \item Objective: Maximize $\mathbb{E}[Y \cdot T(X)]$
+%\end{itemize}
+
+
+%We want to solve:
+%\begin{align}
+%\max_{T(X)} &\quad E[Y \cdot T(X)] \\
+%\text{s.t.} &\quad E[T(X)] \leq \beta \\
+%&\quad T(X) \in \{0,1\}
+%\end{align}
+
+%Since $E[Y \cdot T(X)] = E[T(X) \cdot E[Y|X]] = E[T(X) \cdot \mu(X)]$, the problem becomes:
+%\begin{align}
+%\max_{T(X)} &\quad E[T(X) \cdot \mu(X)] \\
+%\text{s.t.} &\quad E[T(X)] \leq \beta \\
+%&\quad T(X) \in \{0,1\}
+%\end{align}
+
+The solution to problem \eqref{eq:objective}--\eqref{eq:binary} has a simple and intuitive form: allocate the resource to units in decreasing order of their risk score $\mu(X)$ until the budget is exhausted.
+
+\begin{theorem}[Optimal Allocation Rule without Screening]
+\label{thm:optimal_no_screening}
+The optimal allocation rule is:
+$$T^*(X) = \mathbf{1}\{\mu(X) > q_{1-\beta}\}$$
+where $q_{1-\beta}$ is the $(1-\beta)$-quantile of the distribution of $\mu(X)$.
+\end{theorem}
+
+\begin{proof}
+
+Any other feasible rule that deviates from this quantile-threshold rule would move probability mass from higher-value to lower-value $\mu(X)$ units, decreasing the objective. \textcolor{red}{MDR: recuerdo que habia una version más detallada de esto por contradicción, de pronto podriamos dejarlo en el appendix o algo}
+\end{proof}
+
+
+
+
+\section{Resource Allocation with Screening}
+        
+In many practical settings, we can improve allocation decisions through a screening stage where we observe true outcomes $Y$ for a limited subset of units before making final allocation decisions. This is relevant when measuring outcomes is expensive (e.g., multidimensional poverty assessments, medical diagnostics, humanitarian assistance) but cheaper than full assignment. This two-stage procedure involves:
+
+\begin{enumerate}
+\item \textbf{Screening stage}: Select a subset of units $S(X) = 1$ to observe their outcomes, subject to a screening budget $\mathbb{E}[S(X)] \leq \alpha$.
+\item \textbf{Allocation stage}: Assign the resource $T(X, Y \cdot S(X))$ based on both covariates $X$ and observed outcomes (when available for screened units with $S(X) = 1$), subject to  resource budget $\mathbb{E}[T(X, Y \cdot S(X))] \leq \beta$.
+\end{enumerate}
+
+A critical distinction from the no-screening case is that $Y$ is observed for screened units before final allocation decisions are made. This means the allocation rule takes the form $T(X,Y)$ for screened units ($S(X) = 1$), where $Y$ is now a deterministic observed value rather than a random variable. Consequently, for screened units, the outcome $Y$ is no longer uncertain when making the allocation decision.
+
+
+Intuitively, screening can be beneficial in two ways:
+\begin{itemize}
+    \item As the screening budget $\alpha$ increases, utility increases because there exists an allocation rule $T$ that includes screened individuals with $Y=1$. 
+    \item As the screening budget $\alpha$ increases, resource budget is used more efficiently because there exists an allocation rule $T$ that excludes screened individuals with $Y=0$.
+\end{itemize}
+This intuition says that the optimal allocation rule is such that $T_1(X,Y) = Y$, if  $S(X)=1$, and $T_0(X) = \mathbf{1}\{\mu(X) \in H\}$,  if  $S(X) = 0$, for some allocation set $H$. In other words, the optimal rule allocates the resource to screened units if, and only if, $Y = 1$. 
+
+The key question then becomes: \textit{which units should we screen to maximally improve resource allocation?} Unlike the no-screening case where the optimal rule is a simple quantile threshold (\Cref{thm:optimal_no_screening}), the interaction between screening and allocation budgets creates a more complex ``two-stage'' optimization problem. Each screened unit uses resource budget with probability $\mu(X)$ (since we allocate to units with $Y=1$), but also allows us to reallocate the remaining resource budget more efficiently among unscreened units. As we show in the next section, determining the optimal screening and allocation rules requires careful characterization of this trade-off.
+
+\subsection{Optimal Allocation Rule}
+
+Lets start by revisiting the optimization problem. Starting with the original objective $\EE[Y \cdot T(X)]$, we use the law of total expectation to decompose based on whether units are screened. From the proposed treatment rule: $T_1(X,Y) = Y$, therefore
+
+\begin{align}
+\EE[Y \cdot T(X,Y)] &= \EE[S(X) \cdot Y \cdot Y] \nonumber \\
+&\quad + \EE[(1-S(X)) \cdot Y \cdot \mathbf{1}\{\mu(X) \in H\}] \\
+&= \EE[S(X) \cdot Y] \nonumber \\
+&\quad + \EE[(1-S(X)) \cdot Y \cdot \mathbf{1}\{\mu(X) \in H\}]
+\end{align}
+where the first term represents the expected outcome from screened and treated units, and the second term captures unscreened units that are treated, i.e, with $\mu(X) \in H$.
+
+Hence, we are interested in the following optimization problem:
+
+\begin{align*}\label{opt}
+\small
+\max_{S(X),\, H} \quad 
+    & \EE\!\left[ S(X) Y \right] 
+      + \EE\!\left[(1-S(X)) Y\, \mathbf{1}\{\mu(X)\in H\}\right] \\[-2pt]
+\text{s.t.}\quad
+    & \EE[S(X)] \le \alpha, \\[-1pt]
+    & \EE\!\left[ S(X) Y \right] 
+      + \EE\!\left[(1-S(X))\, \mathbf{1}\{\mu(X)\in H\}\right] \le \beta, \\[-1pt]
+    & S(X)\in\{0,1\}.
+\end{align*}
+
+
+Where $\beta$ and $\alpha$ are the treatment and screening budget respectively.
+
+The nature of the screening rule and the treatment set $H$ are not obvious. We will proceed to characterize the optimal screening rule and treatment set. We will draw inspiration from the rule derived in the previous section.
+
+% explain better the "proof strategy". I suggest to state the main result first and then this alternative propositions to make everything more clear
+
+To find the optimal treatment rule, it is necessary to start by showing that the screening and treatment union must be convex on the space of probability risks. Let $F$ denote the cumulative distribution function (CDF) of the risk score $\mu(X)$. For any $q \in [0,1]$, we write $F^{-1}(q)$ for the $q$-th quantile of the risk distribution. Throughout, we use $q$ (possibly with subscripts) to denote quantile values, so that an interval $[q_a, q_b]$ refers to units whose risk $\mu(X)$ lies between the $q_a$-th and $q_b$-th quantiles. Higher quantiles correspond to higher risk.
+
+
+\begin{proposition}[Contiguity of Optimal Sets]
+    Let $S^*(X)$ and $T^*(X,Y)$ denote the optimal screening and treatment rules. When units are ordered by their risk $\mu(X)$, the optimal solution partitions the population into at most three contiguous intervals: a high-risk treatment set, a screening set, and (possibly) a lower-risk treatment set formed from saved budget. That is, there do not exist disjoint intervals $[q_a, q_b]$ and $[q_c, q_d]$ with $q_b < q_c$ that are both in the screening set or both in the treatment set under the optimal policy.
+\end{proposition}
+
+\begin{proof}
+We proceed by contradiction. Suppose the optimal solution has a gap: there exist disjoint intervals $I_1 = [q_a, q_b]$ and $I_2 = [q_c, q_d]$ with $q_b < q_c$ that both belong to either the screening set or the treatment set. Let $\Delta = (q_b, q_c)$ denote the gap.
+
+Consider an alternative policy that shifts mass from $I_1$ into the gap $\Delta$ while maintaining the same total mass (why is this posible?). Specifically, construct interval $I_1' = [q_a', q_b]$ where $q_a' > q_a$ is chosen so that $F(q_b) - F(q_a') = F(q_b) - F(q_a)$, and add the freed mass to form $I_1'' = [q_b, q_b + \epsilon]$ for appropriate $\epsilon > 0$ extending into $\Delta$.
+
+This alternative policy:
+\begin{enumerate}
+    \item Maintains the same screening/treatment mass: $F(I_1') + F(I_1'') = F(I_1)$
+    \item Maintains feasibility: both budget constraints still hold
+    \item Increases utility: Since $\mu(x)$ is non-decreasing in the quantiles of its distribution, units in $(q_a, q_a']$ have lower risk than units in $[q_b, q_b + \epsilon]$. Thus:
+    $$\int_{I_1'' \cup I_2} \mu \, dF > \int_{I_1 \cup I_2} \mu \, dF$$
+\end{enumerate}
+
+This contradicts the optimality of the original solution. Therefore, the optimal screening and treatment sets must be contiguous when ordered by risk.
+\end{proof}
+
+
+
+
+Building on Proposition 1 (contiguity), we now proceed to characterize the precise structure of the optimal solution. We show that the population is partitioned into three contiguous  bands ordered by risk $\mu(X)$.
+
+\subsubsection{Three-Band Structure}
+
+Define the following intervals in the risk space (ordered from high to low risk):
+\begin{itemize}
+   \item \textbf{Band T} (Top Treatment): $I_T = [q_T, 1]$ with mass $m_T = F(1) - F(q_T) = \beta - \alpha$
+   \item \textbf{Band B} (Bottom Treatment): $I_B = [q_B, q_T]$ with mass $m_B = F(q_T) - F(q_B)$
+   \item \textbf{Band S} (Screening): $I_S = [q_S, q_B]$ with mass $m_S = F(q_B) - F(q_S) = \alpha$
+\end{itemize}
+In other words, the treatment rule under this structure is:
+
+\begin{itemize}
+       \item Band T: Treat all units (high risk, no screening needed)
+       \item Band B: Treat all units (using budget saved from Band S)
+       \item Band S: Screen all units; treat if and only if $Y = 1$
+       \item Below $q_S$: No treatment, no screening
+\end{itemize}
+
+\textcolor{red}{\textbf{GAP}: Why all possible solutions have this three parts?. We know they have to be convex and continuous but thats about it.}
+
+The relation between Band B's and the screened individuals is instrumental; the band's size is determined by the screening outcomes in Band S. Specifically:
+\begin{lemma}[Budget Savings from Screening]
+The expected mass of Band B equals the expected proportion of negative outcomes in Band S:
+\begin{equation}\label{eq:budget_savings}
+       m_B = \int_{q_L}^{q_T} (1 - \mu) \, dF(\mu)
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+ The treatment budget constraint requires:
+         $$\underbrace{m_T}_{\text{Band T}} + \underbrace{\int_{q_L}^{q_T} \mu \, dF(\mu)}_{\text{Band S positives}} + \underbrace{m_B}_{\text{Band B}} = \beta$$
+ 
+       Substituting $m_T = \beta - \alpha$ and $m_S = \alpha$:
+       $$(\beta - \alpha) + \int_{q_L}^{q_T} \mu \, dF(\mu) + m_B = \beta$$
+       
+       Rearranging:
+       $$m_B = \alpha - \int_{q_L}^{q_T} \mu \, dF(\mu) = \int_{q_L}^{q_T} (1 - \mu) \, dF(\mu)$$
+       
+       which establishes equation \eqref{eq:budget_savings}.
+\end{proof}
+       
+ This lemma reveals the mechanism: screening "saves" treatment budget by identifying negatives ($Y = 0$), and this saved budget is optimally deployed to treat additional  units in Band B.\\
+
+The previous proposition implies that $F(q_L) - F(q_B) = \int_{q_L}^{q_T} (1 - \mu) dF(\mu)$ is another restriction for the optimization problem \ref{opt}. This restriction is the final piece required to characterize the optimal treatment and screening sets. Such characterization is formally described in the following theorem.
+
+\begin{theorem}[Optimal Band Ordering]\label{thm:band_ordering}
+The optimal screening and treatment policy partitions the population (ordered by risk $\mu$) into three contiguous bands with the following structure:
+\begin{enumerate}
+    \item \textbf{Band T} (highest risk): $[q_T, 1]$ with mass $\beta - \alpha$, all units treated without screening
+    \item \textbf{Band B} (intermediate risk): $[q_B, q_T]$ with mass $m_B$ determined by \eqref{eq:budget_savings}, all units treated using budget saved from Band S
+    \item \textbf{Band S} (lower risk): $[q_S, q_B]$ with mass $\alpha$, all units screened and treated only if $Y = 1$
+\end{enumerate}
+where $0 \leq q_S \leq q_B \leq q_T \leq 1$.
+\end{theorem}
+
+\begin{proof}
+By Proposition 1, we know the optimal sets are contiguous. We must establish: (i) the three-band structure exists, and (ii) the bands are ordered as stated.
+
+\textbf{Step 1: Three-band structure.}
+Consider any feasible screening policy with mass $\alpha$. Let $I_S$ denote the screening set. The treatment budget constraint requires allocating total mass $\beta$ to treatment. Under the optimal treatment rule for screened units (treat if and only if $Y = 1$), the expected treatment mass from $I_S$ is $\int_{I_S} \mu \, dF < \alpha$. This creates budget savings of $\alpha - \int_{I_S} \mu \, dF = \int_{I_S} (1-\mu) \, dF$ relative to treating all screened units.
+
+The total treatment budget available for unscreened units is therefore:
+$$\beta - \int_{I_S} \mu \, dF = (\beta - \alpha) + \int_{I_S} (1-\mu) \, dF$$
+
+By Theorem 1, this budget must be allocated to the highest-risk unscreened units via a threshold rule. This naturally produces three bands:
+\begin{itemize}
+    \item Band T: The top $\beta - \alpha$ mass of the population (always treated regardless of screening)
+    \item Band B: Additional treated units from the budget saved by screening (mass $\int_{I_S} (1-\mu) \, dF$)
+    \item Band S: The screening set $I_S$ (mass $\alpha$)
+\end{itemize}
+
+\textbf{Step 2: Band ordering (T-B-S from high to low risk).}
+We prove that Band T must be highest risk, followed by Band B, then Band S.
+
+\textit{Claim 1: Band T is highest risk.}
+Suppose not. Then there exists some unit $x \in I_B \cup I_S$ with $\mu(x) > \mu(x')$ for some $x' \in I_T$. But Band T consists of the top $\beta - \alpha$ mass that will definitely be treated. If we swap $x$ and $x'$ (moving the higher-risk unit to Band T), we maintain all budget constraints but increase expected utility, contradicting optimality.
+
+\textit{Claim 2: Band B has higher risk than Band S.}
+Suppose by contradiction that some unit $x_s \in I_S$ has higher risk than some unit $x_b \in I_B$, i.e., $\mu(x_s) > \mu(x_b)$.
+
+Consider the alternative policy that swaps these units: screen $x_b$ instead of $x_s$, and place $x_s$ in Band B instead of $x_b$. The expected change in utility is:
+\begin{align*}
+\Delta U = \underbrace{\mu(x_s)}_{\text{new Band B}} - \underbrace{\mu(x_b)}_{\text{old Band B}} +\\ \underbrace{\mu(x_b)}_{\text{screen } x_b \text{, treat if } Y=1} - \underbrace{\mu(x_s)}_{\text{screen } x_s \text{, treat if } Y=1} \\
+= \mu(x_s) - \mu(x_b) > 0
+\end{align*}
+
+This swap maintains the screening budget ($\alpha$) and the expected treatment budget (both generate the same expected savings), but increases utility, contradicting optimality. Therefore, Band B must have uniformly higher risk than Band S.
+
+\textbf{Step 3: Quantile determination.}
+Given the T-B-S ordering:
+\begin{itemize}
+    \item $q_T$ is determined by $F(1) - F(q_T) = \beta - \alpha$ (top treatment band)
+    \item $q_B$ and $q_S$ are jointly determined by: $F(q_B) - F(q_S) = \alpha$ (screening mass) and equation \eqref{eq:budget_savings} (budget savings constraint)
+    \item The optimal $q_B$ (equivalently $q_S$) maximizes \eqref{eq:three_band_objective} subject to these constraints
+\end{itemize}
+\end{proof}
+
+It is worth highlighting that, because the quantiles $q_i$ are defined in the risk space $\mu(X) = \mathbb{E}[Y|X]$ (not the feature space directly),  the feature space $X$ can include any type of data—structured or unstructured (images, text, etc.). This generality is crucial for the LLM application discussed later. 
+
+\begin{itemize}
+    \item It is not true that you can add any feature, as it might add more noise rather than correlation.
+    \item it boils down to the quallity of the predictor, both the model used (think chineese vs american models) and if the new used data makes sense. (adding an image vs adding the race)
+    \item If the estimator is better it never hurts, this is our rresult, but isnt this obvious????, will be better to have stornger guarantees for even unrelated features.
+    \item is there a better no harm result? Or some result based on correlation?
+    \item can we prove that the mix is never worse?
+\end{itemize}
+
+\subsection{Lagrangian Formulation and the Value of Screening}
+
+We now derive the value function $V(\alpha)$ that characterizes the optimal expected utility as a function of the screening budget $\alpha$. To do so, we relax the two inequality constraints in the optimization problem using Lagrange multipliers and solve the resulting unconstrained problem pointwise over the risk distribution.
+
+\paragraph{Step 1: Setting up the Lagrangian.}
+Working in the risk space, let $s(\mu) \in \{0,1\}$ and $h(\mu) \in \{0,1\}$ denote the screening and treatment decisions for a unit with risk $\mu$. The optimization problem has two inequality constraints: the screening budget $\EE[S(X)] \leq \alpha$ and the treatment budget $\EE[S(X)Y + (1-S(X))\mathbf{1}\{\mu(X) \in H\}] \leq \beta$. We introduce a multiplier $\lambda \geq 0$ for the screening constraint and $\gamma \geq 0$ for the treatment constraint. The Lagrangian is:
+\begin{align}
+\mathcal{L} &= \underbrace{\int_0^1 \Big[ s(\mu)\,\mu + (1 - s(\mu))\, h(\mu)\, \mu \Big]\, dF(\mu)}_{\text{objective: expected utility}} \nonumber \\[4pt]
+&\quad + \lambda \underbrace{\left(\alpha - \int_0^1 s(\mu)\, dF(\mu)\right)}_{\text{screening budget slack}} \nonumber \\[4pt]
+&\quad + \gamma \underbrace{\left(\beta - \int_0^1 \Big[s(\mu)\,\mu + (1-s(\mu))\,h(\mu)\Big]\, dF(\mu)\right)}_{\text{treatment budget slack}}
+\end{align}
+
+The first line is the original objective. The second line adds the screening constraint relaxation: $\lambda$ prices each unit of screening capacity, and the term is positive when the screening budget is not fully used. The third line adds the treatment constraint relaxation: $\gamma$ prices each unit of treatment capacity. Note that the treatment cost of a screened unit is $\mu$ (in expectation, only the fraction $\mu$ with $Y=1$ are treated), while the treatment cost of a directly treated unit is $1$.
+
+\paragraph{Step 2: Rearranging by action.}
+Collecting terms by the decision variables $s(\mu)$ and $h(\mu)$, the Lagrangian can be rewritten as:
+\begin{align}\label{eq:lagrangian}
+\mathcal{L} &= \lambda\alpha + \gamma\beta + \int_0^1 \Big[ s(\mu)\big(\mu(1 - \gamma) - \lambda\big) \nonumber \\
+&\quad + (1 - s(\mu))\, h(\mu)\, (\mu - \gamma) \Big]\, dF(\mu)
+\end{align}
+
+Each unit with risk $\mu$ contributes to the integrand through one of three possible actions:
+\begin{itemize}
+    \item \textbf{Screen} ($s=1$): net contribution $= \mu(1 - \gamma) - \lambda$. The term $\mu$ is the objective gain (expected positive outcomes), $-\gamma\mu$ is the shadow cost of the treatment budget consumed in expectation (only positives are treated, costing $\mu$ in expectation), and $-\lambda$ is the shadow cost of using one unit of screening budget.
+    \item \textbf{Treat without screening} ($s=0,\, h=1$): net contribution $= \mu - \gamma$. The term $\mu$ is again the objective gain, and $-\gamma$ is the shadow cost of treatment (the full unit is treated with certainty, costing $1$ unit of budget priced at $\gamma$).
+    \item \textbf{Do nothing} ($s=0,\, h=0$): net contribution $= 0$.
+\end{itemize}
+
+The key difference between screening and treating is in the treatment cost: screening costs $\gamma\mu$ (you only pay for positives) but also incurs the screening cost $\lambda$, while direct treatment costs $\gamma$ (you pay for the full unit). Screening is therefore more attractive for lower-risk units where the budget savings $\gamma(1-\mu)$ from avoiding false positives outweigh the screening cost $\lambda$.
+
+\paragraph{Step 3: Pointwise maximization.}
+Since the integrand is separable across units, the optimal policy assigns each unit to the action with the highest net contribution. The dual function is obtained by taking the pointwise maximum:
+\begin{equation}\label{eq:dual_function}
+g(\lambda, \gamma) = \lambda\alpha + \gamma\beta + \int_0^1 \max\!\left\{\mu(1 - \gamma) - \lambda,\;\; \mu - \gamma,\;\; 0\right\} dF(\mu)
+\end{equation}
+
+\paragraph{Step 4: Deriving the optimal policy thresholds.}
+The boundaries between regions are found by equating the net contributions of adjacent actions:
+\begin{align}
+\text{Treat vs.\ Screen:} \quad & \mu - \gamma = \mu(1-\gamma) - \lambda \nonumber \\
+& \gamma - \gamma\mu = \lambda \nonumber \\
+& \gamma(1 - \mu) = \lambda \;\;\Longleftrightarrow\;\; \mu = 1 - \tfrac{\lambda}{\gamma} \label{eq:treat_screen_boundary} \\[6pt]
+\text{Screen vs.\ Nothing:} \quad & \mu(1-\gamma) - \lambda = 0 \nonumber \\
+& \mu = \tfrac{\lambda}{1-\gamma} \label{eq:screen_nothing_boundary}
+\end{align}
+
+The first condition says: treat directly when the risk is high enough that the budget savings from screening ($\gamma(1-\mu)$) no longer justify the screening cost ($\lambda$). The second says: screen when the expected objective gain ($\mu(1-\gamma)$) exceeds the screening cost ($\lambda$); below this threshold, the unit is not worth screening.
+
+This recovers the three-band structure of \Cref{thm:band_ordering}. Defining $\bar{\mu} = 1 - \lambda/\gamma$ and $\underline{\mu} = \lambda/(1-\gamma)$:
+\begin{itemize}
+    \item \textbf{Treat} ($\mu > \bar{\mu}$): corresponds to Bands T and B---units with risk high enough that direct treatment is preferred over screening.
+    \item \textbf{Screen} ($\underline{\mu} < \mu < \bar{\mu}$): corresponds to Band S---units where the budget savings from screening outweigh the screening cost.
+    \item \textbf{Nothing} ($\mu < \underline{\mu}$): units with risk too low to justify either action.
+\end{itemize}
+The optimal multipliers $\lambda^*(\alpha)$ and $\gamma^*(\alpha)$ are pinned down by the complementary slackness conditions: $\lambda^*(\alpha - \int s^*\, dF) = 0$ and $\gamma^*(\beta - \int [s^*\mu + (1-s^*)h^*]\, dF) = 0$, which require each budget to bind at the optimum (when $\lambda^*, \gamma^* > 0$).
+
+\paragraph{Step 5: The value function.}
+Since all covered units---whether treated directly or screened with $Y=1$---contribute $\mu$ to the objective (recall $Y^2 = Y$ for binary outcomes), the value function admits the compact form:
+\begin{equation}\label{eq:three_band_objective}
+V(\alpha) = \int_{\underline{\mu}(\alpha)}^{1} \mu \, dF(\mu), \qquad \underline{\mu}(\alpha) \;=\; \frac{\lambda^*(\alpha)}{1 - \gamma^*(\alpha)}
+\end{equation}
+where $\underline{\mu}(\alpha)$ is the lowest risk threshold---the boundary below which units receive neither treatment nor screening. As $\alpha$ increases, $\underline{\mu}(\alpha)$ decreases: more screening budget allows covering lower-risk units, expanding the total population served. Equivalently, using the Lagrangian representation:
+\begin{equation}\label{eq:value_function}
+V(\alpha) = \lambda^*\!\alpha + \gamma^*\!\beta + \int_0^1 \max\!\left\{\mu(1 - \gamma^*) - \lambda^*,\;\; \mu - \gamma^*,\;\; 0\right\} dF(\mu)
+\end{equation}
+
+\paragraph{Step 6: Marginal value of screening.}
+By the envelope theorem, the marginal value of the screening budget is:
+\begin{equation}\label{eq:marginal_screening}
+\frac{dV}{d\alpha} = \lambda^*
+\end{equation}
+the shadow price of the screening constraint. Intuitively, $\lambda^*$ captures how much additional expected utility is gained from a marginal expansion of screening capacity. When $\lambda^*$ is large, the screening budget is a binding bottleneck; when $\lambda^*$ is small, expanding screening yields diminishing returns.
+
+
+% \begin{theorem}[Value of LLM Feature Augmentation via Stochastic Dominance]\label{thm:llm_stochastic_dominance}
+% Let $F_X$ denote the distribution of risk $\mu_X(X) = \mathbb{E}[Y \mid X]$ using features $X$ alone, and let $F_{X,\ell}$ denote the distribution of risk $\mu_{X,\ell}(X,\ell) = \mathbb{E}[Y \mid X, \ell]$ when augmenting with LLM-derived features $\ell$.
+
+% If $F_{X,\ell}$ first-order stochastically dominates (FOSD) $F_X$, then the optimal utility satisfies:
+% $$U^*_{X,\ell} \geq U^*_X$$
+% \end{theorem}
+
+% \begin{proof}
+% We prove this by showing that the optimal utility is a non-decreasing function of the risk distribution under FOSD.
+
+% \textbf{Step 1: The utility function is monotone in risk distributions.}
+% Recall from Theorem \ref{thm:band_ordering} that the optimal policy partitions the population by risk quantiles into bands T, B, and S. The expected utility is:
+% $$U^* = \int_{q_T}^{1} \mu \, dF(\mu) + \int_{q_B}^{q_T} \mu \, dF(\mu) + \int_{q_S}^{q_B} \mu \, dF(\mu)$$
+
+% where the thresholds $q_T, q_B, q_S$ are determined by the budget constraints and the risk distribution $F$.
+
+% Consider any non-decreasing function $u(\mu) = \mu$ (the identity function). For any fixed partition into bands defined by quantiles, the expected utility can be written as:
+% $$U = \mathbb{E}_F[u(\mu) \cdot \mathbf{1}\{\mu \in \text{treated bands}\}]$$
+
+% Since treatment assignment is based on quantile thresholds (which are monotone functions of the risk distribution), the utility function is non-decreasing in $F$ under FOSD.
+
+% \textbf{Step 2: FOSD preservation under optimization.}
+% If $F_{X,\ell}$ FOSD $F_X$, then by definition, for any non-decreasing function $u$:
+% $$\mathbb{E}_{F_{X,\ell}}[u(\mu)] \geq \mathbb{E}_{F_X}[u(\mu)]$$
+
+% The optimal policy based on $F_{X,\ell}$ chooses band thresholds to maximize expected treated positives. Crucially, the objective function—treating units with highest risk—is a non-decreasing function of $\mu$.
+
+% For any feasible policy (satisfying budget constraints), if we replace $F_X$ with $F_{X,\ell}$ that FOSD it, the expected utility from that policy weakly increases because:
+% \begin{itemize}
+%     \item The same quantile-based rule now assigns treatment/screening with (stochastically) higher risks
+%     \item Higher risk means higher expected positives among treated units
+% \end{itemize}
+
+% Finally, as a consequence of the optimality of $ U_{X,\ell}^*$
+% \begin{align*}
+%     U_{X,\ell}^* \geq  \mathbb{E}_{X,\ell}[u^*] \geq U^*_{X}
+% \end{align*}
+
+
+% \end{proof}
+
+% \textcolor{red}{GAP:}
+% \begin{enumerate}
+%     \item \textbf{Is FOSD too strong?} 
+
+%     \item \textbf{FOSD vs. better classification:} FOSD of $F_{X,\ell}$ over $F_X$ captures the idea that LLMs shift the risk distribution rightward (more individuals identified as high-risk). This is subtly different from "better classification": a better classifier with the same features $X$ would reduce prediction error but not necessarily change the risk distribution. FOSD explicitly requires that augmentation with $\ell$ reveals more high-risk individuals.
+
+%     \item \textbf{Empirical verification:} FOSD can be tested by comparing the CDFs of $\mu_{X,\ell}$ and $\mu_X$. If $F_{X,\ell}$ lies uniformly to the right of $F_X$. Can our experiments verify this condition?
+% \end{enumerate}
+
+% \textcolor{red}{MDR: FOSD is not possible in this case given our definitions of $\mu_X(X)$ and $\mu_{X,\ell}(X,\ell)$
+% By the law of iterated expectations:
+% $$\mu_X(X) = \mathbb{E}[Y| X] = \mathbb{E}_{\ell}[\mathbb{E}[Y|X, \ell]|X] = \mathbb{E}_{\ell}[\mu_{X,\ell}(X,\ell) | X].$$
+% This means that $\mu_X(X)$ is the conditional expectation of $\mu_{X,\ell}(X,\ell)$ averaged over the distribution of $\ell$ given $X$.}
+
+% \textcolor{red}{For $F_{X,\ell}$ to FOSD $F_X$, we would require:
+% $$\mu_{X,\ell}(X,\ell) \geq \mu_X(X) = \mathbb{E}_\ell[\mu_{X,\ell}(X,\ell) \mid X]$$ almost surely.
+% This can hold almost surely only if $\mu_{X,\ell}(X,\ell)$ is constant in $\ell$ given $X$. That is when $\ell$ provides no additional information (and in that case both distributions are equal and is of no interest).}
+
+% \textcolor{red}{Intutiively: The distribution $F_{X,\ell}$ is a spread, not a shift, of $F_X$ (lower risk values for true Y=0, and higher risk values for true Y=1.}
+
+% \textcolor{red}{What we can say is (I think is obvious but we can try to prove it): Given a DAG where there are features X, Z that are independent and both determine Y, the bayes classifier $E[Y | X, Z]$ has always lower MSE than $E[Y | X]$. Think of it as $Z$ providing more information to distinguish between high and low risk cases with the same $X$ values (this is even when considering the optimal bayes classifiers, is not about training). And we should be able to link this to better allocation rules)}
+
+
+
+\section{Computing the quantiles}
+
+From our characterization of the optimal screening rule and treatment set it is not clear how to compute the quantiles that define the three bands. Furthermore, the second band size is dependent on the proportion of negative outcomes on the third band, thus leading to a circular dependency. We resolve this problem by using an iterative approach described in \ref{algo}.
+
+
+
+%\subsection{Algorithm}
+\begin{algorithm*}
+\label{algo}
+  \caption{Fixed-Point Iteration for Optimal Screening Band Assignment}
+  \begin{algorithmic}[1]
+  \Require Population sorted by risk (highest to lowest), treatment budget $\beta$, screening budget $\alpha$
+  \Ensure Band assignments that maximize true positives
+  \State $\rho_{\text{prev}} \gets 0$ \Comment{Initialize average risk of Band 3}
+  \For{$k = 1$ to $\mathtt{max\_iterations}$}
+      \State \textbf{Compute target mass for each band:}
+      \State $m_1 \gets \beta - \alpha$ \Comment{Band 1: treated without screening}
+      \State $m_2 \gets \alpha \cdot (1 - \rho_{\text{prev}})$ \Comment{Band 2: treated (saved budget from Band 3)}
+      \State $m_3 \gets \alpha$ \Comment{Band 3: screened}
+      \State
+      \State \textbf{Assign individuals to bands by cumulative mass:}
+      \State $i_1 \gets \min\{i : \sum_{j=0}^{i} \frac{1}{n} \geq m_1\}$ \Comment{End of Band 1}
+      \State $i_2 \gets \min\{i : \sum_{j=0}^{i} \frac{1}{n} \geq m_1 + m_2\}$ \Comment{End of Band 2}
+      \State $i_3 \gets \min\{i : \sum_{j=0}^{i} \frac{1}{n} \geq m_1 + m_2 + m_3\}$ \Comment{End of Band 3}
+      \State
+      \State \textbf{Compute average risk in Band 3:}
+      \State $\rho_{\text{curr}} \gets \frac{1}{i_3 - i_2} \sum_{j=i_2}^{i_3-1} r_j$ \Comment{$r_j$ = risk of individual $j$}
+      \State
+      \If{$|\rho_{\text{curr}} - \rho_{\text{prev}}| < \mathtt{tolerance}$}
+          \State \textbf{break} \Comment{Convergence achieved}
+      \EndIf
+      \State $\rho_{\text{prev}} \gets \rho_{\text{curr}}$ \Comment{Update for next iteration}
+  \EndFor
+  \State
+  \Return Band assignments $(i_1, i_2, i_3)$ with converged $\rho_{\text{prev}}$
+  \end{algorithmic}
+  \end{algorithm*}
+
+
+
+\begin{theorem}[Existence of Fixed Point]\label{thm:fixed_point_existence}
+    Assume the risk distribution $F$ is continuous and strictly increasing on its support, with $\alpha \in (0, \beta)$ and $\beta + \alpha \leq 1$. Then the update function $g: [0,1] \to [0,1]$ has a fixed point.
+\end{theorem}
+
+\begin{proof}
+    Consider the population version of the algorithm. The band thresholds are determined by:
+    \begin{align*}
+        q_T & = F^{-1}(\beta - \alpha) \\
+        q_B & = F^{-1}(\beta - \alpha \rho) \\
+        q_S & = F^{-1}(\beta + \alpha - \alpha \rho)
+    \end{align*}
+    where $F$ is the CDF of the risk distribution and $\rho$ is the average risk in Band S. The update function computes:
+    \begin{align*}
+        g(\rho) & = \frac{1}{q_S - q_B}\int_{q_B}^{q_S} \mu \, dF(\mu) \\
+        & = \frac{F(q_S) - F(q_B)}{q_S - q_B} \\
+        & = \frac{\alpha}{F^{-1}(\beta + \alpha - \alpha \rho) - F^{-1}(\beta - \alpha \rho)}
+    \end{align*}
+    where the last equality uses $F(q_S) - F(q_B) = \alpha$.
+
+    Since $F$ is continuous and strictly increasing, $F^{-1}$ exists and is continuous. The arguments $\beta - \alpha\rho$ and $\beta + \alpha - \alpha\rho$ lie in $(0,1)$ for $\rho \in [0,1]$ under our assumptions, so $g$ is well-defined. As a composition of continuous functions, $g$ is continuous.
+
+    The average risk over any interval of positive mass lies within the support of $F$, we have $g: [0,1] \to [0,1]$. Hence,
+    by Brouwer's fixed point theorem, as a consequence of $g$ being continuous and $[0,1]$ compact and convex, there exists $\rho^* \in [0,1]$ such that $g(\rho^*) = \rho^*$.
+\end{proof}
+
+\textcolor{red}{ We need to prove it conevrges no?}
+The algorithm formerly described converges under mild assumptions. We proceed to show there is an optimal point.
+
+
+\begin{theorem}[Uniqueness of Fixed Point]\label{thm:fixed_point_uniqueness}
+    Under the assumptions of Theorem \ref{thm:fixed_point_existence}, the fixed point is unique.
+\end{theorem}
+\begin{proof}
+    We show that $g$ is strictly decreasing, which implies at most one fixed point.
+
+    As $\rho$ increases, both $q_B(\rho) = F^{-1}(\beta - \alpha\rho)$ and $q_S(\rho) = F^{-1}(\beta + \alpha - \alpha\rho)$ decrease, shifting the screening interval leftward in the risk space. Since $F$ is strictly increasing, lower quantiles correspond to lower risk values.
+
+    For $\rho_1 < \rho_2$, the interval $[q_B(\rho_2), q_S(\rho_2)]$ lies strictly to the left of $[q_B(\rho_1), q_S(\rho_1)]$. Both intervals have mass $\alpha$, but the left-shifted interval covers lower-risk individuals, so:
+    $$g(\rho_2) = \frac{1}{\alpha}\int_{q_B(\rho_2)}^{q_S(\rho_2)} \mu \, dF(\mu) < \frac{1}{\alpha}\int_{q_B(\rho_1)}^{q_S(\rho_1)} \mu \, dF(\mu) = g(\rho_1)$$
+
+    Thus $g$ is strictly decreasing. If $\rho_1 < \rho_2$ were both fixed points, then $\rho_1 = g(\rho_1) > g(\rho_2) = \rho_2$, a contradiction. Hence the fixed point is unique.
+\end{proof}
+
+\subsection{Feature Augmentation}
+
+In practice, the risk function $\mu(X)$ is unknown and must be estimated from historical data using features $X$ and observed outcomes $Y$. A natural question arises: what if we have access to additional information $Z$ beyond the standard features $X$? This could include unstructured text, images, or other complex data types that are difficult to incorporate into traditional statistical models.
+
+Large Language Models (LLMs) offer a promising approach for leveraging such auxiliary information. Through pre-training on massive datasets, LLMs may capture latent relationships between covariates that improve risk assessment. However, this raises a fundamental question about evaluation: if an LLM uses latent features $Z$ not present in our ground-truth data, what should serve as the performance benchmark?
+
+We propose comparing LLM-based approaches against the optimal strategy using only the observed features $X$. If LLMs can outperform this baseline by leveraging additional structure in $Z$, this would provide evidence for their ability to perform automatic feature engineering and potentially augmenting limited observed data with additional latent features derived from their training.
+
+\textcolor{red}{The story of this paper should end in an argument that actually shows why using LLMs is sound for the context we are interested in, that is, why we care about using LLMs for this problem. The original idea was that LLMs are a flexible enough interface to bootstrap data features in a reliable manner. So far, we formally showed how the LLMs beat the optimal screening strategy, but it somehow seems to be reduced to just using a better predictor. Can we produce a formal statement of how better are they? Why is it sound to use them for this problem? Why them among all the other good predictors?
+\begin{itemize}
+    \item I think is paramount to rephrase the history of the paper highlighting how it makes sense to "make up" features in certain applications. For example for our socio-technical applications it makes sense to add ethnicity to a dat point as it will be a realistic scenario as every data point belongs to the features partition.
+    \item One possible direction is data efficiency. Lets work under the assumption that the Bayes estimator improves as it is computed over a bigger set of features (We would need to prove this). If this is the case, a cool formal statement that reflects our thinking will be that an LLM allows us to get closer to the optimal model in a zero shot try, further more, it allows to do so with invented features. This last result will be of course empirical.
+    \item  What if you don't have training data, so you cant combine the model Unlabeled data for the data for the LLM. Think about the LLM in the unlabeled data scenario (The model is used to create a proxy of the joint distribution because there is now a y to observe Ys) How to use this in the context of our current approach
+\end{itemize}
+}
+
+
+
+
+
+\section{Experiments}
+
+We run experiments to showcase the usefulness of our framework and corroborate our theoretical claims. We ran a semysinthetic experiment using the ACS income dataset \cite{} and two real world use cases. In all cases our generative approach is an improvement for any screening budge even the optimal ome.
+
+\textbf{Simulation} We evaluate our framework using the American Community Survey (ACS) income dataset, predicting whether individuals earn more than \$50,000 per year. We stratify the population using two demographic features: age (AGEP) and sex (SEX). Our LLM receives additional contextual features including race, marital status, education level, employment status, class of worker, and hours worked per week. We compare six approaches: (1) an \emph{empirical baseline} that uses only the stratification features to compute risk probabilities, (2) an \emph{empirical augmented} approach that adds LLM-predicted risk buckets as an additional stratification dimension, (3) \emph{LLM probability} predictions used directly for screening, (4) \emph{LLM bucket-based} probabilities derived from quantile assignments, (5) a \emph{naive} scoring baseline, and (6) a \emph{random} screening baseline. We set the treatment budget to $\beta = 0.4$ and vary the screening budget $\alpha$ from 0 to $\beta$. Figure \ref{fig:simulation_results} demonstrates that leveraging LLM-generated features substantially improves screening performance across all budget levels, with the empirical augmented approach achieving the largest gains by combining demographic stratification with LLM-inferred risk signals.
+
+\begin{figure}[H]
+    \centering
+    % \includegraphics[width=0.4\textwidth]{..runs/llm_comparison_count.png}
+    \caption{Dummy caption.}
+    \label{fig:simulation_results}
+\end{figure}
+
+\subsection{Real-World Use Case: Demining Operations}
+
+
+\begin{figure}[H]
+    \centering
+    % \includegraphics[width=0.4\textwidth]{..runs/llm_comparison_granada_count.png}
+    \caption{Results for demining use case}
+    \label{fig:demining_results}
+\end{figure}
+
+\subsection{Real-World Use Case: Demining Operations}
+
+We apply our method to landmine detection and demining operations in post-conflict regions. Land mines are typically planted without systematic record-keeping, making it extremely difficult and costly to identify contaminated areas after conflicts end. This application exemplifies our screening framework: limited resources must be allocated to investigate high-risk areas while treating (clearing) confirmed mine locations. We use the RELand dataset, which contains geospatial and contextual features for 500-by-500-meter grid squares in regions of Colombia. While the dataset includes over 60 features, we focus on two key binary indicators for our experiments: (1) presence of coca plantations within 7km, and (2) detected landmines within 250m. We stratify the population using the detected landmine indicator, which serves as an observable risk signal analogous to the demographic features in our income prediction task. The LLM receives both features as contextual information to predict the likelihood of landmine presence. As shown in Figure \ref{fig:demining_results}, LLM-assisted screening substantially outperforms the optimal baseline across all screening budgets, demonstrating that language models can effectively integrate spatial and contextual risk factors even in this specialized domain.
+
+
+\textcolor{red}{Our results show how the LLM-assisted screening performs better than the optimal baseline.}

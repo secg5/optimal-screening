@@ -6,6 +6,15 @@ from typing import Any, Callable, Sequence
 import numpy as np
 
 
+SIMULATION_SIZE = 100_000
+
+RISK_PRESETS: dict[str, tuple[float, float]] = {
+    "uniform": (1.0, 1.0),
+    "bimodal": (0.1, 0.1),
+    "gaussian": (10.0, 10.0),
+}
+
+
 def compute_empirical_probabilities(
     rows: list[dict[str, Any]],
     outcome_col: str,
@@ -307,6 +316,7 @@ def compute_optimal_screening_curve(
     tolerance: float = 1e-6,
     seed: int | None = None,
     use_custom_risk_col: str | None = None,
+    simulation: str | tuple[float, float] | None = None,
 ) -> dict[str, Any]:
     """Compute optimal screening curve with treatment budget β and screening budget α.
 
@@ -331,18 +341,43 @@ def compute_optimal_screening_curve(
         use_custom_risk_col: If provided, use this column for risk instead of computing
             empirical probabilities from strata. Useful for comparing LLM predictions
             with empirical baselines.
+        simulation: If provided, generate synthetic data from a Beta distribution instead
+            of using real data. Pass a preset name ('uniform', 'bimodal', 'gaussian') or
+            a tuple (a, b) of Beta distribution parameters. Uses SIMULATION_SIZE samples.
 
     Returns:
         Dictionary with screening curves and band information
     """
     if alpha_quantiles is None:
         # Default: 10 equally spaced values from 0 to beta
-        alpha_quantiles = [beta * i / 9 for i in range(10)]
+        alpha_quantiles = [beta * i / 49 for i in range(50)]
 
-    # Assign each row its risk (either custom or empirical)
+    # Assign each row its risk (simulation, custom, or empirical)
     rows_with_risk = []
 
-    if use_custom_risk_col is not None:
+    if simulation is not None:
+        # Generate synthetic data from a Beta distribution
+        if isinstance(simulation, str):
+            if simulation not in RISK_PRESETS:
+                raise ValueError(f"Unknown simulation preset '{simulation}'. Choose from {list(RISK_PRESETS.keys())}.")
+            a, b = RISK_PRESETS[simulation]
+        else:
+            a, b = simulation
+
+        rng = np.random.default_rng(seed)
+        risk_scores = rng.beta(a, b, size=SIMULATION_SIZE)
+        outcomes = rng.binomial(1, risk_scores)
+
+        for i in range(SIMULATION_SIZE):
+            rows_with_risk.append(
+                {
+                    "row": {"_sim_index": i, "_sim_feature": 0, outcome_col: bool(outcomes[i])},
+                    "empirical_risk": float(risk_scores[i]),
+                    "true_outcome": bool(outcomes[i]),
+                    "model_prediction": float(risk_scores[i]),
+                }
+            )
+    elif use_custom_risk_col is not None:
         # Use custom risk column directly
         for row in rows:
             risk = row.get(use_custom_risk_col, 0.5)
@@ -357,12 +392,6 @@ def compute_optimal_screening_curve(
     else:
         # Compute empirical P(Y=1|X) for each stratum
         empirical_probs = compute_empirical_probabilities(rows, outcome_col, strata_features)
-        # # TEMPORARY: Override with uniform distribution for debugging
-        # if seed is not None:
-        #     import random
-        #     random.seed(seed)
-        #     for key in empirical_probs.keys():
-        #         empirical_probs[key]['probability'] = random.uniform(0, 1)
 
         for row in rows:
             stratum_key = tuple(row.get(f) for f in strata_features)
@@ -394,9 +423,7 @@ def compute_optimal_screening_curve(
     }
 
     for alpha in alpha_quantiles:
-        if alpha > beta:
-            # Can't screen more than we treat
-            continue
+        assert alpha <= beta, f"Screening budget α={alpha} exceeds treatment budget β={beta}"
 
         # Iteratively find Band 3 position
         # Initial guess: Band 3 starts at position corresponding to (beta + alpha)
@@ -494,15 +521,13 @@ def compute_optimal_screening_curve(
         # Band 1: Treated, empirical predictions
         for i in range(0, band1_end_idx):
             item = rows_with_risk[i]
-            predicted_positive = item["empirical_risk"] >= 0.5
-            if predicted_positive and item["true_outcome"]:
+            if item["true_outcome"]:
                 tp_count += 1
 
         # Band 2: Treated, empirical predictions
         for i in range(band1_end_idx, band2_end_idx):
             item = rows_with_risk[i]
-            predicted_positive = item["empirical_risk"] >= 0.5
-            if predicted_positive and item["true_outcome"]:
+            if item["true_outcome"]:
                 tp_count += 1
 
         # Band 3: Screened, use true outcomes
@@ -547,6 +572,7 @@ def compute_random_screening_curve(
     alpha_quantiles: Sequence[float] | None = None,
     seed: int = 42,
     use_custom_risk_col: str | None = None,
+    simulation: str | tuple[float, float] | None = None,
 ) -> dict[str, Any]:
     """Compute random screening baseline curve.
 
@@ -567,17 +593,42 @@ def compute_random_screening_curve(
         alpha_quantiles: Screening budget levels to evaluate
         seed: Random seed for reproducible random screening
         use_custom_risk_col: If provided, use this column for risk instead of empirical
+        simulation: If provided, generate synthetic data from a Beta distribution instead
+            of using real data. Pass a preset name ('uniform', 'bimodal', 'gaussian') or
+            a tuple (a, b) of Beta distribution parameters. Uses SIMULATION_SIZE samples.
 
     Returns:
         Dictionary with screening curves
     """
     if alpha_quantiles is None:
-        alpha_quantiles = [beta * i / 9 for i in range(10)]
+        alpha_quantiles = [beta * i / 49 for i in range(50)]
 
-    # Assign each row its risk (either custom or empirical)
+    # Assign each row its risk (simulation, custom, or empirical)
     rows_with_risk = []
 
-    if use_custom_risk_col is not None:
+    if simulation is not None:
+        # Generate synthetic data from a Beta distribution
+        if isinstance(simulation, str):
+            if simulation not in RISK_PRESETS:
+                raise ValueError(f"Unknown simulation preset '{simulation}'. Choose from {list(RISK_PRESETS.keys())}.")
+            a, b = RISK_PRESETS[simulation]
+        else:
+            a, b = simulation
+
+        rng = np.random.default_rng(seed)
+        risk_scores = rng.beta(a, b, size=SIMULATION_SIZE)
+        outcomes = rng.binomial(1, risk_scores)
+
+        for i in range(SIMULATION_SIZE):
+            rows_with_risk.append(
+                {
+                    "row": {"_sim_index": i, "_sim_feature": 0, outcome_col: bool(outcomes[i])},
+                    "empirical_risk": float(risk_scores[i]),
+                    "true_outcome": bool(outcomes[i]),
+                    "model_prediction": float(risk_scores[i]),
+                }
+            )
+    elif use_custom_risk_col is not None:
         # Use custom risk column directly
         for row in rows:
             risk = row.get(use_custom_risk_col, 0.5)
@@ -622,54 +673,173 @@ def compute_random_screening_curve(
     rng = np.random.RandomState(seed)
 
     for alpha in alpha_quantiles:
-        if alpha > beta:
-            continue
+        assert alpha <= beta, f"Screening budget α={alpha} exceeds treatment budget β={beta}"
+        # Screen α proportion uniformly at random
+        n_screen = min(int(alpha * n), n)
+        n_treat = int(beta * n)
 
-        # Randomly select α proportion for screening
-        n_screen = int(alpha * n)
-        screened_indices = set(rng.choice(n, size=n_screen, replace=False))
+        if n_screen >= n:
+            screened_indices = set(range(n))
+        elif n_screen > 0:
+            screened_indices = set(rng.choice(n, size=n_screen, replace=False))
+        else:
+            screened_indices = set()
 
-        # Count screened positives and negatives
-        n_screened_positive = 0
-        n_screened_negative = 0
+        # Identify screened positives (gamma mass)
+        screened_positive_indices = {idx for idx in screened_indices if rows_with_risk[idx]["true_outcome"]}
+        gamma_count = len(screened_positive_indices)
 
-        for idx in screened_indices:
-            if rows_with_risk[idx]["true_outcome"]:
-                n_screened_positive += 1
+        # Treat screened positives up to budget
+        tp_from_screening = min(gamma_count, n_treat)
+        remaining_budget = max(0, n_treat - tp_from_screening)
+
+        # Pool for risk-based treatment: everyone except screened positives
+        pool = [(idx, rows_with_risk[idx]) for idx in range(n) if idx not in screened_positive_indices]
+        pool.sort(key=lambda x: x[1]["empirical_risk"], reverse=True)
+
+        # Treat top (β - γ) mass by risk score
+        n_treat_by_risk = min(remaining_budget, len(pool))
+        tp_from_risk = sum(1 for i in range(n_treat_by_risk) if pool[i][1]["true_outcome"])
+
+        tp_count = tp_from_screening + tp_from_risk
+        results["alpha_values"].append(alpha)
+        results["true_positives"].append(tp_count)
+
+    return results
+
+
+def compute_intuitive_optimal_curve(
+    rows: list[dict[str, Any]],
+    outcome_col: str,
+    strata_features: Sequence[str],
+    prediction_col: str = "probability",
+    beta: float = 0.5,
+    alpha_quantiles: Sequence[float] | None = None,
+    seed: int | None = None,
+    use_custom_risk_col: str | None = None,
+    simulation: str | tuple[float, float] | None = None,
+) -> dict[str, Any]:
+    """Compute intuitive-optimal screening curve.
+
+    Algorithm (all bands are adjacent slices of the risk-sorted population):
+      1. Band A: treat the top (β − α) mass by risk (highest risk, no screening).
+      2. Band B: screen the next α mass.  Let γ ≤ α be the mass of screened
+         individuals with Y=0.  Screened Y=1 are treated; screened Y=0 are not.
+      3. Band C: treat the next γ mass below the screened band (replaces the
+         screened negatives, preserving total treatment budget = β).
+
+    Args:
+        rows: List of data rows (ignored when *simulation* is set).
+        outcome_col: Name of outcome column.
+        strata_features: Features defining strata.
+        prediction_col: Column name for model predictions.
+        beta: Treatment budget (proportion who can be treated).
+        alpha_quantiles: Screening budget levels to evaluate.
+        seed: Random seed for simulation mode.
+        use_custom_risk_col: Use this column for risk instead of empirical.
+        simulation: Preset name or (a, b) Beta parameters for synthetic data.
+
+    Returns:
+        Dictionary with alpha_values, true_positives, total_positive, total_samples.
+    """
+    if alpha_quantiles is None:
+        alpha_quantiles = [beta * i / 49 for i in range(50)]
+
+    # --- Build rows_with_risk (same logic as compute_optimal_screening_curve) ---
+    rows_with_risk = []
+
+    if simulation is not None:
+        if isinstance(simulation, str):
+            if simulation not in RISK_PRESETS:
+                raise ValueError(f"Unknown simulation preset '{simulation}'. Choose from {list(RISK_PRESETS.keys())}.")
+            a, b = RISK_PRESETS[simulation]
+        else:
+            a, b = simulation
+
+        rng = np.random.default_rng(seed)
+        risk_scores = rng.beta(a, b, size=SIMULATION_SIZE)
+        outcomes = rng.binomial(1, risk_scores)
+
+        for i in range(SIMULATION_SIZE):
+            rows_with_risk.append(
+                {
+                    "row": {"_sim_index": i, "_sim_feature": 0, outcome_col: bool(outcomes[i])},
+                    "empirical_risk": float(risk_scores[i]),
+                    "true_outcome": bool(outcomes[i]),
+                    "model_prediction": float(risk_scores[i]),
+                }
+            )
+    elif use_custom_risk_col is not None:
+        for row in rows:
+            risk = row.get(use_custom_risk_col, 0.5)
+            rows_with_risk.append(
+                {
+                    "row": row,
+                    "empirical_risk": risk,
+                    "true_outcome": _is_positive_outcome(row.get(outcome_col)),
+                    "model_prediction": row.get(prediction_col, 0.5),
+                }
+            )
+    else:
+        empirical_probs = compute_empirical_probabilities(rows, outcome_col, strata_features)
+        for row in rows:
+            stratum_key = tuple(row.get(f) for f in strata_features)
+            empirical_risk = empirical_probs.get(stratum_key, {}).get("probability", 0.5)
+            rows_with_risk.append(
+                {
+                    "row": row,
+                    "empirical_risk": empirical_risk,
+                    "true_outcome": _is_positive_outcome(row.get(outcome_col)),
+                    "model_prediction": row.get(prediction_col, 0.5),
+                }
+            )
+
+    # Sort by risk (highest to lowest)
+    rows_with_risk.sort(key=lambda x: x["empirical_risk"], reverse=True)
+
+    total_positive = sum(1 for r in rows_with_risk if r["true_outcome"])
+    n = len(rows_with_risk)
+
+    results = {
+        "beta": beta,
+        "alpha_values": [],
+        "true_positives": [],
+        "total_positive": total_positive,
+        "total_samples": n,
+    }
+
+    for alpha in alpha_quantiles:
+        assert alpha <= beta, f"Screening budget α={alpha} exceeds treatment budget β={beta}"
+
+        band_a_end = int((beta - alpha) * n)
+        band_b_end = band_a_end + int(alpha * n)
+
+        # Band A: treated by risk
+        tp_band_a = 0
+        for i in range(band_a_end):
+            item = rows_with_risk[i]
+            if item["true_outcome"]:
+                tp_band_a += 1
+
+        # Band B: screened — Y=1 treated, Y=0 not treated
+        tp_band_b = 0
+        gamma_count = 0  # number of screened with Y=0
+        for i in range(band_a_end, band_b_end):
+            item = rows_with_risk[i]
+            if item["true_outcome"]:
+                tp_band_b += 1
             else:
-                n_screened_negative += 1
+                gamma_count += 1
 
-        prop_screened_positive = n_screened_positive / n
-        prop_screened_negative = n_screened_negative / n
+        # Band C: next gamma_count individuals treated by risk
+        band_c_end = min(band_b_end + gamma_count, n)
+        tp_band_c = 0
+        for i in range(band_b_end, band_c_end):
+            item = rows_with_risk[i]
+            if item["true_outcome"]:
+                tp_band_c += 1
 
-        # Create list of unscreened individuals sorted by risk (highest to lowest)
-        unscreened_with_risk = [(idx, rows_with_risk[idx]) for idx in range(n) if idx not in screened_indices]
-        unscreened_with_risk.sort(key=lambda x: x[1]["empirical_risk"], reverse=True)
-
-        # Determine how many to treat from unscreened
-        # Formula: β + prop_screened_negative - prop_screened_positive
-        # This accounts for:
-        # - β: total treatment budget
-        # - Already used: prop_screened_positive (treated screened Y=1)
-        # - Saved budget: prop_screened_negative (didn't treat these negatives)
-        unscreened_treatment_prop = beta + prop_screened_negative - prop_screened_positive
-        n_treat_unscreened = int(unscreened_treatment_prop * n)
-        n_treat_unscreened = max(0, min(n_treat_unscreened, len(unscreened_with_risk)))
-
-        # Count true positives
-        tp_count = 0
-
-        # From screened: all Y=1 get treated (and correctly identified as TP)
-        tp_count += n_screened_positive
-
-        # From unscreened: treat top n_treat_unscreened by risk
-        for i in range(n_treat_unscreened):
-            idx, item = unscreened_with_risk[i]
-            # These are treated based on model prediction
-            predicted_positive = item["empirical_risk"] >= 0.5
-            if predicted_positive and item["true_outcome"]:
-                tp_count += 1
-
+        tp_count = tp_band_a + tp_band_b + tp_band_c
         results["alpha_values"].append(alpha)
         results["true_positives"].append(tp_count)
 
