@@ -1,0 +1,184 @@
+\section*{Framing and proposed approach}
+
+Resource allocation decisions in settings with significant humanitarian and social impact face the challenge of distributing limited beneficial resources to populations with heterogeneous needs that are not directly observable without costly verification. Common examples of such settings include healthcare, education, social programs, and humanitarian assistance.
+
+Policymakers are typically tasked with allocating a constrained resource, formally represented as resource coverage limited to a fraction $\beta$ of the population. The resource is beneficial and should ideally reach all individuals with a latent vulnerability condition, represented by the outcome $Y = 1$. Therefore, a natural objective is to maximize allocation efficiency, defined as the proportion of allocated resources that reach truly vulnerable individuals. However, because the outcome $Y$ is latent, directly verifying vulnerability is expensive, requiring substantial pecuniary and administrative resources as well as time.
+
+As a result, in current practice, machine learning systems are widely used as risk assessment instruments, estimating $\mathbb{P}(Y = 1 \mid X = x)$ based on observable covariates $X \in \mathcal{X}$. Decision-makers then allocate resources to individuals with the highest predicted risk, lest costly verification of vulnerability be required.
+
+This ML-driven approach is potentially cheaper, faster, and deployable pre-hoc, but it is inherently stochastic. It is precisely this stochasticity that prevents model-based allocation from serving as a true replacement for screening: screening yields deterministic outcomes and therefore enables perfect allocation conditional on coverage, whereas allocation based on probabilistic risk scores—even if perfectly calibrated—inevitably results in some misallocation.
+
+With predictive models available, the question then becomes: 
+\begin{itemize}
+    \item How should screening and prediction be optimally combined? 
+    \item How can we optimally integrate targeted screening with machine learning-based risk prediction under fixed resource and screening budgets to maximize allocation efficiency?
+    \item What is the optimal screening level to maximize expected benefit, given a cost for screening units?
+\end{itemize}
+
+\textit{Remark: This tension between a pre-hoc potentially cheaper albeit sthocastic allocation versus an expensive but potentially perfect one, boils down to the resource-intensive processes that screening usually entails. For example, conducting household interviews and visits to confirm poverty status, performing technical surveys to verify landmine contamination, or convening medical panels to diagnose conditions for treatment eligibility. Traditionally, in the absence of predictive models, policymakers would screen the entire population prior to allocation—a strategy that is often prohibitively expensive. On the limits of predictive modeling in inherently uncertain outcomes + epistemic vs. aleatoric uncertainty.}
+
+\subsection*{Notation and assumptions}
+
+We are interested in studying the optimal constrained resource allocation problem with short-term realistic constraints that characterize many operational settings:
+\begin{itemize}
+    \item \textbf{Fixed allocation budget ($\beta \in [0,1]$):} fraction of population receiving the resource. We assume this is fixed to capture that infrastructure capacity cannot be rapidly expanded (e.g., hospital beds, university slots, demining teams).
+    \item \textbf{Fixed predictive model ($\mu: \mathcal{X} \to [0,1]$):} The risk prediction model $\mu(x) = \widehat{\PP}(Y=1 \mid X=x)$ is given and cannot be immediately improved through additional data collection or retraining. We assume the model is well-calibrated (e.g., Bayes optimal given available covariates).
+    \item \textbf{Screening budget ($\alpha \in [0,1]$):} fraction of population that can be screened. We first assume that the resources available for verification / screening are fixed to $\alpha\%$ of the population. We later relax this assumption and study the optimal screening budget given screening costs.    
+\end{itemize}
+
+\textit{Remark: Note that we consider the allocation budget (access) and predictive model to be fixed and not valid policy levers to improve resource allocation (oposed to the line of work by Perdomo and collaborators (2024, 2025, 2026). In the contrary, we leverage targeted screening that policymakers have relied on for decades as a ready-to-use lever to improve resource allocation.}
+
+
+\subsection*{Problem formulation:}
+
+A resource allocation rule is a function $T: \mathcal{X} \to \{0,1\}$ that maps covariates to allocation decisions, where $T(x)=1$ indicates that a unit with features $X=x$ receives the resource. We operate under a budget constraint that limits the proportion of the population that can receive the resource:
+\begin{equation}
+    \mathbb{E}[T(X)] = \int_{\mathcal{X}} T(x) d\mathbb{P}(x) \leq \beta
+\end{equation}
+where $\beta \in (0,1)$ represents the available budget as a fraction of the population.
+
+Our objective is to maximize the expected number of $Y=1$ cases among allocated units, which measures how effectively the resource reaches those who would benefit:
+\begin{equation}
+  \mathbb{E}[Y \cdot T(X)] = \mathbb{E}[T(X) \cdot \mathbb{E}[Y|X]] = \mathbb{E}[T(X) \cdot \mu(X)],  
+\end{equation}
+using iterated expectations. This objective reflects the total expected benefit from the allocation rule $T(X)$ as units with $Y=1$ represent successful resource deployment. The optimization problem is therefore
+\begin{align}
+\max_{T(X) \in \mathcal{H}} &\quad \mathbb{E}[T(X) \cdot \mu(X)] \label{eq:objective}\\
+\text{s.t.} &\quad \mathbb{E}[T(X)] \leq \beta \label{eq:budget}\\
+&\quad T(X) \in \{0,1\} \label{eq:binary}
+\end{align}
+Where $\mathcal{H}$ is the space of all such allocation rules.
+
+The solution to problem \eqref{eq:objective}--\eqref{eq:binary} has a simple and intuitive form: allocate the resource to units in decreasing order of their risk score $\mu(X)$ until the budget is exhausted.
+
+\begin{theorem}[\textbf{Optimal Allocation Rule without Screening}]
+\label{thm:optimal_no_screening}
+The optimal allocation rule is:
+$$T^*(X) = \mathbf{1}\{\mu(X) > q_{1-\beta}\}$$
+where $q_{1-\beta}$ is the $(1-\beta)$-quantile of the distribution of $\mu(X)$.
+\end{theorem}
+
+\paragraph{Resource Allocation with Screening.} In many practical settings, we can improve allocation decisions through a screening stage where we observe true outcomes $Y$ for a limited subset of units before making final allocation decisions. This is relevant when measuring outcomes is expensive (e.g., multidimensional poverty assessments, medical diagnostics, contamination surveys) but cheaper than full assignment. This two-stage procedure involves:
+
+\begin{enumerate}
+\item \textbf{Screening stage}: Select a subset of units $S(X) = 1$ to observe their outcomes, subject to a screening budget $\mathbb{E}[S(X)] \leq \alpha$.
+\item \textbf{Allocation stage}: Assign the resource $T(X, Y \cdot S(X))$ based on both covariates $X$ and observed outcomes (when available for screened units with $S(X) = 1$), subject to  resource budget $\mathbb{E}[T(X, Y \cdot S(X))] \leq \beta$.
+\end{enumerate}
+
+A critical distinction from the no-screening case is that $Y$ is observed for screened units \textit{before final allocation decisions are made}. This means the allocation rule takes the form $T(X,Y)$ for screened units ($S(X) = 1$), where $Y$ is now a deterministic observed value rather than a random variable. Consequently, for screened units, the outcome $Y$ is no longer uncertain when making the allocation decision. Moreover, in this setting screening is always beneficial (in terms of efficiency) as it reveals truly vulnerable units before resource allocation.
+
+Formally, we are interested in the following optimization problem:
+
+\begin{align*}\label{opt}
+\small
+\max_{S(X),\, H} \quad 
+    & \EE\!\left[ S(X) Y \right] 
+      + \EE\!\left[(1-S(X)) Y\, \mathbf{1}\{\mu(X)\in H\}\right] \\[-2pt]
+\text{s.t.}\quad
+    & \EE[S(X)] \le \alpha, \\[-1pt]
+    & \EE\!\left[ S(X) Y \right] 
+      + \EE\!\left[(1-S(X))\, \mathbf{1}\{\mu(X)\in H\}\right] \le \beta, \\[-1pt]
+    & S(X)\in\{0,1\},
+\end{align*}
+where the first term in the objective represents the expected outcome from screened and treated units (i.e., screened units with observed $Y=1$ that are then treated), and the second term captures unscreened units that are treated according to the rule $T_0(X) = 1(\mu(X) \in H)$.
+
+
+\begin{theorem}[\textbf{(Informal) Optimal Screening Rule}]
+\label{thm:optimal_no_screening}
+The optimal screening rule is to screen those with ``bottom'' risk:
+$$S(X) = 1(\mu(X) \in [q_2, q_3]),$$ 
+where $q_2$ solves for the budget constraint:
+$$\int_{F(F^{-1}(q_3) - \alpha)}^{q_2} \mu(X) dF(x) = \beta - 1 + F(q_3),$$
+where $F$ is the CDF for the distribution of $\mu(X)$, and $q_1 = F^{-1}(F(q_3) - \alpha)$ to satisfy the screening budget constraint.
+\end{theorem}
+
+This results provides a policy lever that combines screening and prediction by screening units ``in the bottom'' of the predicted risk distribution and allocating without screening to units with highest predicted risk. This captures the intuition that: 
+\begin{itemize}
+    \item High-risk units should receive resources regardless (screening would be wasteful).
+
+    
+    \item Low-risk units likely don't need resources, and thus screening them frees more budget to treat units with higher risk. In other words, the aim is to set as many 0 as possible allowing to allocate more budget in total. Hence, screening the \textit{bottom} units is efficient under a pre-hoc set of approach where the most of the decision is going to be based on the uncertainty given by the risk scores.
+
+    \item It is a great point to notice how this scheme is the most efficient under a pre-hoc setting. It is worth to understand what happens if the risk becomes more uniform and post hoc statements become more practical as screening will deal with the uncertainty. Informally, this means the most efficient strategy will be to screen those in the \textit{middle}.
+\end{itemize}
+
+\paragraph{Estimation.} We provide a computationally tractable algorithm (via fixed-point) to identify the optimal screening set $S(\alpha, \beta)$ as a function of both the screening budget $\alpha$ and (fixed) allocation budget $\beta$, by estimating the distribution of risk from the (fixed) predictive model $\mu(X)$.
+
+
+For example, assuming that the risk is uniformly distributed $\mu(X) \sim \text{Unif}[0,1]$, we can analytically solve for the screening set:
+$$q_2^* = \frac{1-\beta- \alpha^2/2}{1-\alpha},$$
+and $q_1^* = q_2^* - \alpha.$
+
+
+
+\subsection*{Characterizing optimal screening budget:}
+
+Under uniform risk, we can study the value function in terms of the screening budget $\alpha$:
+$$V^*(\alpha) = \frac{1}{2} - \frac{(q_2^*(\alpha) - \alpha)^2}{2},$$
+where $q_2^*(\alpha) = \frac{1-\beta- \alpha^2/2}{1-\alpha}$ for a fixed resource budget $\beta$. Then, 
+$$\frac{dV^*}{d\alpha} = (q^* - \alpha)\left(1-\frac{dq^*}{d\alpha}\right)$$
+$$\Rightarrow \alpha^* = 1 - \sqrt{1-2\beta},$$
+(assuming $\beta \leq 1/2$).
+
+
+Let the Lagrangian for the optimization problem including screen be:
+\begin{align}
+\mathcal{L} &= \underbrace{\int_0^1 \Big[ s(\mu)\,\mu + (1 - s(\mu))\, h(\mu)\, \mu \Big]\, dF(\mu)}_{\text{objective: expected utility}} \nonumber \\[4pt]
+&\quad + \lambda \underbrace{\left(\alpha - \int_0^1 s(\mu)\, dF(\mu)\right)}_{\text{screening budget slack}} \nonumber \\[4pt]
+&\quad + \gamma \underbrace{\left(\beta - \int_0^1 \Big[s(\mu)\,\mu + (1-s(\mu))\,h(\mu)\Big]\, dF(\mu)\right)}_{\text{treatment budget slack}}
+\end{align}
+
+
+For general risk distribution $F$ use envelope theorem to get:
+\begin{align}
+    \frac{d V}{d \alpha} = \lambda^*(\alpha)
+\end{align}
+where $\lambda^*(\alpha)$ is the optimal dual variable for a fixed $\alpha$
+
+\section{Experiments}
+
+We are planning in conducting simulations, both semi-synthetic and synthetic and a real world use case.
+
+In the synthetic simulations, we draw 100000 risk scores from four Beta distributions with increasing entropy (Figure~\ref{fig:risk_dists}). We compare our method to the optimal no-screening policy established in Theorem~\ref{thm:optimal_no_screening}, which allocates treatment to individuals with the highest predicted risk. We also evaluate a random screening baseline in which an $\alpha$ fraction of the population is selected uniformly at random for screening, after which the remaining budget is allocated to those with the highest risk scores. Finally, we consider a variant of our approach in which the screening band is placed immediately below the top-risk treatment band.
+\textbf{Results} The experimental results corroborate our theoretical findings, unless there is complete ccertainty (a degenerate bimodal distribution of risks scores), screening will always improve the percentage of people treated with respect to treating just the population with the higest risk. Adittionally, the optimal strategy beats any other heuristic. Finally, it is wort noticing how the most gain in utility is achived when the risk scores themsleves have high entropy (they all are equal to 1/2) while the least utility is gain when there is complete certainty on the risk scores (all of them are either 0 or 1). This concords with our intuition about machine learning and screening as tools operating at different stages of uncertainty: prediction provides ex-ante risk stratification, while screening enables ex-post information acquisition. When risk scores are highly informative, the marginal value of screening diminishes; when predictions are uncertain, screening meaningfully improves allocation efficiency.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\linewidth]{../../runs/risk_distributions.png}
+    \caption{The four risk score distributions used in simulations.}
+    \label{fig:risk_dists}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.85\linewidth]{../../runs/simulations.png}
+    \caption{True positives identified as a function of screening budget $\alpha$, across all distributions and baselines ($\beta = 30\%$, 20 simulations).}
+    \label{fig:sim_main}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.85\linewidth]{../../runs/optimal_vs_no_screening.png}
+    \caption{Optimal screening vs.\ no-screening baseline ($\beta = 5\%$, 10 simulations).}
+    \label{fig:sim_noscreening}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.85\linewidth]{../../runs/optimal_vs_random.png}
+    \caption{Optimal screening vs.\ random screening ($\beta = 5\%$, 10 simulations).}
+    \label{fig:sim_random}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.85\linewidth]{../../runs/optimal_vs_intuitive.png}
+    \caption{Optimal screening vs.\ intuitive (top-adjacent band) screening ($\beta = 5\%$, 10 simulations).}
+    \label{fig:sim_intuitive}
+\end{figure}
+
+\subsection*{Next steps:}
+
+\begin{itemize}
+    \item Prove the maximum gap achived by screening coincides with maximum entropy.
+\end{itemize}

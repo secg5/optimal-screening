@@ -8,10 +8,11 @@ import numpy as np
 
 SIMULATION_SIZE = 100_000
 
-RISK_PRESETS: dict[str, tuple[float, float]] = {
+RISK_PRESETS: dict[str, tuple[float, float] | float] = {
     "uniform": (1.0, 1.0),
     "bimodal": (0.1, 0.1),
     "gaussian": (10.0, 10.0),
+    "delta_half": 0.5,
 }
 
 
@@ -204,6 +205,38 @@ def compute_quantiles(
     return result
 
 
+def generate_simulation_data(
+    a: float | None = None,
+    b: float | None = None,
+    size: int = SIMULATION_SIZE,
+    seed: int | None = None,
+    point_mass: float | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Generate synthetic risk scores and binary outcomes.
+
+    Supports two modes:
+    - **Beta-Binomial**: risk_scores ~ Beta(a, b), outcomes ~ Binomial(1, risk_scores).
+    - **Point mass**: all risk_scores = *point_mass*, outcomes ~ Binomial(1, point_mass).
+
+    Args:
+        a: Alpha parameter of the Beta distribution (ignored when *point_mass* is set).
+        b: Beta parameter of the Beta distribution (ignored when *point_mass* is set).
+        size: Number of samples to generate.
+        seed: Random seed for reproducibility.
+        point_mass: If provided, every risk score is set to this constant value.
+
+    Returns:
+        Tuple of (risk_scores, outcomes).
+    """
+    rng = np.random.default_rng(seed)
+    if point_mass is not None:
+        risk_scores = np.full(size, point_mass)
+    else:
+        risk_scores = rng.beta(a, b, size=size)
+    outcomes = rng.binomial(1, risk_scores)
+    return risk_scores, outcomes
+
+
 def compute_screening_curve(
     rows: list[dict[str, Any]],
     outcome_col: str,
@@ -241,12 +274,6 @@ def compute_screening_curve(
 
     # Compute empirical P(Y=1|X) for each stratum
     empirical_probs = compute_empirical_probabilities(rows, outcome_col, strata_features)
-
-    # # TEMPORARY: Override with uniform distribution for debugging
-    # import random
-    # random.seed(42)
-    # for key in empirical_probs.keys():
-    #     empirical_probs[key]['probability'] = random.uniform(0, 1)
 
     # Assign each row its empirical risk P(Y=1|X)
     rows_with_risk = []
@@ -360,13 +387,15 @@ def compute_optimal_screening_curve(
         if isinstance(simulation, str):
             if simulation not in RISK_PRESETS:
                 raise ValueError(f"Unknown simulation preset '{simulation}'. Choose from {list(RISK_PRESETS.keys())}.")
-            a, b = RISK_PRESETS[simulation]
+            preset = RISK_PRESETS[simulation]
         else:
-            a, b = simulation
+            preset = simulation
 
-        rng = np.random.default_rng(seed)
-        risk_scores = rng.beta(a, b, size=SIMULATION_SIZE)
-        outcomes = rng.binomial(1, risk_scores)
+        if isinstance(preset, (int, float)):
+            risk_scores, outcomes = generate_simulation_data(size=SIMULATION_SIZE, seed=seed, point_mass=float(preset))
+        else:
+            a, b = preset
+            risk_scores, outcomes = generate_simulation_data(a, b, size=SIMULATION_SIZE, seed=seed)
 
         for i in range(SIMULATION_SIZE):
             rows_with_risk.append(
@@ -611,13 +640,15 @@ def compute_random_screening_curve(
         if isinstance(simulation, str):
             if simulation not in RISK_PRESETS:
                 raise ValueError(f"Unknown simulation preset '{simulation}'. Choose from {list(RISK_PRESETS.keys())}.")
-            a, b = RISK_PRESETS[simulation]
+            preset = RISK_PRESETS[simulation]
         else:
-            a, b = simulation
+            preset = simulation
 
-        rng = np.random.default_rng(seed)
-        risk_scores = rng.beta(a, b, size=SIMULATION_SIZE)
-        outcomes = rng.binomial(1, risk_scores)
+        if isinstance(preset, (int, float)):
+            risk_scores, outcomes = generate_simulation_data(size=SIMULATION_SIZE, seed=seed, point_mass=float(preset))
+        else:
+            a, b = preset
+            risk_scores, outcomes = generate_simulation_data(a, b, size=SIMULATION_SIZE, seed=seed)
 
         for i in range(SIMULATION_SIZE):
             rows_with_risk.append(
@@ -752,13 +783,15 @@ def compute_intuitive_optimal_curve(
         if isinstance(simulation, str):
             if simulation not in RISK_PRESETS:
                 raise ValueError(f"Unknown simulation preset '{simulation}'. Choose from {list(RISK_PRESETS.keys())}.")
-            a, b = RISK_PRESETS[simulation]
+            preset = RISK_PRESETS[simulation]
         else:
-            a, b = simulation
+            preset = simulation
 
-        rng = np.random.default_rng(seed)
-        risk_scores = rng.beta(a, b, size=SIMULATION_SIZE)
-        outcomes = rng.binomial(1, risk_scores)
+        if isinstance(preset, (int, float)):
+            risk_scores, outcomes = generate_simulation_data(size=SIMULATION_SIZE, seed=seed, point_mass=float(preset))
+        else:
+            a, b = preset
+            risk_scores, outcomes = generate_simulation_data(a, b, size=SIMULATION_SIZE, seed=seed)
 
         for i in range(SIMULATION_SIZE):
             rows_with_risk.append(
