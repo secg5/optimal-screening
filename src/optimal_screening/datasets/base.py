@@ -6,6 +6,8 @@ from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
+import pandas as pd
+
 
 Row = Mapping[str, Any]
 
@@ -39,6 +41,43 @@ class BaseDataset(ABC):
     def preprocess_data(self, rows: Iterable[Row]) -> list[Row]:
         """Preprocess rows. Default: identity (copy into a list)."""
         return [dict(r) for r in rows]
+
+    def to_dataframe(self) -> tuple[pd.DataFrame, pd.Series]:
+        """Convert loaded rows to a feature DataFrame and binary target Series.
+
+        Returns (X, y) where X contains the feature columns and y is the
+        binary outcome (int 0/1). Loads data first if not already loaded.
+        """
+        if self._rows is None:
+            self.load_data()
+
+        df = pd.DataFrame(self._rows)
+
+        if not self.outcome_col or self.outcome_col not in df.columns:
+            raise ValueError(f"outcome_col '{self.outcome_col}' not found in data columns: {list(df.columns)}")
+
+        # Determine feature columns
+        if self.variables is not None:
+            feature_cols = [c for c in self.variables if c != self.outcome_col]
+        else:
+            feature_cols = [c for c in df.columns if c != self.outcome_col]
+
+        X = df[feature_cols]
+        y_raw = df[self.outcome_col]
+
+        # Convert outcome to binary int
+        def _to_binary(val: Any) -> int:
+            if isinstance(val, bool):
+                return int(val)
+            s = str(val).strip().lower()
+            if s in {"true", "1", "1.0", "yes"}:
+                return 1
+            if s in {"false", "0", "0.0", "no"}:
+                return 0
+            return int(float(s))
+
+        y = y_raw.apply(_to_binary)
+        return X, y
 
     @abstractmethod
     def encode_variable(self, name: str, value: Any) -> str:
