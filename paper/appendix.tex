@@ -1,0 +1,113 @@
+
+\appendix
+
+\section{Proofs}
+\label{app:proofs}
+
+\begin{proof}[Proof of Theorem~\ref{thm:optimal_no_screening}]
+
+Any other feasible rule that deviates from this quantile-threshold rule would move probability mass from higher-value to lower-value $\mu(X)$ units, decreasing the objective. \textcolor{red}{MDR: recuerdo que habia una version más detallada de esto por contradicción, de pronto podriamos dejarlo en el appendix o algo}
+\end{proof}
+
+\begin{proof}[Proof of Proposition~1 (Contiguity of Optimal Sets)]
+We proceed by contradiction. Suppose the optimal solution has a gap: there exist disjoint intervals $I_1 = [q_a, q_b]$ and $I_2 = [q_c, q_d]$ with $q_b < q_c$ that both belong to either the screening set or the treatment set. Let $\Delta = (q_b, q_c)$ denote the gap.
+
+Consider an alternative policy that shifts mass from $I_1$ into the gap $\Delta$ while maintaining the same total mass (why is this posible?). Specifically, construct interval $I_1' = [q_a', q_b]$ where $q_a' > q_a$ is chosen so that $F(q_b) - F(q_a') = F(q_b) - F(q_a)$, and add the freed mass to form $I_1'' = [q_b, q_b + \epsilon]$ for appropriate $\epsilon > 0$ extending into $\Delta$.
+
+This alternative policy:
+\begin{enumerate}
+    \item Maintains the same screening/treatment mass: $F(I_1') + F(I_1'') = F(I_1)$
+    \item Maintains feasibility: both budget constraints still hold
+    \item Increases utility: Since $\mu(x)$ is non-decreasing in the quantiles of its distribution, units in $(q_a, q_a']$ have lower risk than units in $[q_b, q_b + \epsilon]$. Thus:
+    $$\int_{I_1'' \cup I_2} \mu \, dF > \int_{I_1 \cup I_2} \mu \, dF$$
+\end{enumerate}
+
+This contradicts the optimality of the original solution. Therefore, the optimal screening and treatment sets must be contiguous when ordered by risk.
+\end{proof}
+
+\begin{proof}[Proof of Lemma~1 (Budget Savings from Screening)]
+ The treatment budget constraint requires:
+         $$\underbrace{m_T}_{\text{Band T}} + \underbrace{\int_{q_L}^{q_T} \mu \, dF(\mu)}_{\text{Band S positives}} + \underbrace{m_B}_{\text{Band B}} = \beta$$
+
+       Substituting $m_T = \beta - \alpha$ and $m_S = \alpha$:
+       $$(\beta - \alpha) + \int_{q_L}^{q_T} \mu \, dF(\mu) + m_B = \beta$$
+
+       Rearranging:
+       $$m_B = \alpha - \int_{q_L}^{q_T} \mu \, dF(\mu) = \int_{q_L}^{q_T} (1 - \mu) \, dF(\mu)$$
+
+       which establishes equation \eqref{eq:budget_savings}.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:band_ordering}]
+By Proposition 1, we know the optimal sets are contiguous. We must establish: (i) the three-band structure exists, and (ii) the bands are ordered as stated.
+
+\textbf{Step 1: Three-band structure.}
+Consider any feasible screening policy with mass $\alpha$. Let $I_S$ denote the screening set. The treatment budget constraint requires allocating total mass $\beta$ to treatment. Under the optimal treatment rule for screened units (treat if and only if $Y = 1$), the expected treatment mass from $I_S$ is $\int_{I_S} \mu \, dF < \alpha$. This creates budget savings of $\alpha - \int_{I_S} \mu \, dF = \int_{I_S} (1-\mu) \, dF$ relative to treating all screened units.
+
+The total treatment budget available for unscreened units is therefore:
+$$\beta - \int_{I_S} \mu \, dF = (\beta - \alpha) + \int_{I_S} (1-\mu) \, dF$$
+
+By Theorem 1, this budget must be allocated to the highest-risk unscreened units via a threshold rule. This naturally produces three bands:
+\begin{itemize}
+    \item Band T: The top $\beta - \alpha$ mass of the population (always treated regardless of screening)
+    \item Band B: Additional treated units from the budget saved by screening (mass $\int_{I_S} (1-\mu) \, dF$)
+    \item Band S: The screening set $I_S$ (mass $\alpha$)
+\end{itemize}
+
+\textbf{Step 2: Band ordering (T-B-S from high to low risk).}
+We prove that Band T must be highest risk, followed by Band B, then Band S.
+
+\textit{Claim 1: Band T is highest risk.}
+Suppose not. Then there exists some unit $x \in I_B \cup I_S$ with $\mu(x) > \mu(x')$ for some $x' \in I_T$. But Band T consists of the top $\beta - \alpha$ mass that will definitely be treated. If we swap $x$ and $x'$ (moving the higher-risk unit to Band T), we maintain all budget constraints but increase expected utility, contradicting optimality.
+
+\textit{Claim 2: Band B has higher risk than Band S.}
+Suppose by contradiction that some unit $x_s \in I_S$ has higher risk than some unit $x_b \in I_B$, i.e., $\mu(x_s) > \mu(x_b)$.
+
+Consider the alternative policy that swaps these units: screen $x_b$ instead of $x_s$, and place $x_s$ in Band B instead of $x_b$. The expected change in utility is:
+\begin{align*}
+\Delta U = \underbrace{\mu(x_s)}_{\text{new Band B}} - \underbrace{\mu(x_b)}_{\text{old Band B}} +\\ \underbrace{\mu(x_b)}_{\text{screen } x_b \text{, treat if } Y=1} - \underbrace{\mu(x_s)}_{\text{screen } x_s \text{, treat if } Y=1} \\
+= \mu(x_s) - \mu(x_b) > 0
+\end{align*}
+
+This swap maintains the screening budget ($\alpha$) and the expected treatment budget (both generate the same expected savings), but increases utility, contradicting optimality. Therefore, Band B must have uniformly higher risk than Band S.
+
+\textbf{Step 3: Quantile determination.}
+Given the T-B-S ordering:
+\begin{itemize}
+    \item $q_T$ is determined by $F(1) - F(q_T) = \beta - \alpha$ (top treatment band)
+    \item $q_B$ and $q_S$ are jointly determined by: $F(q_B) - F(q_S) = \alpha$ (screening mass) and equation \eqref{eq:budget_savings} (budget savings constraint)
+    \item The optimal $q_B$ (equivalently $q_S$) maximizes \eqref{eq:three_band_objective} subject to these constraints
+\end{itemize}
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:fixed_point_existence}]
+    Consider the population version of the algorithm. The band thresholds are determined by:
+    \begin{align*}
+        q_T & = F^{-1}(\beta - \alpha) \\
+        q_B & = F^{-1}(\beta - \alpha \rho) \\
+        q_S & = F^{-1}(\beta + \alpha - \alpha \rho)
+    \end{align*}
+    where $F$ is the CDF of the risk distribution and $\rho$ is the average risk in Band S. The update function computes:
+    \begin{align*}
+        g(\rho) & = \frac{1}{q_S - q_B}\int_{q_B}^{q_S} \mu \, dF(\mu) \\
+        & = \frac{F(q_S) - F(q_B)}{q_S - q_B} \\
+        & = \frac{\alpha}{F^{-1}(\beta + \alpha - \alpha \rho) - F^{-1}(\beta - \alpha \rho)}
+    \end{align*}
+    where the last equality uses $F(q_S) - F(q_B) = \alpha$.
+
+    Since $F$ is continuous and strictly increasing, $F^{-1}$ exists and is continuous. The arguments $\beta - \alpha\rho$ and $\beta + \alpha - \alpha\rho$ lie in $(0,1)$ for $\rho \in [0,1]$ under our assumptions, so $g$ is well-defined. As a composition of continuous functions, $g$ is continuous.
+
+    The average risk over any interval of positive mass lies within the support of $F$, we have $g: [0,1] \to [0,1]$. Hence,
+    by Brouwer's fixed point theorem, as a consequence of $g$ being continuous and $[0,1]$ compact and convex, there exists $\rho^* \in [0,1]$ such that $g(\rho^*) = \rho^*$.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:fixed_point_uniqueness}]
+    We show that $g$ is strictly decreasing, which implies at most one fixed point.
+
+    As $\rho$ increases, both $q_B(\rho) = F^{-1}(\beta - \alpha\rho)$ and $q_S(\rho) = F^{-1}(\beta + \alpha - \alpha\rho)$ decrease, shifting the screening interval leftward in the risk space. Since $F$ is strictly increasing, lower quantiles correspond to lower risk values.
+
+    For $\rho_1 < \rho_2$, the interval $[q_B(\rho_2), q_S(\rho_2)]$ lies strictly to the left of $[q_B(\rho_1), q_S(\rho_1)]$. Both intervals have mass $\alpha$, but the left-shifted interval covers lower-risk individuals, so:
+    $$g(\rho_2) = \frac{1}{\alpha}\int_{q_B(\rho_2)}^{q_S(\rho_2)} \mu \, dF(\mu) < \frac{1}{\alpha}\int_{q_B(\rho_1)}^{q_S(\rho_1)} \mu \, dF(\mu) = g(\rho_1)$$
+
+    Thus $g$ is strictly decreasing. If $\rho_1 < \rho_2$ were both fixed points, then $\rho_1 = g(\rho_1) > g(\rho_2) = \rho_2$, a contradiction. Hence the fixed point is unique.
+\end{proof}

@@ -8,6 +8,7 @@
 \usepackage{float}
 \usepackage{xcolor}
 \usepackage{graphicx}
+\usepackage{cleveref}
 
 
 
@@ -25,7 +26,14 @@
 
 \begin{document}
 \maketitle
+\input{abstract}
 \input{body}
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\input{appendix}
+
 \end{document}
 
 
