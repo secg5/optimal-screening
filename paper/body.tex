@@ -68,29 +68,6 @@ Where $\mathcal{H}$ is the space of all such allocation rules.
 
 \subsection{Optimal Allocation Based on Risk}
 
-%Consider a population with covariates $X$ and binary outcomes $Y \in \{0,1\}$. We have:
-%\begin{itemize}
-%    \item Conditional mean function: $\mu(X) = \mathbb{E}[Y|X]$
-%    \item Treatment assignment rule: $T(X) \in \{0,1\}$
-%    \item Treatment budget constraint: $\mathbb{E}[T(X)] \leq \beta$
-%    \item Objective: Maximize $\mathbb{E}[Y \cdot T(X)]$
-%\end{itemize}
-
-
-%We want to solve:
-%\begin{align}
-%\max_{T(X)} &\quad E[Y \cdot T(X)] \\
-%\text{s.t.} &\quad E[T(X)] \leq \beta \\
-%&\quad T(X) \in \{0,1\}
-%\end{align}
-
-%Since $E[Y \cdot T(X)] = E[T(X) \cdot E[Y|X]] = E[T(X) \cdot \mu(X)]$, the problem becomes:
-%\begin{align}
-%\max_{T(X)} &\quad E[T(X) \cdot \mu(X)] \\
-%\text{s.t.} &\quad E[T(X)] \leq \beta \\
-%&\quad T(X) \in \{0,1\}
-%\end{align}
-
 The solution to problem \eqref{eq:objective}--\eqref{eq:binary} has a simple and intuitive form: allocate the resource to units in decreasing order of their risk score $\mu(X)$ until the budget is exhausted.
 
 \begin{theorem}[Optimal Allocation Rule without Screening]
@@ -100,7 +77,7 @@ $$T^*(X) = \mathbf{1}\{\mu(X) > q_{1-\beta}\}$$
 where $q_{1-\beta}$ is the $(1-\beta)$-quantile of the distribution of $\mu(X)$.
 \end{theorem}
 
-The proof is deferred to Appendix~\ref{app:proofs}.
+The proof is deferred to Appendix~\ref{app:proofs}.\\
 
 
 
@@ -155,8 +132,39 @@ The nature of the screening rule and the treatment set $H$ are not obvious. The 
 
 \subsection{Optimal Allocation Rule}
 
-To find the optimal treatment rule for the screening case, it is necessary to start by showing that the screening and treatment union must be convex on the space of probability risks. Let $F$ denote the cumulative distribution function (CDF) of the risk score $\mu(X)$. For any $q \in [0,1]$, we write $F^{-1}(q)$ for the $q$-th quantile of the risk distribution. Throughout, we use $q$ (possibly with subscripts) to denote quantile values, so that an interval $[q_a, q_b]$ refers to units whose risk $\mu(X)$ lies between the $q_a$-th and $q_b$-th quantiles. Higher quantiles correspond to higher risk.
+The characterization of the optimal screening rule builds on the intuition of Theorem~\ref{thm:optimal_no_screening}: optimal policies are naturally expressed as sets defined by quantile thresholds in the risk score space. Since quantile notation will be central to all subsequent results, we establish it here alongside the relevant distributional objects. Let $F$ denote the cumulative distribution function (CDF) of $\mu(X)$, and write $F^{-1}(q)$ for the $q$-th quantile of the risk distribution. Throughout, $q$ (possibly with subscripts) denotes quantile values, so that an interval $[q_a, q_b]$ refers to all units whose risk $\mu(X)$ falls between the $q_a$-th and $q_b$-th quantiles, with higher quantiles corresponding to higher risk.
 
+Lets start by defining a treatment set $T$ and a screening set $S$. The treatment set same as before will be all the people who are going to recieve a treatment based on their risks and the screening set, $S$ will be those for who the outcoe will be observed. The total budget $\beta$ has to be allocated between those two groups thus $\mathbb{E}[T(x)] = \beta -\alpha$ and $\mathbb{E}[S(x)]= \alpha$.
+
+
+
+% Ok i think I got it, we can prove the treatment and screning set are convex, then define the extra budget set, then prove they have to be continous and the rest follows. The proofs are basicaaly the same.
+
+One advantage of working in the risk space is that risks themselves are one-dimensional. Since all one-dimensional convex sets are intervals, convexity of the screening and treatment sets is a strong structural property --- it means each set is fully characterized by just two quantile thresholds. We now show this convexity holds at optimality.
+
+\begin{proposition}[Convexity of Optimal Sets]
+\label{prop:convexity}
+The optimal screening set $S^*$ and the optimal treatment set $T^*$ are each convex in the risk score space, i.e., they are intervals of the form $\{\mu(X) \in [q_a, q_b]\}$ for some quantiles $q_a \leq q_b$.
+\end{proposition}
+
+The proof is deferred to Appendix~\ref{app:proofs}.
+
+Band $S$ and $T$ do not run all budget $\beta$ because the outcomes of the screening set now remain fixed. That is there is enough budet saved in the screend band to treat and extra group of people. This extra band "B" relation between Band B's and the screened individuals is instrumental; the band's size is determined by the screening outcomes in Band S. Specifically:
+
+\begin{lemma}[Budget Savings from Screening]
+The expected mass of Band B equals the expected proportion of negative outcomes in Band S:
+\begin{equation}\label{eq:budget_savings}
+       m_B = \int_{q_L}^{q_T} (1 - \mu) \, dF(\mu)
+\end{equation}
+\end{lemma}
+
+The proof is deferred to Appendix~\ref{app:proofs}.
+       
+This lemma reveals the mechanism: screening ``saves" treatment budget by identifying negatives ($Y = 0$), and this saved budget is optimally deployed to treat additional  units in Band B.\\
+
+The previous proposition implies that $F(q_L) - F(q_B) = \int_{q_L}^{q_T} (1 - \mu) dF(\mu)$ is another restriction for the optimization problem \ref{opt}. 
+% If this is true, the treatment band is stil lnot convex...
+All this sets have to be contigous, formally,
 
 \begin{proposition}[Contiguity of Optimal Sets]
     Let $S^*(X)$ and $T^*(X,Y)$ denote the optimal screening and treatment rules. When units are ordered by their risk $\mu(X)$, the optimal solution partitions the population into at most three contiguous intervals: a high-risk treatment set, a screening set, and (possibly) a lower-risk treatment set formed from saved budget. That is, there do not exist disjoint intervals $[q_a, q_b]$ and $[q_c, q_d]$ with $q_b < q_c$ that are both in the screening set or both in the treatment set under the optimal policy.
@@ -166,7 +174,6 @@ The proof is deferred to Appendix~\ref{app:proofs}.
 
 Building on Proposition 1 (contiguity), we now proceed to characterize the precise structure of the optimal solution. We show that the population is partitioned into three contiguous  bands ordered by risk $\mu(X)$.
 
-\subsubsection{Three-Band Structure}
 
 Define the following intervals in the risk space (ordered from high to low risk):
 \begin{itemize}
@@ -183,22 +190,6 @@ In other words, the treatment rule under this structure is:
        \item Below $q_S$: No treatment, no screening
 \end{itemize}
 
-\textcolor{red}{\textbf{GAP}: Why all possible solutions have this three parts?. We know they have to be convex and continuous but thats about it.}
-
-The relation between Band B's and the screened individuals is instrumental; the band's size is determined by the screening outcomes in Band S. Specifically:
-\begin{lemma}[Budget Savings from Screening]
-The expected mass of Band B equals the expected proportion of negative outcomes in Band S:
-\begin{equation}\label{eq:budget_savings}
-       m_B = \int_{q_L}^{q_T} (1 - \mu) \, dF(\mu)
-\end{equation}
-\end{lemma}
-
-The proof is deferred to Appendix~\ref{app:proofs}.
-       
-This lemma reveals the mechanism: screening ``saves" treatment budget by identifying negatives ($Y = 0$), and this saved budget is optimally deployed to treat additional  units in Band B.\\
-
-The previous proposition implies that $F(q_L) - F(q_B) = \int_{q_L}^{q_T} (1 - \mu) dF(\mu)$ is another restriction for the optimization problem \ref{opt}. This restriction is the final piece required to characterize the optimal treatment and screening sets. Such characterization is formally described in the following theorem.
-
 \begin{theorem}[Optimal Band Ordering]\label{thm:band_ordering}
 The optimal screening and treatment policy partitions the population (ordered by risk $\mu$) into three contiguous bands with the following structure:
 \begin{enumerate}
@@ -212,6 +203,9 @@ where $0 \leq q_S \leq q_B \leq q_T \leq 1$.
 The proof is deferred to Appendix~\ref{app:proofs}.\\
 
 It is worth highlighting that, because the quantiles $q_i$ are defined in the risk space $\mu(X) = \mathbb{E}[Y|X]$ (not the feature space directly),  the feature space $X$ can include any type of data—structured or unstructured (images, text, etc.). 
+
+
+
 
 \subsection{Marginal Value of Screening}
 

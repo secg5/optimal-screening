@@ -5,24 +5,37 @@
 \label{app:proofs}
 
 \begin{proof}[Proof of Theorem~\ref{thm:optimal_no_screening}]
+We proceed by contradiction. Let $q^* = q_{1-\beta}$ denote the $(1-\beta)$-quantile of $\mu(X)$, and suppose $T$ is an optimal allocation rule that differs from the threshold rule $T^*(X) = \mathbf{1}\{\mu(X) > q^*\}$. Since $T \neq T^*$ and both exhaust exactly budget $\beta$, they must differ on a set of positive measure. In particular, There exists a unit $x_0$ allocated by $T^*$ but not by $T$, i.e., $\mu(x_0) > q^*$ and $T(x_0) = 0$. Conversely, since both rules exhaust the same budget $\beta$ but $T$ does not allocate $x_0$, it must allocate some unit $x_1$ that $T^*$ does not, i.e., $\mu(x_1) \leq q^*$ and $T(x_1) = 1$. In particular it follows that $\mu(x_0) > q^* \geq \mu(x_1)$, so $\mu(x_0) > \mu(x_1)$.
 
-Any other feasible rule that deviates from this quantile-threshold rule would move probability mass from higher-value to lower-value $\mu(X)$ units, decreasing the objective. \textcolor{red}{MDR: recuerdo que habia una version más detallada de esto por contradicción, de pronto podriamos dejarlo en el appendix o algo}
+Define $\tilde{T}$ to agree with $T$ everywhere except at $x_0$ and $x_1$, specifically:
+$$\tilde{T}(x_0) = 1, \qquad \tilde{T}(x_1) = 0.$$
+This swap preserves feasibility: $\mathbb{E}[\tilde{T}(X)] = \mathbb{E}[T(X)] = \beta$. The change in objective is:
+$$\mathbb{E}[\tilde{T}(X)\,\mu(X)] - \mathbb{E}[T(X)\,\mu(X)] = \mu(x_0) - \mu(x_1) > 0,$$
+strictly improving the value, contradicting the optimality of $T$. Hence no such $T$ can exist, and the optimal rule must be the quantile threshold $T^*(X) = \mathbf{1}\{\mu(X) > q^*\}$.
 \end{proof}
 
-\begin{proof}[Proof of Proposition~1 (Contiguity of Optimal Sets)]
+\begin{proof}[Proof of Proposition~2 (Contiguity of Optimal Sets)]
 We proceed by contradiction. Suppose the optimal solution has a gap: there exist disjoint intervals $I_1 = [q_a, q_b]$ and $I_2 = [q_c, q_d]$ with $q_b < q_c$ that both belong to either the screening set or the treatment set. Let $\Delta = (q_b, q_c)$ denote the gap.
 
-Consider an alternative policy that shifts mass from $I_1$ into the gap $\Delta$ while maintaining the same total mass (why is this posible?). Specifically, construct interval $I_1' = [q_a', q_b]$ where $q_a' > q_a$ is chosen so that $F(q_b) - F(q_a') = F(q_b) - F(q_a)$, and add the freed mass to form $I_1'' = [q_b, q_b + \epsilon]$ for appropriate $\epsilon > 0$ extending into $\Delta$.
+Consider an alternative policy that shifts mass from $I_1$ into the gap $\Delta$ while maintaining the same total mass. Specifically, construct interval $I_1' = [q_a', q_b]$ where $q_a' > q_a$ is chosen so that $F(q_b) - F(q_a') = F(q_b) - F(q_a)$, and add the freed mass to form $I_1'' = [q_b, q_b + \epsilon]$ for appropriate $\epsilon > 0$ extending into $\Delta$.
 
 This alternative policy:
 \begin{enumerate}
     \item Maintains the same screening/treatment mass: $F(I_1') + F(I_1'') = F(I_1)$
     \item Maintains feasibility: both budget constraints still hold
-    \item Increases utility: Since $\mu(x)$ is non-decreasing in the quantiles of its distribution, units in $(q_a, q_a']$ have lower risk than units in $[q_b, q_b + \epsilon]$. Thus:
+    \item Increases utility: since $\mu(x)$ is non-decreasing in the quantiles of its distribution, units in $(q_a, q_a']$ have lower risk than units in $[q_b, q_b + \epsilon]$, so:
     $$\int_{I_1'' \cup I_2} \mu \, dF > \int_{I_1 \cup I_2} \mu \, dF$$
 \end{enumerate}
 
 This contradicts the optimality of the original solution. Therefore, the optimal screening and treatment sets must be contiguous when ordered by risk.
+\end{proof}
+
+\begin{proof}[Proof of Proposition~\ref{prop:convexity} (Convexity of Optimal Sets)]
+We prove convexity of the screening set; the argument for the treatment set is identical. Suppose by contradiction that $S^*$ is not convex. Then there exist units $x_a, x_b$ with $\mu(x_a) < \mu(x_b)$, both screened, and a unit $x_m$ with $\mu(x_a) < \mu(x_m) < \mu(x_b)$ that is \emph{not} screened --- a gap inside the screening set.
+
+Consider swapping $x_a$ out of the screening set and replacing it with $x_m$, keeping all else equal. This maintains the screening budget. However, since $\mu(x_m) > \mu(x_a)$, the screened set now covers a unit with strictly higher risk, yielding strictly more expected positives from screening:
+$$\mathbb{E}[S(X) Y] \text{ increases by } \mu(x_m) - \mu(x_a) > 0.$$
+This contradicts the optimality of $S^*$. Hence the optimal screening set must be an interval in the risk space.
 \end{proof}
 
 \begin{proof}[Proof of Lemma~1 (Budget Savings from Screening)]
