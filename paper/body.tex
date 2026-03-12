@@ -11,6 +11,7 @@ This ML-driven approach is potentially cheaper, faster, and deployable pre-hoc, 
 
 \textit{Remark: This tension between a pre-hoc potentially cheaper albeit sthocastic allocation versus an expensive but potentially perfect one, boils down to the resource-intensive processes that screening usually entails. For example, conducting household interviews and visits to confirm poverty status, performing technical surveys to verify landmine contamination, or convening medical panels to diagnose conditions for treatment eligibility. Traditionally, in the absence of predictive models, policymakers would screen the entire population prior to allocation—a strategy that is often prohibitively expensive. On the limits of predictive modeling in inherently uncertain outcomes + epistemic vs. aleatoric uncertainty.}
 
+% Maybe add a dummy plot showing intuition of the optimal strategy
 
 Our contributions are as follows:
 \begin{itemize}
@@ -133,52 +134,38 @@ The nature of the screening rule and the treatment set $H$ are not obvious. The 
 \subsection{Optimal Allocation Rule}
 
 The characterization of the optimal screening rule builds on the intuition of Theorem~\ref{thm:optimal_no_screening}: optimal policies are naturally expressed as sets defined by quantile thresholds in the risk score space. Since quantile notation will be central to all subsequent results, we establish it here alongside the relevant distributional objects. Let $F$ denote the cumulative distribution function (CDF) of $\mu(X)$, and write $F^{-1}(q)$ for the $q$-th quantile of the risk distribution. Throughout, $q$ (possibly with subscripts) denotes quantile values, so that an interval $[q_a, q_b]$ refers to all units whose risk $\mu(X)$ falls between the $q_a$-th and $q_b$-th quantiles, with higher quantiles corresponding to higher risk.
-
-Lets start by defining a treatment set $T$ and a screening set $S$. The treatment set same as before will be all the people who are going to recieve a treatment based on their risks and the screening set, $S$ will be those for who the outcoe will be observed. The total budget $\beta$ has to be allocated between those two groups thus $\mathbb{E}[T(x)] = \beta -\alpha$ and $\mathbb{E}[S(x)]= \alpha$.
-
-
-
 % Ok i think I got it, we can prove the treatment and screning set are convex, then define the extra budget set, then prove they have to be continous and the rest follows. The proofs are basicaaly the same.
+% We just proved they msut b e convex, then its a matter of time for it to be contigous and that eill be it.
 
-One advantage of working in the risk space is that risks themselves are one-dimensional. Since all one-dimensional convex sets are intervals, convexity of the screening and treatment sets is a strong structural property --- it means each set is fully characterized by just two quantile thresholds. We now show this convexity holds at optimality.
+One advantage of working in the risk space is that risks themselves are one-dimensional. Since all one-dimensional convex sets are intervals, convexity of the screening and treatment sets is equivalent to each set is fully characterized by just two quantile thresholds. We now show this convexity holds at optimality.
 
 \begin{proposition}[Convexity of Optimal Sets]
 \label{prop:convexity}
 The optimal screening set $S^*$ and the optimal treatment set $T^*$ are each convex in the risk score space, i.e., they are intervals of the form $\{\mu(X) \in [q_a, q_b]\}$ for some quantiles $q_a \leq q_b$.
 \end{proposition}
+The proof is deferred to Appendix~\ref{app:proofs}.\\
 
-The proof is deferred to Appendix~\ref{app:proofs}.
-
-Band $S$ and $T$ do not run all budget $\beta$ because the outcomes of the screening set now remain fixed. That is there is enough budet saved in the screend band to treat and extra group of people. This extra band "B" relation between Band B's and the screened individuals is instrumental; the band's size is determined by the screening outcomes in Band S. Specifically:
-
-\begin{lemma}[Budget Savings from Screening]
-The expected mass of Band B equals the expected proportion of negative outcomes in Band S:
-\begin{equation}\label{eq:budget_savings}
-       m_B = \int_{q_L}^{q_T} (1 - \mu) \, dF(\mu)
-\end{equation}
-\end{lemma}
-
-The proof is deferred to Appendix~\ref{app:proofs}.
-       
-This lemma reveals the mechanism: screening ``saves" treatment budget by identifying negatives ($Y = 0$), and this saved budget is optimally deployed to treat additional  units in Band B.\\
-
-The previous proposition implies that $F(q_L) - F(q_B) = \int_{q_L}^{q_T} (1 - \mu) dF(\mu)$ is another restriction for the optimization problem \ref{opt}. 
-% If this is true, the treatment band is stil lnot convex...
-All this sets have to be contigous, formally,
+Furthermore, these two sets have to be contiguous.
 
 \begin{proposition}[Contiguity of Optimal Sets]
     Let $S^*(X)$ and $T^*(X,Y)$ denote the optimal screening and treatment rules. When units are ordered by their risk $\mu(X)$, the optimal solution partitions the population into at most three contiguous intervals: a high-risk treatment set, a screening set, and (possibly) a lower-risk treatment set formed from saved budget. That is, there do not exist disjoint intervals $[q_a, q_b]$ and $[q_c, q_d]$ with $q_b < q_c$ that are both in the screening set or both in the treatment set under the optimal policy.
 \end{proposition}
 
-The proof is deferred to Appendix~\ref{app:proofs}.
+The proof is deferred to Appendix~\ref{app:proofs}.\\
 
-Building on Proposition 1 (contiguity), we now proceed to characterize the precise structure of the optimal solution. We show that the population is partitioned into three contiguous  bands ordered by risk $\mu(X)$.
+The two previous prepostions are almost enough to chracterise our sets, they are two contigous intervals, but how big and it which order should they be?. to answer the first question we already have a restriction for the screening interval, by the restrictions imposed in our optimization problem \ref{eq:objective}, it follows that $\mathbb{E}[S(X)] = \alpha$, but what about $\mathbb{E}[T(X)]$?. The first intuitoin will be to allocate $\beta -\alpha$ proportion of the budget to the treatment, however in this scenario $S$ and $T$ do not fullfill the restrictions of problem \ref{eq:objective}. Succintly putted, $\EE\!\left[ S(X) Y \right] + \EE\!\left[(1-S(X))\, \mathbf{1}\{\mu(X)\in H\}\right]$ is actually less than $\beta$ because only the elements with a postive outcome will be treated. 
 
+The former discovery might seem problematic at first however it is in reality a feature of the setting; Allowing to screen data points frees up budget to allocate more people in to the trearment band therefore allowing for a more efficeint use of the budget, i.e, the total amount of people treated increases. Formally, as a consequence of Proposition~\ref{prop:convexity}, without loss of generality define the optimal screening set as $S^* = \{\mu(X) \in [q_S, q_B]\}$, where $q_S$ and $q_B$ are the lower and upper quantile thresholds of Band S. Let $m_g$ denote the budget gained by screening:
 
-Define the following intervals in the risk space (ordered from high to low risk):
+\begin{align}\label{eq:budget_savings}
+       m_g &= \alpha - \int_{q_S}^{q_B} \mu \, dF(\mu) = \int_{q_S}^{q_B} (1 - \mu) \, dF(\mu)
+\end{align}
+
+We now characterize the optimal partition of the risk space. Let $q_T$ be the quantile such that $F(1) - F(q_T) = \beta - \alpha$, $q_B$ the quantile such that $F(q_T) - F(q_B) = m_g$, and $q_S$ the quantile such that $F(q_B) - F(q_S) = \alpha$, with $0 \leq q_S \leq q_B \leq q_T \leq 1$. The three contiguous bands are defined as follows (ordered from high to low risk):
+
 \begin{itemize}
    \item \textbf{Band T} (Top Treatment): $I_T = [q_T, 1]$ with mass $m_T = F(1) - F(q_T) = \beta - \alpha$
-   \item \textbf{Band B} (Bottom Treatment): $I_B = [q_B, q_T]$ with mass $m_B = F(q_T) - F(q_B)$
+   \item \textbf{Band B} (Bottom Treatment): $I_B = [q_B, q_T]$ with mass $m_g = F(q_T) - F(q_B)$
    \item \textbf{Band S} (Screening): $I_S = [q_S, q_B]$ with mass $m_S = F(q_B) - F(q_S) = \alpha$
 \end{itemize}
 In other words, the treatment rule under this structure is:
@@ -190,17 +177,50 @@ In other words, the treatment rule under this structure is:
        \item Below $q_S$: No treatment, no screening
 \end{itemize}
 
-\begin{theorem}[Optimal Band Ordering]\label{thm:band_ordering}
-The optimal screening and treatment policy partitions the population (ordered by risk $\mu$) into three contiguous bands with the following structure:
-\begin{enumerate}
-    \item \textbf{Band T} (highest risk): $[q_T, 1]$ with mass $\beta - \alpha$, all units treated without screening
-    \item \textbf{Band B} (intermediate risk): $[q_B, q_T]$ with mass $m_B$ determined by \eqref{eq:budget_savings}, all units treated using budget saved from Band S
-    \item \textbf{Band S} (lower risk): $[q_S, q_B]$ with mass $\alpha$, all units screened and treated only if $Y = 1$
-\end{enumerate}
-where $0 \leq q_S \leq q_B \leq q_T \leq 1$.
+\begin{theorem}[Optimal Screening]\label{thm:Optimal screening}
+The treatment rule $T^* = I_T \cup I_B$ and screening rule $S^* = I_S$, with bands $I_T$, $I_B$, $I_S$ as defined above, constitute an optimal solution to problem~\ref{opt}.
 \end{theorem}
 
-The proof is deferred to Appendix~\ref{app:proofs}.\\
+\begin{proof}
+By Proposition~\ref{prop:convexity}, we know the optimal sets are contiguous. We must establish: (i) the three-band structure exists, and (ii) the bands are ordered as stated.
+
+\textbf{Step 1: Three-band structure.}
+Consider any feasible screening policy with mass $\alpha$. Let $I_S$ denote the screening set. The treatment budget constraint requires allocating total mass $\beta$ to treatment. Under the optimal treatment rule for screened units (treat if and only if $Y = 1$), the expected treatment mass from $I_S$ is $\int_{I_S} \mu \, dF < \alpha$. This creates budget savings of $\alpha - \int_{I_S} \mu \, dF = \int_{I_S} (1-\mu) \, dF$ relative to treating all screened units.
+
+The total treatment budget available for unscreened units is therefore:
+$$\beta - \int_{I_S} \mu \, dF = (\beta - \alpha) + \int_{I_S} (1-\mu) \, dF$$
+
+By Theorem~\ref{thm:optimal_no_screening}, this budget must be allocated to the highest-risk unscreened units via a threshold rule. This naturally produces three bands:
+\begin{itemize}
+    \item Band T: The top $\beta - \alpha$ mass of the population (always treated regardless of screening)
+    \item Band B: Additional treated units from the budget saved by screening (mass $\int_{I_S} (1-\mu) \, dF$)
+    \item Band S: The screening set $I_S$ (mass $\alpha$)
+\end{itemize}
+
+\textbf{Step 2: Band ordering (T-B-S from high to low risk).}
+We prove that Band T must be highest risk, followed by Band B, then Band S.
+
+\textit{Claim 1: Band T is highest risk.}
+Suppose not. Then there exists some unit $x \in I_B \cup I_S$ with $\mu(x) > \mu(x')$ for some $x' \in I_T$. But Band T consists of the top $\beta - \alpha$ mass that will definitely be treated. If we swap $x$ and $x'$ (moving the higher-risk unit to Band T), we maintain all budget constraints but increase expected utility, contradicting optimality.
+
+\textit{Claim 2: Band B has higher risk than Band S.}
+Suppose by contradiction that some unit $x_s \in I_S$ has higher risk than some unit $x_b \in I_B$, i.e., $\mu(x_s) > \mu(x_b)$.
+
+Consider the alternative policy that swaps these units: screen $x_b$ instead of $x_s$, and place $x_s$ in Band B instead of $x_b$. The expected change in utility is:
+\begin{align*}
+\Delta U = \underbrace{\mu(x_s)}_{\text{new Band B}} - \underbrace{\mu(x_b)}_{\text{old Band B}} + \underbrace{\mu(x_b)}_{\text{screen } x_b \text{, treat if } Y=1} - \underbrace{\mu(x_s)}_{\text{screen } x_s \text{, treat if } Y=1} = \mu(x_s) - \mu(x_b) > 0
+\end{align*}
+
+This swap maintains the screening budget ($\alpha$) and the expected treatment budget, but increases utility, contradicting optimality. Therefore, Band B must have uniformly higher risk than Band S.
+
+\textbf{Step 3: Quantile determination.}
+Given the T-B-S ordering:
+\begin{itemize}
+    \item $q_T$ is determined by $F(1) - F(q_T) = \beta - \alpha$ (top treatment band)
+    \item $q_B$ and $q_S$ are jointly determined by $F(q_B) - F(q_S) = \alpha$ (screening mass) and equation \eqref{eq:budget_savings} (budget savings constraint)
+    \item The optimal $q_B$ (equivalently $q_S$) maximizes \eqref{eq:three_band_objective} subject to these constraints
+\end{itemize}
+\end{proof}
 
 It is worth highlighting that, because the quantiles $q_i$ are defined in the risk space $\mu(X) = \mathbb{E}[Y|X]$ (not the feature space directly),  the feature space $X$ can include any type of data—structured or unstructured (images, text, etc.). 
 

@@ -38,60 +38,7 @@ $$\mathbb{E}[S(X) Y] \text{ increases by } \mu(x_m) - \mu(x_a) > 0.$$
 This contradicts the optimality of $S^*$. Hence the optimal screening set must be an interval in the risk space.
 \end{proof}
 
-\begin{proof}[Proof of Lemma~1 (Budget Savings from Screening)]
- The treatment budget constraint requires:
-         $$\underbrace{m_T}_{\text{Band T}} + \underbrace{\int_{q_L}^{q_T} \mu \, dF(\mu)}_{\text{Band S positives}} + \underbrace{m_B}_{\text{Band B}} = \beta$$
 
-       Substituting $m_T = \beta - \alpha$ and $m_S = \alpha$:
-       $$(\beta - \alpha) + \int_{q_L}^{q_T} \mu \, dF(\mu) + m_B = \beta$$
-
-       Rearranging:
-       $$m_B = \alpha - \int_{q_L}^{q_T} \mu \, dF(\mu) = \int_{q_L}^{q_T} (1 - \mu) \, dF(\mu)$$
-
-       which establishes equation \eqref{eq:budget_savings}.
-\end{proof}
-
-\begin{proof}[Proof of Theorem~\ref{thm:band_ordering}]
-By Proposition 1, we know the optimal sets are contiguous. We must establish: (i) the three-band structure exists, and (ii) the bands are ordered as stated.
-
-\textbf{Step 1: Three-band structure.}
-Consider any feasible screening policy with mass $\alpha$. Let $I_S$ denote the screening set. The treatment budget constraint requires allocating total mass $\beta$ to treatment. Under the optimal treatment rule for screened units (treat if and only if $Y = 1$), the expected treatment mass from $I_S$ is $\int_{I_S} \mu \, dF < \alpha$. This creates budget savings of $\alpha - \int_{I_S} \mu \, dF = \int_{I_S} (1-\mu) \, dF$ relative to treating all screened units.
-
-The total treatment budget available for unscreened units is therefore:
-$$\beta - \int_{I_S} \mu \, dF = (\beta - \alpha) + \int_{I_S} (1-\mu) \, dF$$
-
-By Theorem 1, this budget must be allocated to the highest-risk unscreened units via a threshold rule. This naturally produces three bands:
-\begin{itemize}
-    \item Band T: The top $\beta - \alpha$ mass of the population (always treated regardless of screening)
-    \item Band B: Additional treated units from the budget saved by screening (mass $\int_{I_S} (1-\mu) \, dF$)
-    \item Band S: The screening set $I_S$ (mass $\alpha$)
-\end{itemize}
-
-\textbf{Step 2: Band ordering (T-B-S from high to low risk).}
-We prove that Band T must be highest risk, followed by Band B, then Band S.
-
-\textit{Claim 1: Band T is highest risk.}
-Suppose not. Then there exists some unit $x \in I_B \cup I_S$ with $\mu(x) > \mu(x')$ for some $x' \in I_T$. But Band T consists of the top $\beta - \alpha$ mass that will definitely be treated. If we swap $x$ and $x'$ (moving the higher-risk unit to Band T), we maintain all budget constraints but increase expected utility, contradicting optimality.
-
-\textit{Claim 2: Band B has higher risk than Band S.}
-Suppose by contradiction that some unit $x_s \in I_S$ has higher risk than some unit $x_b \in I_B$, i.e., $\mu(x_s) > \mu(x_b)$.
-
-Consider the alternative policy that swaps these units: screen $x_b$ instead of $x_s$, and place $x_s$ in Band B instead of $x_b$. The expected change in utility is:
-\begin{align*}
-\Delta U = \underbrace{\mu(x_s)}_{\text{new Band B}} - \underbrace{\mu(x_b)}_{\text{old Band B}} +\\ \underbrace{\mu(x_b)}_{\text{screen } x_b \text{, treat if } Y=1} - \underbrace{\mu(x_s)}_{\text{screen } x_s \text{, treat if } Y=1} \\
-= \mu(x_s) - \mu(x_b) > 0
-\end{align*}
-
-This swap maintains the screening budget ($\alpha$) and the expected treatment budget (both generate the same expected savings), but increases utility, contradicting optimality. Therefore, Band B must have uniformly higher risk than Band S.
-
-\textbf{Step 3: Quantile determination.}
-Given the T-B-S ordering:
-\begin{itemize}
-    \item $q_T$ is determined by $F(1) - F(q_T) = \beta - \alpha$ (top treatment band)
-    \item $q_B$ and $q_S$ are jointly determined by: $F(q_B) - F(q_S) = \alpha$ (screening mass) and equation \eqref{eq:budget_savings} (budget savings constraint)
-    \item The optimal $q_B$ (equivalently $q_S$) maximizes \eqref{eq:three_band_objective} subject to these constraints
-\end{itemize}
-\end{proof}
 
 \begin{proof}[Proof of Theorem~\ref{thm:fixed_point_existence}]
     Consider the population version of the algorithm. The band thresholds are determined by:
