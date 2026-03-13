@@ -11,7 +11,57 @@ This ML-driven approach is potentially cheaper, faster, and deployable pre-hoc, 
 
 \textit{Remark: This tension between a pre-hoc potentially cheaper albeit sthocastic allocation versus an expensive but potentially perfect one, boils down to the resource-intensive processes that screening usually entails. For example, conducting household interviews and visits to confirm poverty status, performing technical surveys to verify landmine contamination, or convening medical panels to diagnose conditions for treatment eligibility. Traditionally, in the absence of predictive models, policymakers would screen the entire population prior to allocation—a strategy that is often prohibitively expensive. On the limits of predictive modeling in inherently uncertain outcomes + epistemic vs. aleatoric uncertainty.}
 
-% Maybe add a dummy plot showing intuition of the optimal strategy
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.0]
+
+    % Risk axis
+    \draw[->, thick] (0,0) -- (11,0) node[right] {Risk $\mu(X)$};
+    \node at (0,-0.35) {\small $0$};
+    \node at (10,-0.35) {\small $1$};
+
+    % Band colours
+    % No-treatment zone (grey)
+    \fill[gray!20] (0,0.15) rectangle (3,0.75);
+    % Band S (yellow)
+    \fill[orange!30] (3,0.15) rectangle (5,0.75);
+    % Band B (blue, saved budget)
+    \fill[blue!25] (5,0.15) rectangle (7,0.75);
+    % Band T (green)
+    \fill[green!30] (7,0.15) rectangle (10,0.75);
+
+    % Band outlines
+    \draw (0,0.15) rectangle (3,0.75);
+    \draw (3,0.15) rectangle (5,0.75);
+    \draw (5,0.15) rectangle (7,0.75);
+    \draw (7,0.15) rectangle (10,0.75);
+
+    % Band labels inside bars
+    \node at (1.5,0.45) {\small No action};
+    \node at (4.0,0.45) {\small Band $S$};
+    \node at (6.0,0.45) {\small Band $B$};
+    \node at (8.5,0.45) {\small Band $T$};
+
+    % Quantile tick marks
+    \foreach \x/\lbl in {3/$q_S$, 5/$q_B$, 7/$q_T$}{
+        \draw (\x, 0) -- (\x, -0.15);
+        \node at (\x,-0.38) {\small \lbl};
+    }
+
+    % Action labels below bands
+    \node[align=center, text width=2cm] at (4.0,-1.0) {\scriptsize Screen;\\ treat if $Y=1$};
+    \node[align=center, text width=2.5cm] at (6.0,-1.0) {\scriptsize Treat all\\ (saved budget)};
+    \node[align=center, text width=2cm] at (8.5,-1.0) {\scriptsize Treat all};
+
+    % Arrow showing saved budget flow
+    \draw[->, dashed, thick, orange!70!black]
+        (4.0, 0.9) .. controls (4.0,1.4) and (6.0,1.4) .. (6.0, 0.9)
+        node[midway, above] {\scriptsize saved budget $\rightarrow$ Band $B$};
+
+\end{tikzpicture}
+\caption{Illustration of the optimal three-band screening strategy. The population is ordered by risk score $\mu(X)$ from left to right. The highest-risk individuals (Band $T$) are treated directly. The middle band (Band $S$) is screened and treated only if $Y=1$, which frees up budget. This saved budget finances Band $B$, an additional treatment band immediately below Band $T$ that would not be reachable without screening.}
+\label{fig:illustration}
+\end{figure}
 
 Our contributions are as follows:
 \begin{itemize}
@@ -134,8 +184,6 @@ The nature of the screening rule and the treatment set $H$ are not obvious. The 
 \subsection{Optimal Allocation Rule}
 
 The characterization of the optimal screening rule builds on the intuition of Theorem~\ref{thm:optimal_no_screening}: optimal policies are naturally expressed as sets defined by quantile thresholds in the risk score space. Since quantile notation will be central to all subsequent results, we establish it here alongside the relevant distributional objects. Let $F$ denote the cumulative distribution function (CDF) of $\mu(X)$, and write $F^{-1}(q)$ for the $q$-th quantile of the risk distribution. Throughout, $q$ (possibly with subscripts) denotes quantile values, so that an interval $[q_a, q_b]$ refers to all units whose risk $\mu(X)$ falls between the $q_a$-th and $q_b$-th quantiles, with higher quantiles corresponding to higher risk.
-% Ok i think I got it, we can prove the treatment and screning set are convex, then define the extra budget set, then prove they have to be continous and the rest follows. The proofs are basicaaly the same.
-% We just proved they msut b e convex, then its a matter of time for it to be contigous and that eill be it.
 
 One advantage of working in the risk space is that risks themselves are one-dimensional. Since all one-dimensional convex sets are intervals, convexity of the screening and treatment sets is equivalent to each set is fully characterized by just two quantile thresholds. We now show this convexity holds at optimality.
 
@@ -218,7 +266,7 @@ Given the T-B-S ordering:
 \begin{itemize}
     \item $q_T$ is determined by $F(1) - F(q_T) = \beta - \alpha$ (top treatment band)
     \item $q_B$ and $q_S$ are jointly determined by $F(q_B) - F(q_S) = \alpha$ (screening mass) and equation \eqref{eq:budget_savings} (budget savings constraint)
-    \item The optimal $q_B$ (equivalently $q_S$) maximizes \eqref{eq:three_band_objective} subject to these constraints
+    \item The optimal $q_B$ (equivalently $q_S$) maximizes \textcolor{red}{Equation [REVISIT]}\label{eq:three_band_objective} subject to these constraints
 \end{itemize}
 \end{proof}
 
@@ -227,37 +275,6 @@ It is worth highlighting that, because the quantiles $q_i$ are defined in the ri
 
 
 
-\subsection{Marginal Value of Screening}
-
-Define the value function of our allocation problem as:
-\begin{equation}\label{eq:value}
-    V(\alpha) = \int_{q_S^*}^{1} \mu \, dF(\mu).
-\end{equation}
-where:
-\begin{itemize}
-    \item $q_S^* = F^{-1}(F(q_B^*) - \alpha)$ satisfies the screening budget constraint ($\int_{q_S}^{q_B}dF(\mu) = \alpha$),
-    \item $q_B^*$ solves the budget constraint $\int_{q_S}^{q_B} \mu \, dF(\mu) = \beta - 1 + F(q_B)$.
-\end{itemize}
-
-\begin{theorem}[Marginal Value of Screening]
-\label{thm:dV}
-The marginal value of the screening budget is:
-\begin{equation}
-    \frac{dV}{d\alpha} = \frac{q_S^*(1 - q_B^*)}{1 - q_B^* + q_S^*} > 0.
-    \label{eq:dV_dalpha}
-\end{equation}
-\end{theorem}
-
-The proof is deferred to Appendix~\ref{app:proofs}.
-
-\textit{Remark: This reconciles with the previous result from the uniform distribution, the alpha values derived as critical points yields to either $q_S = 0$ or $q_B = 1$, which are trivial critical point where we screen all the population.}
-
-\textit{Remark 2: This expression \eqref{eq:dV_dalpha} is distribution-free: the marginal value of screening depends only on the optimal screening cutoff values $q_B^*$ and $q_S^*$.
-The distribution $F$ enters only implicitly through the these cutoffs via the screening and budget constraints.}
-
-\textit{Remark 3: We can also get the second derivative wrt $\alpha$ and I think is always negative so diminishing returns as expected!}
-
-\textit{Remark 4: comment on how to use this vs. marginal cost of screening to derive the optimal screening budget.}
 
 
 
@@ -320,12 +337,19 @@ The proof is deferred to Appendix~\ref{app:proofs}.
 
 \section{Experiments}
 
-We are planning in conducting simulations, both semi-synthetic and synthetic and a real world use case.
+To corroborate our thoeretical findings we conduct simulations, both semi-synthetic and synthetic and a real world use case. We not only our emprical analysis corroborate our results btu we alsom charcaterize the marginal gain of screening (we delve in a thoeretical analysis for this in the appendix (Appendix~\ref{app:marginal_value}). Finally, we present a real use case where we use our setting to optimize de-mining operations in the rural areas of Colombia with results summarized in plot \textcolor{red}{Place holder for the figure}.
 
 In the synthetic simulations, we draw 100000 risk scores from four Beta distributions with increasing entropy (Figure~\ref{fig:risk_dists}). We compare our method to the optimal no-screening policy established in Theorem~\ref{thm:optimal_no_screening}, which allocates treatment to individuals with the highest predicted risk. We also evaluate a random screening baseline in which an $\alpha$ fraction of the population is selected uniformly at random for screening, after which the remaining budget is allocated to those with the highest risk scores. Finally, we consider a variant of our approach in which the screening band is placed immediately below the top-risk treatment band.
-\textbf{Results} The experimental results corroborate our theoretical findings, unless there is complete ccertainty (a degenerate bimodal distribution of risks scores), screening will always improve the percentage of people treated with respect to treating just the population with the higest risk. Adittionally, the optimal strategy beats any other heuristic. Finally, it is wort noticing how the most gain in utility is achived when the risk scores themsleves have high entropy (they all are equal to 1/2) while the least utility is gain when there is complete certainty on the risk scores (all of them are either 0 or 1). This concords with our intuition about machine learning and screening as tools operating at different stages of uncertainty: prediction provides ex-ante risk stratification, while screening enables ex-post information acquisition. When risk scores are highly informative, the marginal value of screening diminishes; when predictions are uncertain, screening meaningfully improves allocation efficiency. To study how the value of screening varies with the predictive uncertainty of the underlying risk model, we conduct a synthetic sweep over a one-parameter family of risk distributions. Specifically, we draw risk scores $\mu(X) \sim \text{Beta}(t,t)$ for $t$ ranging log-uniformly from $0.02$ (near-bimodal, where most risk scores concentrate near $0$ or $1$) to $200$ (near-point-mass at $1/2$, where all units are equally uncertain). For each value of $t$, we fix $\alpha$ and $\beta$, run the fixed-point algorithm to obtain the optimal screening policy, and compute the \emph{utility gap}
+
+To study how the value of screening varies with the predictive uncertainty of the underlying risk model, we conduct a synthetic sweep over a one-parameter family of risk distributions. Specifically, we draw risk scores $\mu(X) \sim \text{Beta}(t,t)$ for $t$ ranging log-uniformly from $0.02$ (near-bimodal, where most risk scores concentrate near $0$ or $1$) to $200$ (near-point-mass at $1/2$, where all units are equally uncertain). For each value of $t$, we fix $\alpha$ and $\beta$, run the fixed-point algorithm to obtain the optimal screening policy, and compute the \emph{utility gap}
 $$\Delta V(\alpha) = V^*(\alpha) - V^*(0),$$
 i.e., the percentage-point improvement in true-positive rate from screening relative to the no-screening baseline. The experiment is repeated across multiple simulations, and we report the mean and one standard-deviation band.
+
+\textbf{Results} The experimental results corroborate our theoretical findings, unless there is complete ccertainty (a degenerate bimodal distribution of risks scores), screening will always improve the percentage of people treated with respect to treating just the population with the higest risk. Adittionally, the optimal strategy beats any other heuristic. Finally, it is wort noticing how the most gain in utility is achived when the risk scores themsleves have high entropy (they all are equal to 1/2) while the least utility is gain when there is complete certainty on the risk scores (all of them are either 0 or 1). This concords with our intuition about machine learning and screening as tools operating at different stages of uncertainty: prediction provides ex-ante risk stratification, while screening enables ex-post information acquisition. When risk scores are highly informative, the marginal value of screening diminishes; when predictions are uncertain, screening meaningfully improves allocation efficiency. 
+
+% Expand
+The gap is monotonically increasing in $t$: when risk scores are nearly deterministic ($t\ll 1$), the no-screening quantile rule already separates positives from negatives almost perfectly, leaving little room for screening to improve; as the distribution concentrates at $\tfrac{1}{2}$ (maximum uncertainty), the risk model loses all discriminative power and targeted screening becomes indispensable, yielding the largest gains. This confirms the theoretical prediction that the marginal value of screening $\lambda^*(\alpha)$ is an increasing function of the entropy of the risk distribution.
+
 
 \begin{figure}[h]
     \centering
@@ -361,6 +385,9 @@ i.e., the percentage-point improvement in true-positive rate from screening rela
     \caption{%
         \textbf{Utility gap between optimal screening and no-screening as a function of the
         Beta$(t,t)$ parameter} ($\alpha=25\%$, $\beta=35\%$).
+        The horizontal axis (log scale) sweeps $t$ from near-bimodal ($t\to 0$, dashed orange)
+        through uniform ($t=1$, dashed blue) to near-point-mass at $\tfrac{1}{2}$
+        ($t\to\infty$, dashed green).
     }
     \label{fig:utility_gap_vs_dist}
 \end{figure}
