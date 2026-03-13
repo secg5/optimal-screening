@@ -40,6 +40,44 @@ This contradicts the optimality of $S^*$. Hence the optimal screening set must b
 
 
 
+\begin{proof}[Proof of Theorem~\ref{thm:dV} (Marginal Value of Screening)]
+The proof proceeds in two steps: we first differentiate $V(\alpha)$ via Leibniz's rule, and then obtain $dq_2^*/d\alpha$ via implicit differentiation of the budget constraint.
+
+\paragraph{Step 1: Differentiating the value function.}
+
+By Leibniz's rule applied to \eqref{eq:value}:
+$$\frac{dV}{d\alpha} = -q_3 f(q_3) \frac{dq_3}{d\alpha}.$$
+The total derivative of $q_3 = F^{-1}(F(q_2^*(\alpha)) - \alpha)$ with respect to $\alpha$ is:
+$$\frac{dq_3}{d\alpha} = \frac{1}{f(q_3)}\left(f(q_2)\frac{dq_2^*}{d\alpha} - 1\right).$$
+
+\paragraph{Step 2: Implicit differentiation of the budget constraint.}
+
+Define
+$$ G(q_2, \alpha) \equiv \int_{q_3}^{q_2} \mu dF(\mu) + 1 - F(q_2) - 1 =0,$$
+where $q_3 = F^{-1}(F(q_2) - \alpha)$ depends on both $q_2$ and $\alpha$.
+
+From this expression we have:
+$$\frac{\partial q_3}{\partial q_2} = \frac{f(q_2)}{f(q_3)}, \qquad
+\frac{\partial q_3}{\partial \alpha} = -\frac{1}{f(q_3)}. $$
+
+Applying Leibniz's rule to differentiate $G$ with respect to $q_2$:
+$$\frac{\partial G}{\partial q_2} = q_2 f(q_2) - q_3 f(q_3) \frac{\partial q_3}{\partial q_2} - f(q_2) = f(q_2)\bigl(q_2 - q_3 - 1\bigr).$$
+
+Differentiating $G$ with respect to $\alpha$:
+$$\frac{\partial G}{\partial \alpha} = -q_3 f(q_3) \frac{\partial q_3}{\partial \alpha} = q_3.$$
+
+By the implicit function theorem:
+$$\frac{dq_2^*}{d\alpha} = -\frac{\partial G / \partial \alpha}{\partial G / \partial q_2} = -\frac{q_3}{f(q_2)(q_2 - q_3 - 1)} = \frac{q_3}{f(q_2)(1 - q_2 + q_3)}.$$
+This derivative is always positive as $1 - q_2 + q_3 = 1-(q_2-q_3) = 1-\text{width of the screening interval} > 0$. That is, as budget increases the upper limit of the screening interval also increases (and the lower limit decreases from its partial derivative being always negative).
+
+\paragraph{Step 3: Substituting into $dV/d\alpha$.}
+
+Finally, using this expression for $dq_2^*/d\alpha$ in $dV/d\alpha$:
+$$\frac{dV}{d\alpha} = -q_3 {f(q_3)} \frac{1}{f(q_3)}\left(f(q_2)\frac{dq_2^*}{d\alpha} - 1\right)= -q_3\left(\frac{q_3}{1 - q_2 + q_3} - 1\right) = \frac{q_3(1 - q_2)}{1 - q_2 + q_3}.$$
+
+Positivity follows immediately again by $1 - q_2 + q_3 > 0$.
+\end{proof}
+
 \begin{proof}[Proof of Theorem~\ref{thm:fixed_point_existence}]
     Consider the population version of the algorithm. The band thresholds are determined by:
     \begin{align*}
