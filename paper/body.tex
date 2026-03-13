@@ -229,30 +229,30 @@ It is worth highlighting that, because the quantiles $q_i$ are defined in the ri
 
 \subsection{Marginal Value of Screening}
 
-Define the value function of our allocation problem as: 
+Define the value function of our allocation problem as:
 \begin{equation}\label{eq:value}
-    V(\alpha) = \int_{q_3^*}^{1} \mu \, dF(\mu).
+    V(\alpha) = \int_{q_S^*}^{1} \mu \, dF(\mu).
 \end{equation}
 where:
 \begin{itemize}
-    \item $q_3^* = F^{-1}(F(q_2^*) - \alpha)$ satisfies the screening budget constraint ($\int_{q_3}^{q_2}dF(\mu) = \alpha$),
-    \item $q_2^*$ solves the budget constraint $\int_{q_3}^{q_2} \mu \, dF(\mu) = \beta - 1 + F(q_2)$.    
+    \item $q_S^* = F^{-1}(F(q_B^*) - \alpha)$ satisfies the screening budget constraint ($\int_{q_S}^{q_B}dF(\mu) = \alpha$),
+    \item $q_B^*$ solves the budget constraint $\int_{q_S}^{q_B} \mu \, dF(\mu) = \beta - 1 + F(q_B)$.
 \end{itemize}
 
 \begin{theorem}[Marginal Value of Screening]
 \label{thm:dV}
 The marginal value of the screening budget is:
 \begin{equation}
-    \frac{dV}{d\alpha} = \frac{q_3^*(1 - q_2^*)}{1 - q_2^* + q_3^*} > 0.
+    \frac{dV}{d\alpha} = \frac{q_S^*(1 - q_B^*)}{1 - q_B^* + q_S^*} > 0.
     \label{eq:dV_dalpha}
 \end{equation}
 \end{theorem}
 
 The proof is deferred to Appendix~\ref{app:proofs}.
 
-\textit{Remark: This reconciles with the previous result from the uniform distribution, the alpha values derived as critical points yields to either $q_3 = 0$ or $q_2 = 1$, which are trivial critical point where we screen all the population.}
+\textit{Remark: This reconciles with the previous result from the uniform distribution, the alpha values derived as critical points yields to either $q_S = 0$ or $q_B = 1$, which are trivial critical point where we screen all the population.}
 
-\textit{Remark 2: This expression \eqref{eq:dV_dalpha} is distribution-free: the marginal value of screening depends only on the optimal screening cutoff values $q_2^*$ and $q_3^*$. 
+\textit{Remark 2: This expression \eqref{eq:dV_dalpha} is distribution-free: the marginal value of screening depends only on the optimal screening cutoff values $q_B^*$ and $q_S^*$.
 The distribution $F$ enters only implicitly through the these cutoffs via the screening and budget constraints.}
 
 \textit{Remark 3: We can also get the second derivative wrt $\alpha$ and I think is always negative so diminishing returns as expected!}
