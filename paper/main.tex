@@ -1,7 +1,6 @@
 \documentclass[11pt]{article}
 \usepackage{amsmath, amssymb, amsthm}
 \usepackage[margin=1in]{geometry}
-\usepackage{hyperref}
 \usepackage{comment}
 \usepackage{algorithm}
 \usepackage{algpseudocode}  % Modern algorithmic commands (part of algorithmicx)
@@ -9,27 +8,76 @@
 \usepackage{xcolor}
 \usepackage{graphicx}
 \usepackage{tikz}
+\usepackage{wrapfig}
+\usepackage{authblk}
+\usepackage{booktabs}
+
+% Links and bib 
+\usepackage[numbers,compress]{natbib}
+\usepackage[pagebackref=true]{hyperref}
 \usepackage{cleveref}
+\definecolor{myblue}{rgb}{0.36, 0.54, 0.66}
+\hypersetup{
+	colorlinks=true,
+	linkcolor=magenta,
+	citecolor=myblue
+}
+
+% Stylistic stuff
+\renewcommand{\qedsymbol}{$\blacksquare$}
+\renewcommand{\geq}{\geqslant}
+\renewcommand{\leq}{\leqslant}
+\renewcommand{\subset}{\subseteq}
+\renewcommand{\supset}{\supseteq}
 
 
+% TOC setup 
+\usepackage{tocbasic}
+\DeclareTOCStyleEntry[
+  beforeskip=.05em plus .6pt,% default is 1em plus 1pt
+  pagenumberformat=\textbf
+]{tocline}{section}
 
+% Theorems
 \newtheorem{theorem}{Theorem}
 \newtheorem{proposition}{Proposition}
 \newtheorem{lemma}{Lemma}
 \newtheorem{corollary}{Corollary}
 
+% Arxiv version control 
+\newif\ifarxiv
+\arxivtrue
+
 \newcommand{\EE}{\mathbb{E}}
 \newcommand{\PP}{\mathbb{P}}
 
+%%%%%% Title %%%%%%
 \title{Optimal Constrained Treatment Assignment with Generative Screening}
-\author{}
+
+%%%%%% Authors %%%%%%
+\author[1]{Santiago Cortes-Gomez\textsuperscript{$*$}}
+\author[2]{Mateo Dulce\textsuperscript{$*$}}
+\author[3]{Carlos Patino}
+\author[1]{Bryan Wilder}
+
+%%%%%% Affiliations %%%%%%
+\affil[1]{Department of Machine Learning, Carnegie Mellon University}
+\affil[2]{Department of Computer Science, New York University}
+\affil[3]{Hugging face}
+\affil[1]{\texttt{\{scortesg, bwilder\}@cs.cmu.edu}}
+\affil[2]{\texttt{mdulceru@andrew.cmu.edu}}
+
 \date{}
 
 \begin{document}
 \maketitle
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\footnotetext[1]{Equal contribution.}
+\renewcommand{\thefootnote}{\arabic{footnote}}
 \input{abstract}
 \input{body}
 
+\clearpage
 \bibliographystyle{plain}
 \bibliography{references}
 

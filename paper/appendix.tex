@@ -109,6 +109,10 @@ $$\frac{dV}{d\alpha} = -q_S {f(q_S)} \frac{1}{f(q_S)}\left(f(q_B)\frac{dq_B^*}{d
 Positivity follows immediately again by $1 - q_B + q_S > 0$.
 \end{proof}
 
+\begin{theorem}[Existence of Fixed Point]\label{thm:fixed_point_existence}
+    Assume the risk distribution $F$ is continuous and strictly increasing on its support, with $\alpha \in (0, \beta)$ and $\beta + \alpha \leq 1$. Then the update function $g: [0,1] \to [0,1]$ has a fixed point.
+\end{theorem}
+
 \begin{proof}[Proof of Theorem~\ref{thm:fixed_point_existence}]
     Consider the population version of the algorithm. The band thresholds are determined by:
     \begin{align*}
@@ -129,6 +133,10 @@ Positivity follows immediately again by $1 - q_B + q_S > 0$.
     The average risk over any interval of positive mass lies within the support of $F$, we have $g: [0,1] \to [0,1]$. Hence,
     by Brouwer's fixed point theorem, as a consequence of $g$ being continuous and $[0,1]$ compact and convex, there exists $\rho^* \in [0,1]$ such that $g(\rho^*) = \rho^*$.
 \end{proof}
+
+\begin{theorem}[Uniqueness of Fixed Point]\label{thm:fixed_point_uniqueness}
+    Under the assumptions of Theorem~\ref{thm:fixed_point_existence}, the fixed point is unique.
+\end{theorem}
 
 \begin{proof}[Proof of Theorem~\ref{thm:fixed_point_uniqueness}]
     We show that $g$ is strictly decreasing, which implies at most one fixed point.
