@@ -1,0 +1,142 @@
+
+\appendix
+
+\section{Marginal Value of Screening}
+\label{app:marginal_value}
+
+Define the value function of our allocation problem as:
+\begin{equation}\label{eq:value}
+    V(\alpha) = \int_{q_S^*}^{1} \mu \, dF(\mu).
+\end{equation}
+where:
+\begin{itemize}
+    \item $q_S^* = F^{-1}(F(q_B^*) - \alpha)$ satisfies the screening budget constraint ($\int_{q_S}^{q_B}dF(\mu) = \alpha$),
+    \item $q_B^*$ solves the budget constraint $\int_{q_S}^{q_B} \mu \, dF(\mu) = \beta - 1 + F(q_B)$.
+\end{itemize}
+
+\begin{theorem}[Marginal Value of Screening]
+\label{thm:dV}
+The marginal value of the screening budget is:
+\begin{equation}
+    \frac{dV}{d\alpha} = \frac{q_S^*(1 - q_B^*)}{1 - q_B^* + q_S^*} > 0.
+    \label{eq:dV_dalpha}
+\end{equation}
+\end{theorem}
+
+\textit{Remark: This reconciles with the previous result from the uniform distribution, the alpha values derived as critical points yields to either $q_S = 0$ or $q_B = 1$, which are trivial critical point where we screen all the population.}
+
+\textit{Remark 2: This expression \eqref{eq:dV_dalpha} is distribution-free: the marginal value of screening depends only on the optimal screening cutoff values $q_B^*$ and $q_S^*$.
+The distribution $F$ enters only implicitly through the these cutoffs via the screening and budget constraints.}
+
+\textit{Remark 3: We can also get the second derivative wrt $\alpha$ and I think is always negative so diminishing returns as expected!}
+
+\textit{Remark 4: comment on how to use this vs. marginal cost of screening to derive the optimal screening budget.}
+
+\section{Proofs}
+\label{app:proofs}
+
+\begin{proof}[Proof of Theorem~\ref{thm:optimal_no_screening}]
+We proceed by contradiction. Let $q^* = q_{1-\beta}$ denote the $(1-\beta)$-quantile of $\mu(X)$, and suppose $T$ is an optimal allocation rule that differs from the threshold rule $T^*(X) = \mathbf{1}\{\mu(X) > q^*\}$. Since $T \neq T^*$ and both exhaust exactly budget $\beta$, they must differ on a set of positive measure. In particular, There exists a unit $x_0$ allocated by $T^*$ but not by $T$, i.e., $\mu(x_0) > q^*$ and $T(x_0) = 0$. Conversely, since both rules exhaust the same budget $\beta$ but $T$ does not allocate $x_0$, it must allocate some unit $x_1$ that $T^*$ does not, i.e., $\mu(x_1) \leq q^*$ and $T(x_1) = 1$. In particular it follows that $\mu(x_0) > q^* \geq \mu(x_1)$, so $\mu(x_0) > \mu(x_1)$.
+
+Define $\tilde{T}$ to agree with $T$ everywhere except at $x_0$ and $x_1$, specifically:
+$$\tilde{T}(x_0) = 1, \qquad \tilde{T}(x_1) = 0.$$
+This swap preserves feasibility: $\mathbb{E}[\tilde{T}(X)] = \mathbb{E}[T(X)] = \beta$. The change in objective is:
+$$\mathbb{E}[\tilde{T}(X)\,\mu(X)] - \mathbb{E}[T(X)\,\mu(X)] = \mu(x_0) - \mu(x_1) > 0,$$
+strictly improving the value, contradicting the optimality of $T$. Hence no such $T$ can exist, and the optimal rule must be the quantile threshold $T^*(X) = \mathbf{1}\{\mu(X) > q^*\}$.
+\end{proof}
+
+\begin{proof}[Proof of Proposition~2 (Contiguity of Optimal Sets)]
+We proceed by contradiction. Suppose the optimal solution has a gap: there exist disjoint intervals $I_1 = [q_a, q_b]$ and $I_2 = [q_c, q_d]$ with $q_b < q_c$ that both belong to either the screening set or the treatment set. Let $\Delta = (q_b, q_c)$ denote the gap.
+
+Consider an alternative policy that shifts mass from $I_1$ into the gap $\Delta$ while maintaining the same total mass. Specifically, construct interval $I_1' = [q_a', q_b]$ where $q_a' > q_a$ is chosen so that $F(q_b) - F(q_a') = F(q_b) - F(q_a)$, and add the freed mass to form $I_1'' = [q_b, q_b + \epsilon]$ for appropriate $\epsilon > 0$ extending into $\Delta$.
+
+This alternative policy:
+\begin{enumerate}
+    \item Maintains the same screening/treatment mass: $F(I_1') + F(I_1'') = F(I_1)$
+    \item Maintains feasibility: both budget constraints still hold
+    \item Increases utility: since $\mu(x)$ is non-decreasing in the quantiles of its distribution, units in $(q_a, q_a']$ have lower risk than units in $[q_b, q_b + \epsilon]$, so:
+    $$\int_{I_1'' \cup I_2} \mu \, dF > \int_{I_1 \cup I_2} \mu \, dF$$
+\end{enumerate}
+
+This contradicts the optimality of the original solution. Therefore, the optimal screening and treatment sets must be contiguous when ordered by risk.
+\end{proof}
+
+\begin{proof}[Proof of Proposition~\ref{prop:convexity} (Convexity of Optimal Sets)]
+We prove convexity of the screening set; the argument for the treatment set is identical. Suppose by contradiction that $S^*$ is not convex. Then there exist units $x_a, x_b$ with $\mu(x_a) < \mu(x_b)$, both screened, and a unit $x_m$ with $\mu(x_a) < \mu(x_m) < \mu(x_b)$ that is \emph{not} screened --- a gap inside the screening set.
+
+Consider swapping $x_a$ out of the screening set and replacing it with $x_m$, keeping all else equal. This maintains the screening budget. However, since $\mu(x_m) > \mu(x_a)$, the screened set now covers a unit with strictly higher risk, yielding strictly more expected positives from screening:
+$$\mathbb{E}[S(X) Y] \text{ increases by } \mu(x_m) - \mu(x_a) > 0.$$
+This contradicts the optimality of $S^*$. Hence the optimal screening set must be an interval in the risk space.
+\end{proof}
+
+
+
+\begin{proof}[Proof of Theorem~\ref{thm:dV} (Marginal Value of Screening)]
+The proof proceeds in two steps: we first differentiate $V(\alpha)$ via Leibniz's rule, and then obtain $dq_B^*/d\alpha$ via implicit differentiation of the budget constraint.
+
+\paragraph{Step 1: Differentiating the value function.}
+
+By Leibniz's rule applied to \eqref{eq:value}:
+$$\frac{dV}{d\alpha} = -q_S f(q_S) \frac{dq_S}{d\alpha}.$$
+The total derivative of $q_S = F^{-1}(F(q_B^*(\alpha)) - \alpha)$ with respect to $\alpha$ is:
+$$\frac{dq_S}{d\alpha} = \frac{1}{f(q_S)}\left(f(q_B)\frac{dq_B^*}{d\alpha} - 1\right).$$
+
+\paragraph{Step 2: Implicit differentiation of the budget constraint.}
+
+Define
+$$ G(q_B, \alpha) \equiv \int_{q_S}^{q_B} \mu dF(\mu) + 1 - F(q_B) - 1 =0,$$
+where $q_S = F^{-1}(F(q_B) - \alpha)$ depends on both $q_B$ and $\alpha$.
+
+From this expression we have:
+$$\frac{\partial q_S}{\partial q_B} = \frac{f(q_B)}{f(q_S)}, \qquad
+\frac{\partial q_S}{\partial \alpha} = -\frac{1}{f(q_S)}. $$
+
+Applying Leibniz's rule to differentiate $G$ with respect to $q_B$:
+$$\frac{\partial G}{\partial q_B} = q_B f(q_B) - q_S f(q_S) \frac{\partial q_S}{\partial q_B} - f(q_B) = f(q_B)\bigl(q_B - q_S - 1\bigr).$$
+
+Differentiating $G$ with respect to $\alpha$:
+$$\frac{\partial G}{\partial \alpha} = -q_S f(q_S) \frac{\partial q_S}{\partial \alpha} = q_S.$$
+
+By the implicit function theorem:
+$$\frac{dq_B^*}{d\alpha} = -\frac{\partial G / \partial \alpha}{\partial G / \partial q_B} = -\frac{q_S}{f(q_B)(q_B - q_S - 1)} = \frac{q_S}{f(q_B)(1 - q_B + q_S)}.$$
+This derivative is always positive as $1 - q_B + q_S = 1-(q_B-q_S) = 1-\text{width of the screening interval} > 0$. That is, as budget increases the upper limit of the screening interval also increases (and the lower limit decreases from its partial derivative being always negative).
+
+\paragraph{Step 3: Substituting into $dV/d\alpha$.}
+
+Finally, using this expression for $dq_B^*/d\alpha$ in $dV/d\alpha$:
+$$\frac{dV}{d\alpha} = -q_S {f(q_S)} \frac{1}{f(q_S)}\left(f(q_B)\frac{dq_B^*}{d\alpha} - 1\right)= -q_S\left(\frac{q_S}{1 - q_B + q_S} - 1\right) = \frac{q_S(1 - q_B)}{1 - q_B + q_S}.$$
+
+Positivity follows immediately again by $1 - q_B + q_S > 0$.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:fixed_point_existence}]
+    Consider the population version of the algorithm. The band thresholds are determined by:
+    \begin{align*}
+        q_T & = F^{-1}(\beta - \alpha) \\
+        q_B & = F^{-1}(\beta - \alpha \rho) \\
+        q_S & = F^{-1}(\beta + \alpha - \alpha \rho)
+    \end{align*}
+    where $F$ is the CDF of the risk distribution and $\rho$ is the average risk in Band S. The update function computes:
+    \begin{align*}
+        g(\rho) & = \frac{1}{q_S - q_B}\int_{q_B}^{q_S} \mu \, dF(\mu) \\
+        & = \frac{F(q_S) - F(q_B)}{q_S - q_B} \\
+        & = \frac{\alpha}{F^{-1}(\beta + \alpha - \alpha \rho) - F^{-1}(\beta - \alpha \rho)}
+    \end{align*}
+    where the last equality uses $F(q_S) - F(q_B) = \alpha$.
+
+    Since $F$ is continuous and strictly increasing, $F^{-1}$ exists and is continuous. The arguments $\beta - \alpha\rho$ and $\beta + \alpha - \alpha\rho$ lie in $(0,1)$ for $\rho \in [0,1]$ under our assumptions, so $g$ is well-defined. As a composition of continuous functions, $g$ is continuous.
+
+    The average risk over any interval of positive mass lies within the support of $F$, we have $g: [0,1] \to [0,1]$. Hence,
+    by Brouwer's fixed point theorem, as a consequence of $g$ being continuous and $[0,1]$ compact and convex, there exists $\rho^* \in [0,1]$ such that $g(\rho^*) = \rho^*$.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:fixed_point_uniqueness}]
+    We show that $g$ is strictly decreasing, which implies at most one fixed point.
+
+    As $\rho$ increases, both $q_B(\rho) = F^{-1}(\beta - \alpha\rho)$ and $q_S(\rho) = F^{-1}(\beta + \alpha - \alpha\rho)$ decrease, shifting the screening interval leftward in the risk space. Since $F$ is strictly increasing, lower quantiles correspond to lower risk values.
+
+    For $\rho_1 < \rho_2$, the interval $[q_B(\rho_2), q_S(\rho_2)]$ lies strictly to the left of $[q_B(\rho_1), q_S(\rho_1)]$. Both intervals have mass $\alpha$, but the left-shifted interval covers lower-risk individuals, so:
+    $$g(\rho_2) = \frac{1}{\alpha}\int_{q_B(\rho_2)}^{q_S(\rho_2)} \mu \, dF(\mu) < \frac{1}{\alpha}\int_{q_B(\rho_1)}^{q_S(\rho_1)} \mu \, dF(\mu) = g(\rho_1)$$
+
+    Thus $g$ is strictly decreasing. If $\rho_1 < \rho_2$ were both fixed points, then $\rho_1 = g(\rho_1) > g(\rho_2) = \rho_2$, a contradiction. Hence the fixed point is unique.
+\end{proof}

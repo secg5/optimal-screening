@@ -144,37 +144,69 @@ In the synthetic simulations, we draw 100000 risk scores from four Beta distribu
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.7\linewidth]{../../runs/risk_distributions.png}
+    \includegraphics[width=0.7\linewidth]{../figures/risk_distributions.png}
     \caption{The four risk score distributions used in simulations.}
     \label{fig:risk_dists}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.85\linewidth]{../../runs/simulations.png}
+    \includegraphics[width=0.85\linewidth]{../figures/simulations.png}
     \caption{True positives identified as a function of screening budget $\alpha$, across all distributions and baselines ($\beta = 30\%$, 20 simulations).}
     \label{fig:sim_main}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.85\linewidth]{../../runs/optimal_vs_no_screening.png}
+    \includegraphics[width=0.85\linewidth]{../figures/optimal_vs_no_screening.png}
     \caption{Optimal screening vs.\ no-screening baseline ($\beta = 5\%$, 10 simulations).}
     \label{fig:sim_noscreening}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.85\linewidth]{../../runs/optimal_vs_random.png}
+    \includegraphics[width=0.85\linewidth]{../figures/optimal_vs_random.png}
     \caption{Optimal screening vs.\ random screening ($\beta = 5\%$, 10 simulations).}
     \label{fig:sim_random}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.85\linewidth]{../../runs/optimal_vs_intuitive.png}
+    \includegraphics[width=0.85\linewidth]{../figures/optimal_vs_intuitive.png}
     \caption{Optimal screening vs.\ intuitive (top-adjacent band) screening ($\beta = 5\%$, 10 simulations).}
     \label{fig:sim_intuitive}
+\end{figure}
+
+\paragraph{Utility gap as a function of risk-score entropy.}
+To study how the value of screening varies with the predictive uncertainty of the underlying risk model, we conduct a synthetic sweep over a one-parameter family of risk distributions. Specifically, we draw risk scores $\mu(X) \sim \text{Beta}(t,t)$ for $t$ ranging log-uniformly from $0.02$ (near-bimodal, where most risk scores concentrate near $0$ or $1$) to $200$ (near-point-mass at $1/2$, where all units are equally uncertain). For each value of $t$, we fix $\alpha$ and $\beta$, run the fixed-point algorithm to obtain the optimal screening policy, and compute the \emph{utility gap}
+$$\Delta V(\alpha) = V^*(\alpha) - V^*(0),$$
+i.e., the percentage-point improvement in true-positive rate from screening relative to the no-screening baseline. The experiment is repeated across multiple simulations, and we report the mean and one standard-deviation band.
+
+The script \texttt{scripts/plot\_utility\_gap\_vs\_dist\_param.py} implements this sweep and saves the resulting figure to \texttt{runs/utility\_gap\_vs\_dist\_param.png}. It can be run as:
+\begin{verbatim}
+python scripts/plot_utility_gap_vs_dist_param.py \
+    --alpha 0.25 --beta 0.35 --n-sims 10 --n-params 50
+\end{verbatim}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.85\linewidth]{../figures/utility_gap_vs_dist_param.png}
+    \caption{%
+        \textbf{Utility gap between optimal screening and no-screening as a function of the
+        Beta$(t,t)$ parameter} ($\alpha=25\%$, $\beta=35\%$).
+        The horizontal axis (log scale) sweeps $t$ from near-bimodal ($t\to 0$, dashed orange)
+        through uniform ($t=1$, dashed blue) to near-point-mass at $\tfrac{1}{2}$
+        ($t\to\infty$, dashed green).
+        The gap is monotonically increasing in $t$: when risk scores are nearly
+        deterministic ($t\ll 1$), the no-screening quantile rule already separates
+        positives from negatives almost perfectly, leaving little room for screening to
+        improve; as the distribution concentrates at $\tfrac{1}{2}$ (maximum uncertainty),
+        the risk model loses all discriminative power and targeted screening becomes
+        indispensable, yielding the largest gains. This confirms the theoretical
+        prediction that the marginal value of screening $\lambda^*(\alpha)$ is
+        an increasing function of the entropy of the risk distribution.
+    }
+    \label{fig:utility_gap_vs_dist}
 \end{figure}
 
 \subsection*{Next steps:}
