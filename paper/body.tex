@@ -316,7 +316,7 @@ While the preceding results characterize the structure of the optimal screening 
 
 \section{Experiments}
 
-To corroborate our thoeretical findings we conduct simulations, both semi-synthetic and synthetic, and a real world use case. Our emprical analysis not only corroborate our results, but also charcaterize the marginal gain of screening (we delve in a thoeretical analysis for this in the appendix (Appendix~\ref{app:marginal_value}). Finally, we present a real use case where we use our setting to optimize de-mining operations in the rural areas of Colombia with results summarized in plot \textcolor{red}{Place holder for the figure}.
+To corroborate our thoeretical findings we conduct simulations, both semi-synthetic and synthetic, and a real world use case. Our emprical analysis not only corroborate our results, but also charcaterize the marginal gain of screening (we delve in a thoeretical analysis for this in the appendix (Appendix~\ref{app:marginal_value}). Finally, we present a real use case where we use our setting to optimize de-mining operations in the rural areas of Colombia with results summarized in Figure~\ref{fig:landmines_strata_only50}.
 
 In the synthetic simulations, we draw 100000 risk scores from four Beta distributions with increasing entropy (Figure~\ref{fig:risk_dists}). We compare our method to the optimal no-screening policy established in Theorem~\ref{thm:optimal_no_screening}, which allocates treatment to individuals with the highest predicted risk (Figure~\ref{fig:sim_noscreening}). We also evaluate a random screening baseline in which an $\alpha$ fraction of the population is selected uniformly at random for screening, after which the remaining budget is allocated to those with the highest risk scores (Figure~\ref{fig:sim_random}). Finally, we consider a variant of our approach in which the screening band is placed immediately below the top-risk treatment band (Figure~\ref{fig:sim_intuitive}).
 
@@ -326,8 +326,14 @@ i.e., the percentage-point improvement in true-positive rate from screening rela
 
 \textbf{Results} The experimental results corroborate our theoretical findings, unless there is complete ccertainty (a degenerate bimodal distribution of risks scores), screening will always improve the percentage of people treated with respect to treating just the population with the higest risk. Adittionally, the optimal strategy beats any other heuristic. Finally, it is wort noticing how the most gain in utility is achived when the risk scores themsleves have high entropy (they all are equal to 1/2) while the least utility is gain when there is complete certainty on the risk scores (all of them are either 0 or 1). This concords with our intuition about machine learning and screening as tools operating at different stages of uncertainty: prediction provides ex-ante risk stratification, while screening enables ex-post information acquisition. When risk scores are highly informative, the marginal value of screening diminishes; when predictions are uncertain, screening meaningfully improves allocation efficiency. 
 
-\textbf{Real world use case}
+\textbf{Real world use case} We apply our framework to a humanitarian demining task in Granada, a municipality in rural Colombia that has been heavily affected by the country's conflict. The dataset consists of 773 spatial units, of which approximately 10\% are labeled as mine-contaminated, making this a challenging imbalanced classification setting. Rather than relying on a learned risk model, we use three interpretable binary strata derived from domain knowledge: whether coca crops are present within 7\,km (\texttt{coca\_within\_7km}), whether a historical mine is recorded within 250\,m (\texttt{old\_mine\_within\_250m}), and whether the unit has warm-weather classification (\texttt{warm\_weather}). These strata partition the population into groups for which empirical contamination probabilities are estimated from the training split (50\% of the data). We set the treatment budget to $\beta = 0.30$, meaning that at most 30\% of spatial units can be allocated for demining, and we vary the screening budget $\alpha$. The screening curve in Figure~\ref{fig:landmines_strata_only50} shows the true positive rate achieved as a function of $\alpha$. Our results clealry show how the same budget leads to a better true positive rate when screening increases. It is also clear that our solution is model agnostic and improves over the baseline even for a random screening strategy.
 
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.85\linewidth]{figures/screening_tabular_landmines_strata_only_50pct_llm.png}
+    \caption{}
+    \label{fig:landmines_strata_only50}
+\end{figure}
 
 \begin{figure}[h]
     \centering
@@ -372,8 +378,8 @@ i.e., the percentage-point improvement in true-positive rate from screening rela
 
 
 
-\textit{Remark: We can plot where in this plot a bunch of datasets to predict social programs will fall! I think it would have to be in a different plot as these are not beta but compute the utility gap for ~20 datasets. Ideas: fit a beta distribution to each dataset and see where it falls here; or histogram of utility gap across dataset, or x axis being a measure of aleatoric uncertainty.}
+% \textit{Remark: We can plot where in this plot a bunch of datasets to predict social programs will fall! I think it would have to be in a different plot as these are not beta but compute the utility gap for ~20 datasets. Ideas: fit a beta distribution to each dataset and see where it falls here; or histogram of utility gap across dataset, or x axis being a measure of aleatoric uncertainty.}
 
-\textit{Remark 72: Be clear about our setting predicting current outcomes and not future not-realized outcomes. Idea: run some experiments where screening doesn't fully reveal the outcome but just give \textit{local} information about the screened units. Like an additional feature that you can use for prediction in those units (and collapses to our setting when that signal is $\pm \infty$), and check how this utility gap vs. beta plot would change. Is screening still that informative in this case?}
+% \textit{Remark 72: Be clear about our setting predicting current outcomes and not future not-realized outcomes. Idea: run some experiments where screening doesn't fully reveal the outcome but just give \textit{local} information about the screened units. Like an additional feature that you can use for prediction in those units (and collapses to our setting when that signal is $\pm \infty$), and check how this utility gap vs. beta plot would change. Is screening still that informative in this case?}
 
 \section{Discussion}

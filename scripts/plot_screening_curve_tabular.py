@@ -13,14 +13,18 @@ Usage:
         --outcome "PINCP > 50k" \
         --strata AGEP SEX \
         --beta 0.3 \
-        --output runs/screening_tabular_acs.png
+        --strata-only \
+        --test-size 0.5 \
+        --output runs/screening_tabular_acs_strata_only_50pct.png
 
     python scripts/plot_screening_curve_tabular.py \
         --csv data/landmines_granada_binary.csv \
         --outcome mines_outcome \
         --strata coca_within_7km old_mine_within_250m warm_weather \
         --beta 0.3 \
-        --output runs/screening_tabular_landmines.png
+        --strata-only \
+        --test-size 0.5 \
+        --output runs/screening_tabular_landmines_strata_only_50pct.png
 
     # Include gpt-4o-mini predictions:
     python scripts/plot_screening_curve_tabular.py \
@@ -28,9 +32,11 @@ Usage:
         --outcome "PINCP > 50k" \
         --strata AGEP SEX \
         --beta 0.3 \
+        --strata-only \
+        --test-size 0.5 \
         --include-llm \
         --dataset-class acs_income.ACSDataset \
-        --output runs/screening_tabular_acs.png
+        --output runs/screening_tabular_acs_strata_only_50pct.png
 """
 
 from __future__ import annotations
@@ -59,6 +65,7 @@ from xgboost import XGBClassifier
 sys.path.insert(0, "src")
 
 from optimal_screening.analysis import (
+    compute_empirical_probabilities,
     compute_optimal_screening_curve,
     compute_random_screening_curve,
 )
@@ -181,12 +188,13 @@ def main() -> None:
         help="Dataset class for LLM prompt generation, e.g. 'acs_income.ACSDataset' or 'generic.GenericCSVDataset'",
     )
     parser.add_argument("--llm-model", default="gpt-4o-mini", help="OpenAI model name (default: gpt-4o-mini)")
+    parser.add_argument("--strata-only", action="store_true", help="Restrict ML models to strata features only")
     args = parser.parse_args()
 
     # --- Load data ---
     df = pd.read_csv(args.csv)
     outcome_col = args.outcome
-    feature_cols = [c for c in df.columns if c != outcome_col]
+    feature_cols = args.strata if args.strata_only else [c for c in df.columns if c != outcome_col]
 
     y = df[outcome_col].apply(lambda v: int(str(v).lower() in ("true", "1", "yes", "t", "y") if isinstance(v, str) else int(v) > 0 if isinstance(v, (int, float)) else 0))
     X = df[feature_cols]
@@ -241,6 +249,15 @@ def main() -> None:
             auc = roc_auc_score(y_test, llm_probs)
             print(f"  {args.llm_model} — AUC: {auc:.4f}")
 
+    # --- Compute empirical strata probabilities from training set ---
+    train_df_for_strata = X_train.copy()
+    train_df_for_strata[outcome_col] = y_train.values
+    train_rows = train_df_for_strata.to_dict("records")
+    train_empirical_probs = compute_empirical_probabilities(train_rows, outcome_col, args.strata)
+    train_stratum_risk = {
+        k: v["probability"] for k, v in train_empirical_probs.items()
+    }
+
     # --- Build row dicts for the test set (needed by screening functions) ---
     test_df = X_test.copy()
     test_df[outcome_col] = y_test.values
@@ -248,6 +265,11 @@ def main() -> None:
     for name, probs in model_probs.items():
         col_name = f"_risk_{name}"
         test_df[col_name] = probs
+    # Add training-set empirical strata risk (avoids leakage from test outcomes)
+    test_df["_risk_empirical"] = [
+        train_stratum_risk.get(tuple(row.get(f) for f in args.strata), 0.5)
+        for row in X_test.to_dict("records")
+    ]
 
     rows = test_df.to_dict("records")
 
@@ -256,14 +278,15 @@ def main() -> None:
 
     all_results: dict[str, dict] = {}
 
-    # 1. Empirical (strata-based)
+    # 1. Empirical (strata-based) — uses training-set strata probabilities
     print("  Empirical (strata)...")
     all_results["Empirical (strata)"] = compute_optimal_screening_curve(
         rows=rows,
         outcome_col=outcome_col,
         strata_features=args.strata,
-        prediction_col=f"_risk_{list(model_probs.keys())[0]}",
+        prediction_col="_risk_empirical",
         beta=args.beta,
+        use_custom_risk_col="_risk_empirical",
     )
 
     # 2. Each tabular model
@@ -285,9 +308,10 @@ def main() -> None:
         rows=rows,
         outcome_col=outcome_col,
         strata_features=args.strata,
-        prediction_col=f"_risk_{list(model_probs.keys())[0]}",
+        prediction_col="_risk_empirical",
         beta=args.beta,
         seed=args.seed,
+        use_custom_risk_col="_risk_empirical",
     )
 
     # --- Plot ---
