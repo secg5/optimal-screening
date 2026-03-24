@@ -1,36 +1,6 @@
 
 \appendix
 
-\section{Marginal Value of Screening}
-\label{app:marginal_value}
-
-Define the value function of our allocation problem as:
-\begin{equation}\label{eq:value}
-    V(\alpha) = \int_{q_S^*}^{1} \mu \, dF(\mu).
-\end{equation}
-where:
-\begin{itemize}
-    \item $q_S^* = F^{-1}(F(q_B^*) - \alpha)$ satisfies the screening budget constraint ($\int_{q_S}^{q_B}dF(\mu) = \alpha$),
-    \item $q_B^*$ solves the budget constraint $\int_{q_S}^{q_B} \mu \, dF(\mu) = \beta - 1 + F(q_B)$.
-\end{itemize}
-
-\begin{theorem}[Marginal Value of Screening]
-\label{thm:dV}
-The marginal value of the screening budget is:
-\begin{equation}
-    \frac{dV}{d\alpha} = \frac{q_S^*(1 - q_B^*)}{1 - q_B^* + q_S^*} > 0.
-    \label{eq:dV_dalpha}
-\end{equation}
-\end{theorem}
-
-\textit{Remark: This reconciles with the previous result from the uniform distribution, the alpha values derived as critical points yields to either $q_S = 0$ or $q_B = 1$, which are trivial critical point where we screen all the population.}
-
-\textit{Remark 2: This expression \eqref{eq:dV_dalpha} is distribution-free: the marginal value of screening depends only on the optimal screening cutoff values $q_B^*$ and $q_S^*$.
-The distribution $F$ enters only implicitly through the these cutoffs via the screening and budget constraints.}
-
-\textit{Remark 3: We can also get the second derivative wrt $\alpha$ and I think is always negative so diminishing returns as expected!}
-
-\textit{Remark 4: comment on how to use this vs. marginal cost of screening to derive the optimal screening budget.}
 
 \section{Proofs}
 \label{app:proofs}
@@ -148,3 +118,25 @@ Positivity follows immediately again by $1 - q_B + q_S > 0$.
 
     Thus $g$ is strictly decreasing. If $\rho_1 < \rho_2$ were both fixed points, then $\rho_1 = g(\rho_1) > g(\rho_2) = \rho_2$, a contradiction. Hence the fixed point is unique.
 \end{proof}
+
+
+
+\section{Additional empirical results}
+\label{app:more_experiments}
+
+We compare our optimal screening strategies against alternative baselines 
+    
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.85\linewidth]{figures/optimal_vs_random.png}
+    \caption{Optimal screening vs.\ random screening ($\beta = 35\%$, 10 simulations).}
+    \label{fig:sim_random}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.85\linewidth]{figures/optimal_vs_intuitive.png}
+    \caption{Optimal screening vs.\ intuitive (top-adjacent band) screening ($\beta = 35\%$, 10 simulations).}
+    \label{fig:sim_intuitive}
+\end{figure}
