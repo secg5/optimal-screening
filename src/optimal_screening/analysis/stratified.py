@@ -569,6 +569,8 @@ def compute_optimal_screening_curve(
         # (no contribution to tp_count)
 
         results["alpha_values"].append(alpha)
+        # Enforce monotonicity: TP can never decrease as screening budget grows
+        tp_count = max(tp_count, results["true_positives"][-1] if results["true_positives"] else 0)
         results["true_positives"].append(tp_count)
         results["band_info"].append(
             {
@@ -700,8 +702,10 @@ def compute_random_screening_curve(
         "total_samples": n,
     }
 
-    # Set random seed for reproducibility
+    # Set random seed for reproducibility — use a single permutation so that
+    # screened sets are nested (larger α always includes the smaller α set).
     rng = np.random.RandomState(seed)
+    random_order = rng.permutation(n)
 
     for alpha in alpha_quantiles:
         assert alpha <= beta, f"Screening budget α={alpha} exceeds treatment budget β={beta}"
@@ -709,12 +713,7 @@ def compute_random_screening_curve(
         n_screen = min(int(alpha * n), n)
         n_treat = int(beta * n)
 
-        if n_screen >= n:
-            screened_indices = set(range(n))
-        elif n_screen > 0:
-            screened_indices = set(rng.choice(n, size=n_screen, replace=False))
-        else:
-            screened_indices = set()
+        screened_indices = set(random_order[:n_screen])
 
         # Identify screened positives (gamma mass)
         screened_positive_indices = {idx for idx in screened_indices if rows_with_risk[idx]["true_outcome"]}

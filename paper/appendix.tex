@@ -15,6 +15,23 @@ $$\mathbb{E}[\tilde{T}(X)\,\mu(X)] - \mathbb{E}[T(X)\,\mu(X)] = \mu(x_0) - \mu(x
 strictly improving the value, contradicting the optimality of $T$. Hence no such $T$ can exist, and the optimal rule must be the quantile threshold $T^*(X) = \mathbf{1}\{\mu(X) > q^*\}$.
 \end{proof}
 
+\begin{proof}[Proof of Theorem~\ref{thm:Optimal screening}]
+By Proposition~\ref{prop:convexity}, $S'$ must be a contiguous interval of mass $\alpha$ in the risk space, and $T'$ must also be a contiguous interval. By Proposition~\ref{prop:contiguity}, they form two adjacent bands with no gaps.
+
+For any screening set $S'$ of mass $\alpha$, the budget saved by screening is $m_g(S') = \int_{S'} (1-\mu)\,dF(\mu)$. This saved budget is used to treat $m_g(S')$ additional units — the highest-risk non-screened units just below the treatment boundary. If the screening band were placed above the treatment band (i.e., screening higher-risk units), then $\mu$ is larger within $S'$, making $1 - \mu$ smaller throughout, and hence $m_g$ strictly smaller. Fewer savings means fewer additional units can be treated, reducing the objective relative to a policy where the screening band sits below the treatment band with the same masses. Therefore the treatment band lies above the screening band: $T'$ and $S'$.
+
+Moreover, by Theorem~\ref{thm:optimal_no_screening}, the optimal treatment rule for unscreened units must allocate the available budget to the highest-risk units via a threshold rule. Hence $T' = [q_B', 1]$ for some $q_B'$, and $S' = [q_S', q_B']$ where $q_S' = F^{-1}(F(q_B') - \alpha)$. It only remains to verify that $q_B' = q_B$.
+
+With $T' = [q_B', 1]$ and $S' = [q_S', q_B']$ where $q_S' = F^{-1}(F(q_B') - \alpha)$, the budget constraint $\mathbb{E}[T'(X,Y)] = \beta$ becomes
+$$h(q_B') \equiv \int_{q_S'}^{q_B'} \mu \, dF(\mu) + 1 - F(q_B') = \beta.$$
+Differentiating $h$ with respect to $q_B'$, where $f = F'$ is the PDF of the risk distribution and $q_S'$ moves with $q_B'$ via $\partial q_S'/\partial q_B' = f(q_B')/f(q_S')$ (implicit differentiation of $F(q_S') = F(q_B') - \alpha$):
+\begin{align*}
+h'(q_B') &= \underbrace{q_B' \cdot f(q_B')}_{\text{upper limit}} - \underbrace{q_S' \cdot f(q_S') \cdot \frac{f(q_B')}{f(q_S')}}_{\text{lower limit}} - \underbrace{f(q_B')}_{\text{derivative of }1-F(q_B')} \\
+&= f(q_B')\bigl(q_B' - q_S' - 1\bigr).
+\end{align*}
+Since $f(q_B') > 0$ and the screening interval width satisfies $q_B' - q_S' < 1$, we have $h'(q_B') < 0$. Hence $h$ is strictly decreasing and $h(q_B') = \beta$ has a unique solution. Since the proposed policy satisfies this constraint by construction with $q_B' = q_B$, the boundary is uniquely determined, so $(T', S') = (T^*, S^*)$.
+\end{proof}
+
 \begin{proof}[Proof of Proposition~2 (Contiguity of Optimal Sets)]
 We proceed by contradiction. Suppose the optimal solution has a gap: there exist disjoint intervals $I_1 = [q_a, q_b]$ and $I_2 = [q_c, q_d]$ with $q_b < q_c$ that both belong to either the screening set or the treatment set. Let $\Delta = (q_b, q_c)$ denote the gap.
 
