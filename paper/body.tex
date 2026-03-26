@@ -230,16 +230,7 @@ In other words, the treatment rule under this structure is:
 The treatment rule $T^* = I_T \cup I_B$ and screening rule $S^* = I_S$, with bands $I_T$, $I_B$, $I_S$ as defined above, constitute an optimal solution to problem~\ref{opt}.
 \end{theorem}
 
-The proof is deferred to Appendix~\ref{app:proofs}.
-
-It is worth highlighting that, because the quantiles $q_i$ are defined in the risk space $\mu(X) = \mathbb{E}[Y|X]$ (not the feature space directly),  the feature space $X$ can include any type of data—structured or unstructured (images, text, etc.). 
-
-
-\begin{corollary}
-    Asuming that the risk is uniformly distributed $\mu(X) \sim \text{Unif}[0,1]$, we can analytically solve for the screening set:
-$$q_2^* = \frac{1-\beta- \alpha^2/2}{1-\alpha}.$$
-
-\end{corollary}
+The proof is deferred to Appendix~\ref{app:proofs}. It is worth highlighting that, because the quantiles $q_i$ are defined in the risk space $\mu(X) = \mathbb{E}[Y|X]$ (not the feature space directly), the feature space $X$ can include any type of data ,i.e, the faetures $X$ can be either structured or unstructured data (images, text, etc.). For specific risk distributions the optimal thresholds can be solved analytically; see Corollary~\ref{cor:uniform} in Appendix~\ref{app:proofs}.
 
 
 \subsection{Marginal Value of Screening}
@@ -278,8 +269,13 @@ The distribution $F$ enters only implicitly through the these cutoffs via the sc
 
 
 \section{Computing the quantiles}
+While the preceding results characterize the structure of the optimal screening rule, they do not directly yield a constructive method for computing the band thresholds. To give an algorithm that provides the three bands, our srtategy will lie in finding the quantile $q_B$ as this quantity determines the three bands.  
 
-While the preceding results characterize the structure of the optimal screening rule, they do not directly yield a constructive method for computing the quantiles $q_T$, $q_B$, and $q_S$. A key difficulty is that the mass allocated to the screening band depends on the average risk within it, introducing a circular dependency among the band thresholds. We resolve this by proposing the fixed-point iteration described in Algorithm~\ref{algo}; existence and uniqueness of the fixed point are established in Theorems~\ref{thm:fixed_point_existence} and~\ref{thm:fixed_point_uniqueness} (see Appendix~\ref{app:proofs}) and implemented in \textcolor{red}{REPO}.
+A natural first attempt is to set $q_B = q_T$, placing Band S immediately below Band T. However, this violates the budget constraint~\eqref{eq:budget_savings}: screening units in $[q_T-\alpha, q_T]$ saves budget $m_g > 0$, which requires Band B to occupy $m_g$ mass between $q_B$ and $q_T$; impossible if $q_B = q_T$. A correction is to lower $q_B$ to $q_T - m_g$, using $m_g$ computed from the risks in $[q_T - \alpha, q_T]$. But this shifts Band S to lower-risk territory, making the true $m_g$ larger than the one used, so the constraint is still violated, albeit by a smaller margin. Hence, Repeating this correction produces a converging sequence of estimates for $q_B$.
+
+Iterating directly on $q_B$ is cumbersome since each step requires recomputing an integral over a shifting interval. A cleaner parameterization uses the average risk in Band S, $\rho = \frac{1}{\alpha}\int_{q_S}^{q_B}\mu\, dF(\mu)$. By equation~\eqref{eq:budget_savings}, $m_g = \alpha(1-\rho)$, so $\rho$ and $m_g$ carry equivalent information however $\rho$, unlike $q_B$ admits a closed-form update. Given $\rho^{(k)}$, fix $m_g = \alpha(1-\rho^{(k)})$ and compute the boundaries in sequence: $q_T$ from the top $(\beta-\alpha)$ mass, $q_B$ from the next $m_g$ mass, and $q_S$ from the $\alpha$ mass below $q_B$. Recomputing the average risk over $[q_S, q_B]$ gives $\rho^{(k+1)} = g(\rho^{(k)})$.
+
+This iteration is self-correcting: an overestimate of $\rho$ produces $m_g$ that is too small, pushing Band S into lower-risk territory and pulling $\rho^{(k+1)}$ back down; an underestimate does the opposite. This opposing response is precisely why $g$ is a strictly decreasing function (Theorem~\ref{thm:fixed_point_uniqueness}), guaranteeing convergence to a unique fixed point $\rho^* = g(\rho^*)$, from which $q_B$ is immediately recovered. Algorithm~\ref{algo} implements this procedure; existence and uniqueness of $\rho^*$ are established in Theorems~\ref{thm:fixed_point_existence} and~\ref{thm:fixed_point_uniqueness} (Appendix~\ref{app:proofs}).
 
 
 

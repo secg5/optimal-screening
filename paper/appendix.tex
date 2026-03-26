@@ -24,13 +24,15 @@ Moreover, by Theorem~\ref{thm:optimal_no_screening}, the optimal treatment rule 
 
 With $T' = [q_B', 1]$ and $S' = [q_S', q_B']$ where $q_S' = F^{-1}(F(q_B') - \alpha)$, the budget constraint $\mathbb{E}[T'(X,Y)] = \beta$ becomes
 $$h(q_B') \equiv \int_{q_S'}^{q_B'} \mu \, dF(\mu) + 1 - F(q_B') = \beta.$$
-Differentiating $h$ with respect to $q_B'$, where $f = F'$ is the PDF of the risk distribution and $q_S'$ moves with $q_B'$ via $\partial q_S'/\partial q_B' = f(q_B')/f(q_S')$ (implicit differentiation of $F(q_S') = F(q_B') - \alpha$):
-\begin{align*}
-h'(q_B') &= \underbrace{q_B' \cdot f(q_B')}_{\text{upper limit}} - \underbrace{q_S' \cdot f(q_S') \cdot \frac{f(q_B')}{f(q_S')}}_{\text{lower limit}} - \underbrace{f(q_B')}_{\text{derivative of }1-F(q_B')} \\
-&= f(q_B')\bigl(q_B' - q_S' - 1\bigr).
-\end{align*}
-Since $f(q_B') > 0$ and the screening interval width satisfies $q_B' - q_S' < 1$, we have $h'(q_B') < 0$. Hence $h$ is strictly decreasing and $h(q_B') = \beta$ has a unique solution. Since the proposed policy satisfies this constraint by construction with $q_B' = q_B$, the boundary is uniquely determined, so $(T', S') = (T^*, S^*)$.
+We show $h$ is strictly decreasing. For $q_B'' > q_B'$, let $\delta = F(q_B'') - F(q_B') = F(q_S'') - F(q_S') > 0$, where the equality holds because both intervals have mass $\alpha$ and $F$ is strictly increasing. Splitting the difference:
+$$h(q_B'') - h(q_B') = \underbrace{\int_{q_B'}^{q_B''} \mu \, dF - \delta}_{\leq\, 0 \text{ since } \mu \leq 1} \;-\; \underbrace{\int_{q_S'}^{q_S''} \mu \, dF}_{>\, 0} \;<\; 0.$$
+The first term is non-positive since $\mu \leq 1$; the second is strictly positive since $F$ is strictly increasing (giving positive mass on $[q_S', q_S'']$) and $\mu > 0$. Hence $h$ is strictly decreasing and $h(q_B') = \beta$ has a unique solution. Since the proposed policy satisfies this constraint by construction with $q_B' = q_B$, the boundary is uniquely determined, so $(T', S') = (T^*, S^*)$.
 \end{proof}
+
+\begin{corollary}\label{cor:uniform}
+Assuming the risk is uniformly distributed, $\mu(X) \sim \mathrm{Unif}[0,1]$, the optimal screening threshold is given analytically by:
+$$q_B^* = \frac{1-\beta- \alpha^2/2}{1-\alpha}.$$
+\end{corollary}
 
 \begin{proof}[Proof of Proposition~2 (Contiguity of Optimal Sets)]
 We proceed by contradiction. Suppose the optimal solution has a gap: there exist disjoint intervals $I_1 = [q_a, q_b]$ and $I_2 = [q_c, q_d]$ with $q_b < q_c$ that both belong to either the screening set or the treatment set. Let $\Delta = (q_b, q_c)$ denote the gap.
