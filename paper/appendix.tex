@@ -5,7 +5,7 @@
 \section{Proofs}
 \label{app:proofs}
 
-\begin{proof}[Proof of Theorem~\ref{thm:optimal_no_screening}]
+\begin{proof}[Proof of Proposition~\ref{prop:optimal_no_screening} (Optimal Allocation Rule without Screening)]
 We proceed by contradiction. Let $q^* = q_{1-\beta}$ denote the $(1-\beta)$-quantile of $\mu(X)$, and suppose $T$ is an optimal allocation rule that differs from the threshold rule $T^*(X) = \mathbf{1}\{\mu(X) > q^*\}$. Since $T \neq T^*$ and both exhaust exactly budget $\beta$, they must differ on a set of positive measure. In particular, There exists a unit $x_0$ allocated by $T^*$ but not by $T$, i.e., $\mu(x_0) > q^*$ and $T(x_0) = 0$. Conversely, since both rules exhaust the same budget $\beta$ but $T$ does not allocate $x_0$, it must allocate some unit $x_1$ that $T^*$ does not, i.e., $\mu(x_1) \leq q^*$ and $T(x_1) = 1$. In particular it follows that $\mu(x_0) > q^* \geq \mu(x_1)$, so $\mu(x_0) > \mu(x_1)$.
 
 Define $\tilde{T}$ to agree with $T$ everywhere except at $x_0$ and $x_1$, specifically:
@@ -15,6 +15,10 @@ $$\mathbb{E}[\tilde{T}(X)\,\mu(X)] - \mathbb{E}[T(X)\,\mu(X)] = \mu(x_0) - \mu(x
 strictly improving the value, contradicting the optimality of $T$. Hence no such $T$ can exist, and the optimal rule must be the quantile threshold $T^*(X) = \mathbf{1}\{\mu(X) > q^*\}$.
 \end{proof}
 
+
+
+
+\begin{comment}
 \begin{proof}[Proof of Theorem~\ref{thm:Optimal screening}]
 By Proposition~\ref{prop:convexity}, $S'$ must be a contiguous interval of mass $\alpha$ in the risk space, and $T'$ must also be a contiguous interval. By Proposition~\ref{prop:contiguity}, they form two adjacent bands with no gaps.
 
@@ -29,73 +33,108 @@ $$h(q_B'') - h(q_B') = \underbrace{\int_{q_B'}^{q_B''} \mu \, dF - \delta}_{\leq
 The first term is non-positive since $\mu \leq 1$; the second is strictly positive since $F$ is strictly increasing (giving positive mass on $[q_S', q_S'']$) and $\mu > 0$. Hence $h$ is strictly decreasing and $h(q_B') = \beta$ has a unique solution. Since the proposed policy satisfies this constraint by construction with $q_B' = q_B$, the boundary is uniquely determined, so $(T', S') = (T^*, S^*)$.
 \end{proof}
 
-\begin{corollary}\label{cor:uniform}
-Assuming the risk is uniformly distributed, $\mu(X) \sim \mathrm{Unif}[0,1]$, the optimal screening threshold is given analytically by:
-$$q_B^* = \frac{1-\beta- \alpha^2/2}{1-\alpha}.$$
-\end{corollary}
 
-\begin{proof}[Proof of Proposition~2 (Contiguity of Optimal Sets)]
-We proceed by contradiction. Suppose the optimal solution has a gap: there exist disjoint intervals $I_1 = [q_a, q_b]$ and $I_2 = [q_c, q_d]$ with $q_b < q_c$ that both belong to either the screening set or the treatment set. Let $\Delta = (q_b, q_c)$ denote the gap.
 
-Consider an alternative policy that shifts mass from $I_1$ into the gap $\Delta$ while maintaining the same total mass. Specifically, construct interval $I_1' = [q_a', q_b]$ where $q_a' > q_a$ is chosen so that $F(q_b) - F(q_a') = F(q_b) - F(q_a)$, and add the freed mass to form $I_1'' = [q_b, q_b + \epsilon]$ for appropriate $\epsilon > 0$ extending into $\Delta$.
+%\begin{proof}[Proof of Proposition~2 (Contiguity of Optimal Sets)]
+%We proceed by contradiction. Suppose the optimal solution has a gap: there exist disjoint intervals $I_1 = [q_a, q_b]$ and $I_2 = [q_c, q_d]$ with $q_b < q_c$ that both belong to either the screening set or the treatment set. Let $\Delta = (q_b, q_c)$ denote the gap.
 
-This alternative policy:
-\begin{enumerate}
-    \item Maintains the same screening/treatment mass: $F(I_1') + F(I_1'') = F(I_1)$
-    \item Maintains feasibility: both budget constraints still hold
-    \item Increases utility: since $\mu(x)$ is non-decreasing in the quantiles of its distribution, units in $(q_a, q_a']$ have lower risk than units in $[q_b, q_b + \epsilon]$, so:
-    $$\int_{I_1'' \cup I_2} \mu \, dF > \int_{I_1 \cup I_2} \mu \, dF$$
-\end{enumerate}
+%Consider an alternative policy that shifts mass from $I_1$ into the gap $\Delta$ while maintaining the same total mass. Specifically, construct interval $I_1' = [q_a', q_b]$ where $q_a' > q_a$ is chosen so that $F(q_b) - F(q_a') = F(q_b) - F(q_a)$, and add the freed mass to form $I_1'' = [q_b, q_b + \epsilon]$ for appropriate $\epsilon > 0$ extending into $\Delta$.
 
-This contradicts the optimality of the original solution. Therefore, the optimal screening and treatment sets must be contiguous when ordered by risk.
+%This alternative policy:
+%\begin{enumerate}
+%    \item Maintains the same screening/treatment mass: $F(I_1') + F(I_1'') = F(I_1)$
+%    \item Maintains feasibility: both budget constraints still hold
+%    \item Increases utility: since $\mu(x)$ is non-decreasing in the quantiles of its distribution, units in $(q_a, q_a']$ have lower risk than units in $[q_b, q_b + \epsilon]$, so:
+%    $$\int_{I_1'' \cup I_2} \mu \, dF > \int_{I_1 \cup I_2} \mu \, dF$$
+%\end{enumerate}
+
+%This contradicts the optimality of the original solution. Therefore, the optimal screening and treatment sets must be contiguous when ordered by risk.
+%\end{proof}
+\end{comment}
+
+\begin{proof}[Proof of Theorem~\ref{thm:optimal_screening} (Optimal Screening in Two-Stage Allocation)]
+
+We first show that the optimal screening set $S^*(X)$ lies entirely below the optimal direct allocation set $T^*(X)$. With this, the second-stage allocation for unscreened units reduces to a no-screening optimization problem with a threshold rule solution. Finally, we show that the two optimal sets are contiguous, with the screening band sitting immediately below the direct allocation band, and that the boundaries are uniquely determined by the budget constraints.
+
+
+\textit{Step 1: No directly allocated unit lies below a screened one.} Suppose for contradiction that under the optimal policy, unit $z$ with $\mu(z) < \mu(z')$ is directly allocated while unit $z'$ is screened. Consider the alternative policy that swaps their roles: screen $z$ and directly allocate $z'$. This swap preserves the screening budget constraint since $\mathbb{E}[S(X)]$ is unchanged. The direct contribution to the objective from these two units is unchanged since both screened and directly allocated units contribute $\mu(X)$ in expectation. However, the allocation budget used by the screened unit changes from $\mu(z')$ to $\mu(z) < \mu(z')$, saving $\mu(z') - \mu(z) > 0$ of allocation budget. This extra budget can be used to extend the direct allocation band to additional units with positive risk, strictly increasing the objective. This contradicts optimality of the original policy. Hence at optimality, no directly allocated unit has lower risk than any screened unit, i.e., the screening set lies entirely below the direct allocation set.
+
+\textit{Step 2: Given $S$, the optimal allocation rule is a threshold in $\mu(X)$.} Fix any feasible screening rule $S$ with $\mathbb{E}[S(X)] \leq \alpha$. For screened units, the allocation rule is fixed at $\pi(X,Y) = Y$ by definition. For unscreened units, the remaining allocation problem is
+\begin{equation}
+    \max_{T: \mathcal{X} \to \{0,1\}} \mathbb{E}[(1-S(X))T(X)\mu(X)] \quad \text{s.t.} \quad \mathbb{E}[S(X)Y] + \mathbb{E}[(1-S(X))T(X)] \leq \beta.
+\end{equation}
+This is identical in structure to the no-screening problem of Proposition~\ref{prop:optimal_no_screening} with effective budget $\beta - \mathbb{E}[S(X)Y]$ on the subpopulation with $S(X) = 0$. By Proposition~\ref{prop:optimal_no_screening}, the optimal unscreened allocation rule is a threshold rule in $\mu(X)$ within this subpopulation. From Step 1, we have that the screening set lies entirely below the direct allocation set, and the subpopulation threshold translates directly to a threshold in the original risk score space, $T^*(X) = \mathbf{1}\{\mu(X) > q_\beta\}$ for some $q_\beta$.
+
+\textit{Step 3: The optimal screening interval is $[q_\alpha, q_\beta]$.} By Steps 1 and 2, and Proposition \ref{prop:convexity} the optimal policy has the following form: screen some interval $[q_a, q_b]$ with $q_b \leq q_\beta$ and directly allocate $[q_\beta, 1]$, where $q_\beta$ is determined by the allocation budget constraint. We now show the optimal screening interval satisfies $q_b = q_\beta$.
+
+Consider the objective as a function of $q_b$, with $q_a = F^{-1}(F(q_b) - \alpha)$ determined by the screening budget constraint, and $q_\beta = q_\beta(q_b)$ determined by the allocation budget constraint:
+\begin{equation}
+    \int_{q_a}^{q_b} \mu \, dF(\mu) + 1 - F(q_\beta(q_b)) = \beta.
+\end{equation}
+The objective is:
+\begin{equation}
+    V(q_b) = \int_{q_a}^{q_b} \mu \, dF(\mu) + \int_{q_\beta(q_b)}^{1} \mu \, dF(\mu).
+\end{equation}
+Differentiating with respect to $q_b$, using $\frac{dq_a}{dq_b} = \frac{f(q_b)}{f(q_a)}$ from the screening budget constraint and $\frac{dq_\beta}{dq_b} = \frac{f(q_b)(q_b - q_a)}{f(q_\beta)}$ from the allocation budget constraint:
+\begin{equation}
+    \frac{dV}{dq_b} = q_b f(q_b) - q_a f(q_b) - q_\beta f(q_b)(q_b - q_a) = f(q_b)(q_b - q_a)(1 - q_\beta) > 0,
+\end{equation}
+since $f(q_b) > 0$, $q_b > q_a$, and $q_\beta < 1$. Hence $V$ is strictly increasing in $q_b$, so the optimal screening interval is pushed as high as possible. The upper boundary is therefore $q_b = q_\beta$, with $q_\alpha = F^{-1}(F(q_\beta) - \alpha)$ from the screening budget constraint.
 \end{proof}
 
-\begin{proof}[Proof of Proposition~\ref{prop:convexity} (Convexity of Optimal Sets)]
-We prove convexity of the screening set; the argument for the treatment set is identical. Suppose by contradiction that $S^*$ is not convex. Then there exist units $x_a, x_b$ with $\mu(x_a) < \mu(x_b)$, both screened, and a unit $x_m$ with $\mu(x_a) < \mu(x_m) < \mu(x_b)$ that is \emph{not} screened --- a gap inside the screening set.
+\begin{proposition}[Interval Structure of Optimal Rules]
+\label{prop:convexity}
+The optimal screening rule $S^*$ and the optimal allocation rule $T^*$ each have an interval structure in the risk score space, i.e., they select units of the form $\mathbbm{1}\{\mu(X) \in [q_a, q_b]\}$ for some quantiles $0 \leq q_a \leq q_b \leq 1$.
+\end{proposition}
 
-Consider swapping $x_a$ out of the screening set and replacing it with $x_m$, keeping all else equal. This maintains the screening budget. However, since $\mu(x_m) > \mu(x_a)$, the screened set now covers a unit with strictly higher risk, yielding strictly more expected positives from screening:
+\begin{proof}[Proof of Proposition~\ref{prop:convexity} (Convexity of Optimal Sets)]
+We prove convexity of the screening set; the argument for the allocation set is identical. Suppose by contradiction that $S^*$ is not convex. Then there exist units $x_a, x_b$ with $\mu(x_a) < \mu(x_b)$, both screened, and a unit $x_m$ with $\mu(x_a) < \mu(x_m) < \mu(x_b)$ that is \emph{not} screened---a gap inside the screening set. Note that $x_m$ is also not directly allocated from Step 1 in the proof of Theorem \ref{thm:optimal_screening}.
+
+Consider swapping $x_a$ out of the screening set and replacing it with $x_m$, keeping all else equal. This maintains the screening budget. 
+However, since $\mu(x_m) > \mu(x_a)$, the screened set now covers a unit with strictly higher risk, yielding strictly more expected positives from screening:
 $$\mathbb{E}[S(X) Y] \text{ increases by } \mu(x_m) - \mu(x_a) > 0.$$
 This contradicts the optimality of $S^*$. Hence the optimal screening set must be an interval in the risk space.
 \end{proof}
 
 
+\begin{corollary}
+\label{cor:uniform}
+    Assume the risk is uniformly distributed, $\mu(X) \sim \text{Unif}[0, 1]$. The optimal screening threshold is given analytically by:
+    $$q_\beta = \frac{1-\beta-\alpha^2/2}{1-\alpha},$$
+    and $q_\alpha = q_\beta - \alpha$.
+\end{corollary}
 
-\begin{proof}[Proof of Theorem~\ref{thm:dV} (Marginal Value of Screening)]
-The proof proceeds in two steps: we first differentiate $V(\alpha)$ via Leibniz's rule, and then obtain $dq_B^*/d\alpha$ via implicit differentiation of the budget constraint.
 
-\paragraph{Step 1: Differentiating the value function.}
+%\begin{proof}
+%TODO (MDR corollary 1 and 2)
+%\end{proof}
 
-By Leibniz's rule applied to \eqref{eq:value}:
-$$\frac{dV}{d\alpha} = -q_S f(q_S) \frac{dq_S}{d\alpha}.$$
-The total derivative of $q_S = F^{-1}(F(q_B^*(\alpha)) - \alpha)$ with respect to $\alpha$ is:
-$$\frac{dq_S}{d\alpha} = \frac{1}{f(q_S)}\left(f(q_B)\frac{dq_B^*}{d\alpha} - 1\right).$$
 
-\paragraph{Step 2: Implicit differentiation of the budget constraint.}
 
-Define
-$$ G(q_B, \alpha) \equiv \int_{q_S}^{q_B} \mu dF(\mu) + 1 - F(q_B) - 1 =0,$$
-where $q_S = F^{-1}(F(q_B) - \alpha)$ depends on both $q_B$ and $\alpha$.
+\begin{proof}[Proof of Theorem~\ref{thm:value_screening} (Marginal Value of Screening)]
+The proof proceeds in two steps: we first differentiate $V^*(\alpha)$ via Leibniz's rule, and then obtain $dq_{\beta}/d\alpha$ via implicit differentiation of the budget constraint.
 
-From this expression we have:
-$$\frac{\partial q_S}{\partial q_B} = \frac{f(q_B)}{f(q_S)}, \qquad
-\frac{\partial q_S}{\partial \alpha} = -\frac{1}{f(q_S)}. $$
+By Leibniz's rule applied to the allocation value under optimal screening \eqref{eq:value}:
+$$\frac{dV^*}{d\alpha} = -q_{\alpha} f(q_\alpha) \frac{dq_{\alpha}}{d\alpha} = -q_{\alpha} f(q_\alpha)\frac{1}{f(q_{\alpha})}\left(f(q_{\beta})\frac{dq_{\beta}}{d\alpha} - 1\right),$$
+where $\frac{dq_{\alpha}}{d\alpha}$ is obtained from the relationship $q_{\alpha} = F^{-1}(F(q_{\beta}(\alpha)) - \alpha)$. Moreover, from this expression we have the partial derivatives for $q_\alpha$:
+$$\frac{\partial q_{\alpha}}{\partial q_{\beta}} = \frac{f(q_\beta)}{f(q_{\alpha})}, \qquad
+\frac{\partial q_{\alpha}}{\partial \alpha} = -\frac{1}{f(q_{\alpha})}.$$
 
-Applying Leibniz's rule to differentiate $G$ with respect to $q_B$:
-$$\frac{\partial G}{\partial q_B} = q_B f(q_B) - q_S f(q_S) \frac{\partial q_S}{\partial q_B} - f(q_B) = f(q_B)\bigl(q_B - q_S - 1\bigr).$$
-
+To derive $\frac{dq_{\beta}}{d\alpha}$, define the budget function
+$$ G(q_{\beta}, \alpha) \equiv \int_{q_{\alpha}}^{q_{\beta}} \mu dF(\mu) + 1 - F(q_{\beta}) - 1 =0.$$
+Applying Leibniz's rule to differentiate $G$ with respect to $q_{\beta}$:
+$$\frac{\partial G}{\partial q_{\beta}} = q_{\beta} f(q_{\beta}) - q_{\alpha} f(q_{\alpha}) \frac{\partial q_{\alpha}}{\partial q_{\beta}} - f(q_{\beta}) = f(q_{\beta})\bigl(q_{\beta} - q_{\alpha} - 1\bigr).$$
 Differentiating $G$ with respect to $\alpha$:
-$$\frac{\partial G}{\partial \alpha} = -q_S f(q_S) \frac{\partial q_S}{\partial \alpha} = q_S.$$
-
+$$\frac{\partial G}{\partial \alpha} = -q_{\alpha} f(q_{\alpha}) \frac{\partial q_{\alpha}}{\partial \alpha} = q_{\alpha}.$$
 By the implicit function theorem:
-$$\frac{dq_B^*}{d\alpha} = -\frac{\partial G / \partial \alpha}{\partial G / \partial q_B} = -\frac{q_S}{f(q_B)(q_B - q_S - 1)} = \frac{q_S}{f(q_B)(1 - q_B + q_S)}.$$
-This derivative is always positive as $1 - q_B + q_S = 1-(q_B-q_S) = 1-\text{width of the screening interval} > 0$. That is, as budget increases the upper limit of the screening interval also increases (and the lower limit decreases from its partial derivative being always negative).
+$$\frac{dq_{\beta}}{d\alpha} = -\frac{\partial G / \partial \alpha}{\partial G / \partial q_{\beta}} = -\frac{q_{\alpha}}{f(q_{\beta})(q_{\beta} - q_{\alpha} - 1)} = \frac{q_{\alpha}}{f(q_{\beta})(1 - q_{\beta} + q_{\alpha})}.$$
+This derivative is always positive as $1 \geq q_{\beta} \geq  q_{\alpha} \geq 0$. %That is, as budget increases the upper limit of the screening interval also increases (and the lower limit decreases from its partial derivative being always negative).
 
-\paragraph{Step 3: Substituting into $dV/d\alpha$.}
+Finally, replacing this result for $dq_{\beta}/d\alpha$ in $dV^*/d\alpha$:
+$$\frac{dV^*}{d\alpha} = -q_{\alpha} {f(q_{\alpha})} \frac{1}{f(q_{\alpha})}\left(f(q_{\beta})\frac{dq_{\beta}}{d\alpha} - 1\right)= -q_{\alpha}\left(\frac{q_{\alpha}}{1 - q_{\beta} + q_{\alpha}} - 1\right) = \frac{q_{\alpha}(1 - q_{\beta})}{1 - q_{\beta} + q_{\alpha}}.$$
+Positivity follows immediately again by $1 - q_{\beta} + q_{\alpha} > 0$.
 
-Finally, using this expression for $dq_B^*/d\alpha$ in $dV/d\alpha$:
-$$\frac{dV}{d\alpha} = -q_S {f(q_S)} \frac{1}{f(q_S)}\left(f(q_B)\frac{dq_B^*}{d\alpha} - 1\right)= -q_S\left(\frac{q_S}{1 - q_B + q_S} - 1\right) = \frac{q_S(1 - q_B)}{1 - q_B + q_S}.$$
-
-Positivity follows immediately again by $1 - q_B + q_S > 0$.
+%TODO: MDR second deriative is < 0.
 \end{proof}
 
 \begin{theorem}[Existence of Fixed Point]\label{thm:fixed_point_existence}
@@ -105,17 +144,17 @@ Positivity follows immediately again by $1 - q_B + q_S > 0$.
 \begin{proof}[Proof of Theorem~\ref{thm:fixed_point_existence}]
     Consider the population version of the algorithm. The band thresholds are determined by:
     \begin{align*}
-        q_T & = F^{-1}(\beta - \alpha) \\
-        q_B & = F^{-1}(\beta - \alpha \rho) \\
-        q_S & = F^{-1}(\beta + \alpha - \alpha \rho)
+        %q_T & = F^{-1}(\beta - \alpha) %not used\\
+        q_{\beta} & = F^{-1}(\beta - \alpha \rho) \\
+        q_{\alpha} & = F^{-1}(\beta + \alpha - \alpha \rho)
     \end{align*}
-    where $F$ is the CDF of the risk distribution and $\rho$ is the average risk in Band S. The update function computes:
+    where $F$ is the CDF of the risk distribution and $\rho$ is the average risk in the Screening Band. The update function computes:
     \begin{align*}
-        g(\rho) & = \frac{1}{q_S - q_B}\int_{q_B}^{q_S} \mu \, dF(\mu) \\
-        & = \frac{F(q_S) - F(q_B)}{q_S - q_B} \\
-        & = \frac{\alpha}{F^{-1}(\beta + \alpha - \alpha \rho) - F^{-1}(\beta - \alpha \rho)}
+        g(\rho) & = \frac{1}{q_{\alpha} - q_{\beta}}\int_{q_{\beta}}^{q_{\alpha}} \mu \, dF(\mu) \\
+        %& = \frac{F(q_{\beta}) - F(q_{\alpha})}{q_{\alpha} - q_{\beta}} \\
+        & = \frac{1}{F^{-1}(\beta + \alpha - \alpha \rho) - F^{-1}(\beta - \alpha \rho)} \int_{q_{\beta}}^{q_{\alpha}} \mu \, dF(\mu).
     \end{align*}
-    where the last equality uses $F(q_S) - F(q_B) = \alpha$.
+    %where the last equality uses $F(q_S) - F(q_B) = \alpha$.
 
     Since $F$ is continuous and strictly increasing, $F^{-1}$ exists and is continuous. The arguments $\beta - \alpha\rho$ and $\beta + \alpha - \alpha\rho$ lie in $(0,1)$ for $\rho \in [0,1]$ under our assumptions, so $g$ is well-defined. As a composition of continuous functions, $g$ is continuous.
 
@@ -130,10 +169,10 @@ Positivity follows immediately again by $1 - q_B + q_S > 0$.
 \begin{proof}[Proof of Theorem~\ref{thm:fixed_point_uniqueness}]
     We show that $g$ is strictly decreasing, which implies at most one fixed point.
 
-    As $\rho$ increases, both $q_B(\rho) = F^{-1}(\beta - \alpha\rho)$ and $q_S(\rho) = F^{-1}(\beta + \alpha - \alpha\rho)$ decrease, shifting the screening interval leftward in the risk space. Since $F$ is strictly increasing, lower quantiles correspond to lower risk values.
+    As $\rho$ increases, both $q_{\beta}(\rho) = F^{-1}(\beta - \alpha\rho)$ and $q_{\alpha}(\rho) = F^{-1}(\beta + \alpha - \alpha\rho)$ decrease, shifting the screening interval leftward in the risk space. Since $F$ is strictly increasing, lower quantiles correspond to lower risk values.
 
-    For $\rho_1 < \rho_2$, the interval $[q_B(\rho_2), q_S(\rho_2)]$ lies strictly to the left of $[q_B(\rho_1), q_S(\rho_1)]$. Both intervals have mass $\alpha$, but the left-shifted interval covers lower-risk individuals, so:
-    $$g(\rho_2) = \frac{1}{\alpha}\int_{q_B(\rho_2)}^{q_S(\rho_2)} \mu \, dF(\mu) < \frac{1}{\alpha}\int_{q_B(\rho_1)}^{q_S(\rho_1)} \mu \, dF(\mu) = g(\rho_1)$$
+    For $\rho_1 < \rho_2$, the interval $[q_{\beta}(\rho_2), q_{\alpha}(\rho_2)]$ lies strictly to the left of $[q_{\beta}(\rho_1), q_{\alpha}(\rho_1)]$. Both intervals have mass $\alpha$, but the left-shifted interval covers lower-risk individuals, so:
+    $$g(\rho_2) = \frac{1}{\alpha}\int_{q_{\beta}(\rho_2)}^{q_{\alpha}(\rho_2)} \mu \, dF(\mu) < \frac{1}{\alpha}\int_{q_{\beta}(\rho_1)}^{q_{\alpha}(\rho_1)} \mu \, dF(\mu) = g(\rho_1)$$
 
     Thus $g$ is strictly decreasing. If $\rho_1 < \rho_2$ were both fixed points, then $\rho_1 = g(\rho_1) > g(\rho_2) = \rho_2$, a contradiction. Hence the fixed point is unique.
 \end{proof}
@@ -143,19 +182,18 @@ Positivity follows immediately again by $1 - q_B + q_S > 0$.
 \section{Additional empirical results}
 \label{app:more_experiments}
 
-We compare our optimal screening strategies against alternative baselines 
-    
+We compare the optimal screening strategy characterized in Theorem \ref{thm:optimal_screening} against two benchmarks: random screening which selects units for physical verification uniformly at random (Figure \ref{fig:sim_random}), and a heuristic variant that places the screening band immediately below the pure algorithmic allocation threshold (Figure \ref{fig:sim_intuitive}). These comparisons illustrate that the efficiency gains from screening depend not only on the total amount of screening capacity deployed, but critically on where in the score distribution screening is concentrated.
 
-\begin{figure}[h]
+\begin{figure}[ht]
     \centering
-    \includegraphics[width=0.85\linewidth]{figures/optimal_vs_random.png}
-    \caption{Optimal screening vs.\ random screening ($\beta = 35\%$, 10 simulations).}
+    \includegraphics[width=0.72\textwidth]{figures/optimal_vs_random.png}
+    \caption{Allocation recall by screening budget under optimal screening vs. random screening baseline across risk distributions ($\beta = 35\%$, averaged over 10 simulations).}
     \label{fig:sim_random}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[ht]
     \centering
-    \includegraphics[width=0.85\linewidth]{figures/optimal_vs_intuitive.png}
-    \caption{Optimal screening vs.\ intuitive (top-adjacent band) screening ($\beta = 35\%$, 10 simulations).}
+    \includegraphics[width=0.72\textwidth]{figures/optimal_vs_intuitive.png}
+    \caption{Allocation recall by screening budget under optimal screening vs. heuristic top-adjacent screening across risk distributions ($\beta = 35\%$, averaged over 10 simulations).}
     \label{fig:sim_intuitive}
 \end{figure}

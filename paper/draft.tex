@@ -11,73 +11,48 @@
 \begin{figure}[h]
 \centering
 \begin{tikzpicture}[scale=1.0]
-    % Risk axis
+
+  % ── TOP DIAGRAM ──────────────────────────────────────────────
+  \begin{scope}[yshift=1.5cm]
     \draw[->, thick] (-0.5,0) -- (10.5,0);
     \node at (0,-0.35) {\small $0$};
     \node at (10,-0.35) {\small $1$};
+    \fill[gray!20]  (0,0.15)   rectangle (6.4,0.75);
+    \fill[green!30] (6.4,0.15) rectangle (10,0.75);
+    \draw (0,0.15)   rectangle (6.4,0.75);
+    \draw (6.4,0.15) rectangle (10,0.75);
+    \node at (2.5,0.45) {\small Do not target};
+    \node at (8.2,0.45) {\small AI targeting};
+    \foreach \x in {0, 6.4, 10}{\draw (\x,0) -- (\x,-0.15);}
+    \node at (6.4,-0.38) {\small $\widetilde{q}_{\beta}$};
+  \end{scope}
 
-    % Regions
-    \fill[gray!20]   (0,0.15)  rectangle (6.4,0.75);
-    \fill[green!30]  (6.4,0.15)  rectangle (10,0.75);
-
-    % Region outlines
-    \draw (0,0.15)  rectangle (6.4,0.75);
-    \draw (6.4,0.15)  rectangle (10,0.75);
-
-    % Region labels
-    \node at (2.5,0.45)  {\small Do not target};
-    \node at (8.2,0.45)  {\small AI targeting};
-
-    % Boundary ticks
-    \foreach \x in {0, 6.4, 10}{
-        \draw (\x, 0) -- (\x, -0.15);
-    }
-
-    % q* tick (dashed, inside screening band)
-    \node at (6.4,-0.38) {\small $q_{\beta}$};
-
-\end{tikzpicture}
-\label{fig:screening_policy}
-\end{figure}
-
-
-\begin{figure}[h]
-\centering
-\begin{tikzpicture}[scale=1.0]
-    % Risk axis
+  % ── BOTTOM DIAGRAM ───────────────────────────────────────────
+  \begin{scope}[yshift=0cm]
     \draw[->, thick] (-0.5,0) -- (10.5,0);
-    \node at (5,-0.75) {\small Low risk \quad $\leftarrow$\quad\quad Risk score $\mu(x) = \mathbb{P}(Y=1 | X=x)$ \quad\quad $\rightarrow$ \quad High risk};;
     \node at (0,-0.35) {\small $0$};
     \node at (10,-0.35) {\small $1$};
-
-    % Regions
     \fill[gray!20]   (0,0.15)  rectangle (5,0.75);
     \fill[orange!30] (5,0.15)  rectangle (7,0.75);
     \fill[green!30]  (7,0.15)  rectangle (10,0.75);
-
-    % Region outlines
     \draw (0,0.15)  rectangle (5,0.75);
     \draw (5,0.15)  rectangle (7,0.75);
     \draw (7,0.15)  rectangle (10,0.75);
-
-    % Region labels
-    \node at (2.5,0.45)  {\small Do not target};
-    \node at (6,0.45)  {\small Screen};
-    %\node at (5.0,0.28)  {\scriptsize allocate if $Y=1$};
-    \node at (8.5,0.45)  {\small AI targeting};
-
-    % Boundary ticks
-    \foreach \x in {0, 6.4, 10}{
-        \draw (\x, 0) -- (\x, -0.15);
-    }
-
-    % q* tick (dashed, inside screening band)
-    \node at (6.4,-0.38) {\small $q_{\beta}$};
+    \node at (2.5,0.45) {\small Do not target};
+    \node at (6,0.45)   {\small Screen};
+    \node at (8.5,0.45) {\small AI targeting};
+    \foreach \x in {0, 5, 7, 10}{\draw (\x,0) -- (\x,-0.15);}
+    \node at (5,-0.38)  {\small $q_{\alpha}$};
+    \node at (7,-0.38)  {\small $q_{\beta}$};
+    \node at (5,-0.95) {\small Low risk \quad $\leftarrow$\quad\quad Risk score $\mu(x) = \mathbb{P}(Y=1 \mid X=x)$ \quad\quad $\rightarrow$ \quad High risk};
+  \end{scope}
 
 \end{tikzpicture}
-\caption{The population is ordered by the vulnerability risk score $\mathbb{E}[Y | X]$ from left to right. Units with the highest risk are allocated directly. Units in the middle band are screened and allocated only if their true vulnerability status $Y=1$. The threshold $q_{\beta}$ marks the cutoff that a purely algorithmic policy would use to allocate a $\beta$ budget, which falls inside the optimal screening region.}
+\caption{The population is ordered by the vulnerability risk score $\mathbb{E}[Y | X]$ from left to right. \textit{Top:} AI-driven allocation directly targets all units above $\widetilde{q}_{\beta}$. \textit{Bottom:} Two-stage allocation with optimal screening band $[q_{\alpha},~q_{\beta}]$, where units are allocated only if their true vulnerability status $Y=1$ is confirmed, and remaining budget is allocated to the highest-risk unscreened units. Note that $\widetilde{q}_{\beta}$ falls within the optimal screening region $[q_{\alpha},~q_{\beta}]$.}
 \label{fig:screening_policy}
 \end{figure}
+
+
 
 
 
@@ -132,6 +107,9 @@
 \caption{Illustration of the optimal three-band screening strategy. The population is ordered by risk score $\mu(X)$ from left to right. The highest-risk individuals (Band $T$) are treated directly. The middle band (Band $S$) is screened and treated only if $Y=1$, which frees up budget. This saved budget finances Band $B$, an additional treatment band immediately below Band $T$ that would not be reachable without screening.}
 \label{fig:illustration}
 \end{figure}
+
+
+
 
 
 
