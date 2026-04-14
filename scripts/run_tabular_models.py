@@ -41,6 +41,18 @@ Usage:
         --strata-only \
         --test-size 0.5 \
         --output runs/screening_tabular_acs2018_all_strata_50pct.json
+
+    # Landmines — raw features, Granada as test set, with gpt-4o-mini:
+    python scripts/run_tabular_models.py \
+        --csv data/landmines_raw.csv \
+        --outcome mines_outcome \
+        --strata Municipio \
+        --beta 0.1 \
+        --test-municipio GRANADA \
+        --include-llm \
+        --dataset-class landmines.LandmineRawDataset \
+        --llm-cache runs/llm_cache_landmines_granada.json \
+        --output runs/screening_tabular_landmines_granada_test_llm.json
 """
 
 from __future__ import annotations
