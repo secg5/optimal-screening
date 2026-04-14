@@ -1,42 +1,46 @@
 #!/usr/bin/env python
-"""Plot optimal screening curves (TP Rate vs α) using tabular model risk scores.
+"""Train ML models on tabular data, compute optimal screening curves, and save results to JSON.
 
-Trains Logistic Regression, Random Forest, and XGBoost on a train split,
-then computes optimal screening curves on the test split using each model's
-predicted probabilities as risk scores.  Optionally includes gpt-4o-mini
-LLM predictions.  Also includes empirical (strata-based) and random screening
-baselines.
+Trains Logistic Regression, Random Forest, and XGBoost on a train split, then computes
+optimal screening curves on the test split using each model's predicted probabilities as
+risk scores. Optionally includes gpt-4o-mini LLM predictions.
+Does NOT produce plots — run plot_figures.py to generate figures from the saved artifact.
+
+The output JSON contains:
+  - Screening curve data (alpha_values, true_positives) per model
+  - Risk scores (predicted probabilities on test set) per model
+  - y_test (true labels for the test set)
+  - Metadata (beta, dataset, split info)
 
 Usage:
-    python scripts/plot_screening_curve_tabular.py \
-        --csv data/acs_income_sample.csv \
-        --outcome "PINCP > 50k" \
-        --strata AGEP SEX \
-        --beta 0.3 \
-        --strata-only \
-        --test-size 0.5 \
-        --output runs/screening_tabular_acs_strata_only_50pct.png
-
-    python scripts/plot_screening_curve_tabular.py \
+    # Landmines — binary strata:
+    python scripts/run_tabular_models.py \
         --csv data/landmines_granada_binary.csv \
         --outcome mines_outcome \
         --strata coca_within_7km old_mine_within_250m warm_weather \
-        --beta 0.3 \
+        --beta 0.1 \
         --strata-only \
         --test-size 0.5 \
-        --output runs/screening_tabular_landmines_strata_only_50pct.png
+        --output runs/screening_tabular_landmines_strata_only_50pct.json
 
-    # Include gpt-4o-mini predictions:
-    python scripts/plot_screening_curve_tabular.py \
-        --csv data/acs_income_sample.csv \
+    # Landmines — raw features, Granada as test set:
+    python scripts/run_tabular_models.py \
+        --csv data/landmines_raw.csv \
+        --outcome mines_outcome \
+        --strata Municipio \
+        --beta 0.1 \
+        --test-municipio GRANADA \
+        --output runs/screening_tabular_landmines_granada_test.json
+
+    # ACS 2018 — all features as strata:
+    python scripts/run_tabular_models.py \
+        --csv data/acs_income_2018.csv \
         --outcome "PINCP > 50k" \
-        --strata AGEP SEX \
+        --strata AGEP COW SCHL MAR OCCP POBP RELP WKHP SEX RAC1P \
         --beta 0.3 \
         --strata-only \
         --test-size 0.5 \
-        --include-llm \
-        --dataset-class acs_income.ACSDataset \
-        --output runs/screening_tabular_acs_strata_only_50pct.png
+        --output runs/screening_tabular_acs2018_all_strata_50pct.json
 """
 
 from __future__ import annotations
@@ -49,7 +53,12 @@ import time
 from pathlib import Path
 from typing import Any
 
-import matplotlib.pyplot as plt
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
@@ -128,8 +137,13 @@ def _predict_llm(
     variables: list[str],
     model_name: str = "gpt-4o-mini",
     requests_per_second: float = 5.0,
+    cache_path: str | None = None,
 ) -> np.ndarray:
     """Get probability predictions from an OpenAI LLM for each row."""
+    if cache_path and Path(cache_path).exists():
+        print(f"    Loading cached LLM predictions from {cache_path}")
+        return np.array(json.loads(Path(cache_path).read_text()))
+
     from optimal_screening.models.openai_model import OAModel
 
     model = OAModel(model_name=model_name)
@@ -154,17 +168,12 @@ def _predict_llm(
         if (i + 1) % 50 == 0 or (i + 1) == len(rows):
             print(f"    LLM progress: {i + 1}/{len(rows)}")
 
+    if cache_path:
+        Path(cache_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(cache_path).write_text(json.dumps(probabilities))
+        print(f"    LLM predictions cached to {cache_path}")
+
     return np.array(probabilities)
-
-
-MODEL_STYLES: dict[str, dict[str, str]] = {
-    "Logistic Regression": {"color": "#1f77b4", "marker": "o"},
-    "Random Forest": {"color": "#2ca02c", "marker": "s"},
-    "XGBoost": {"color": "#ff7f0e", "marker": "^"},
-    "gpt-4o-mini": {"color": "#d62728", "marker": "P"},
-    "Empirical (strata)": {"color": "#9467bd", "marker": "D"},
-    "Random": {"color": "gray", "marker": "x"},
-}
 
 
 # ---------------------------------------------------------------------------
@@ -173,21 +182,19 @@ MODEL_STYLES: dict[str, dict[str, str]] = {
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Plot screening curves using tabular model risk scores")
+    parser = argparse.ArgumentParser(description="Train tabular models and compute screening curves")
     parser.add_argument("--csv", required=True, help="Path to CSV data file")
     parser.add_argument("--outcome", required=True, help="Outcome column name")
     parser.add_argument("--strata", nargs="+", required=True, help="Feature columns defining risk strata")
     parser.add_argument("--beta", type=float, required=True, help="Treatment budget β")
-    parser.add_argument("--output", default="runs/screening_tabular.png", help="Output plot path")
+    parser.add_argument("--output", required=True, help="Output JSON path")
     parser.add_argument("--test-size", type=float, default=0.2, help="Test split fraction (default: 0.2)")
+    parser.add_argument("--test-municipio", default=None, help="Use this Municipio value as test set")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--include-llm", action="store_true", help="Include gpt-4o-mini LLM predictions")
-    parser.add_argument(
-        "--dataset-class",
-        default=None,
-        help="Dataset class for LLM prompt generation, e.g. 'acs_income.ACSDataset' or 'generic.GenericCSVDataset'",
-    )
+    parser.add_argument("--dataset-class", default=None, help="Dataset class for LLM prompt generation")
     parser.add_argument("--llm-model", default="gpt-4o-mini", help="OpenAI model name (default: gpt-4o-mini)")
+    parser.add_argument("--llm-cache", default=None, help="Path to cache LLM predictions as JSON")
     parser.add_argument("--strata-only", action="store_true", help="Restrict ML models to strata features only")
     args = parser.parse_args()
 
@@ -196,17 +203,26 @@ def main() -> None:
     outcome_col = args.outcome
     feature_cols = args.strata if args.strata_only else [c for c in df.columns if c != outcome_col]
 
-    y = df[outcome_col].apply(lambda v: int(str(v).lower() in ("true", "1", "yes", "t", "y") if isinstance(v, str) else int(v) > 0 if isinstance(v, (int, float)) else 0))
+    y = df[outcome_col].apply(
+        lambda v: int(str(v).lower() in ("true", "1", "yes", "t", "y") if isinstance(v, str)
+                      else int(v) > 0 if isinstance(v, (int, float)) else 0)
+    )
     X = df[feature_cols]
 
     print(f"Dataset: {args.csv}")
     print(f"Samples: {len(X)}, Features: {X.shape[1]}, Positive rate: {y.mean():.2%}")
 
     # --- Train/test split ---
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=args.test_size, random_state=args.seed, stratify=y,
-    )
-    print(f"Train: {len(X_train)}, Test: {len(X_test)}")
+    if args.test_municipio:
+        municipio_mask = df["Municipio"].str.upper() == args.test_municipio.upper()
+        X_train, X_test = X[~municipio_mask], X[municipio_mask]
+        y_train, y_test = y[~municipio_mask], y[municipio_mask]
+        print(f"Train: {len(X_train)} (all except {args.test_municipio}), Test: {len(X_test)} ({args.test_municipio})")
+    else:
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=args.test_size, random_state=args.seed, stratify=y,
+        )
+        print(f"Train: {len(X_train)}, Test: {len(X_test)}")
 
     # --- Detect column types & build pipelines ---
     numeric_cols, categorical_cols = _detect_column_types(X_train)
@@ -233,44 +249,24 @@ def main() -> None:
             dataset = DatasetClass(csv_path=args.csv, outcome_col=outcome_col)
             dataset.load_data()
 
-            # Build row dicts for the test set matching the dataset's internal row format
             test_indices = X_test.index.tolist()
             test_rows = [dataset._rows[i] for i in test_indices]
             variables = [c for c in df.columns if c != outcome_col]
 
             print(f"\nRunning LLM predictions ({args.llm_model})...")
             llm_probs = _predict_llm(
-                dataset=dataset,
-                rows=test_rows,
-                variables=variables,
-                model_name=args.llm_model,
+                dataset=dataset, rows=test_rows, variables=variables,
+                model_name=args.llm_model, cache_path=args.llm_cache,
             )
             model_probs[args.llm_model] = llm_probs
             auc = roc_auc_score(y_test, llm_probs)
             print(f"  {args.llm_model} — AUC: {auc:.4f}")
 
-    # --- Compute empirical strata probabilities from training set ---
-    train_df_for_strata = X_train.copy()
-    train_df_for_strata[outcome_col] = y_train.values
-    train_rows = train_df_for_strata.to_dict("records")
-    train_empirical_probs = compute_empirical_probabilities(train_rows, outcome_col, args.strata)
-    train_stratum_risk = {
-        k: v["probability"] for k, v in train_empirical_probs.items()
-    }
-
-    # --- Build row dicts for the test set (needed by screening functions) ---
+    # --- Build row dicts for screening curve computation ---
     test_df = X_test.copy()
     test_df[outcome_col] = y_test.values
-    # Add each model's predictions as columns
     for name, probs in model_probs.items():
-        col_name = f"_risk_{name}"
-        test_df[col_name] = probs
-    # Add training-set empirical strata risk (avoids leakage from test outcomes)
-    test_df["_risk_empirical"] = [
-        train_stratum_risk.get(tuple(row.get(f) for f in args.strata), 0.5)
-        for row in X_test.to_dict("records")
-    ]
-
+        test_df[f"_risk_{name}"] = probs
     rows = test_df.to_dict("records")
 
     # --- Compute screening curves ---
@@ -278,99 +274,47 @@ def main() -> None:
 
     all_results: dict[str, dict] = {}
 
-    # 1. Empirical (strata-based) — uses training-set strata probabilities
-    print("  Empirical (strata)...")
-    all_results["Empirical (strata)"] = compute_optimal_screening_curve(
-        rows=rows,
-        outcome_col=outcome_col,
-        strata_features=args.strata,
-        prediction_col="_risk_empirical",
-        beta=args.beta,
-        use_custom_risk_col="_risk_empirical",
-    )
-
-    # 2. Each tabular model
     for name in model_probs:
         col_name = f"_risk_{name}"
         print(f"  {name}...")
         all_results[name] = compute_optimal_screening_curve(
-            rows=rows,
-            outcome_col=outcome_col,
-            strata_features=args.strata,
-            prediction_col=col_name,
-            beta=args.beta,
-            use_custom_risk_col=col_name,
+            rows=rows, outcome_col=outcome_col, strata_features=args.strata,
+            prediction_col=col_name, beta=args.beta, use_custom_risk_col=col_name,
         )
 
-    # 3. Random baseline
+    first_col = f"_risk_{next(iter(model_probs))}"
     print("  Random baseline...")
     all_results["Random"] = compute_random_screening_curve(
-        rows=rows,
-        outcome_col=outcome_col,
-        strata_features=args.strata,
-        prediction_col="_risk_empirical",
-        beta=args.beta,
-        seed=args.seed,
-        use_custom_risk_col="_risk_empirical",
+        rows=rows, outcome_col=outcome_col, strata_features=args.strata,
+        prediction_col=first_col, beta=args.beta, seed=args.seed, use_custom_risk_col=first_col,
     )
 
-    # --- Plot ---
-    total_pos = all_results["Empirical (strata)"]["total_positive"]
-
-    fig, ax = plt.subplots(figsize=(10, 6))
-    for label, res in all_results.items():
-        style = MODEL_STYLES.get(label, {"color": "black", "marker": "."})
-        alpha_pct = [a * 100 for a in res["alpha_values"]]
-        tp_pct = [tp / total_pos * 100 for tp in res["true_positives"]]
-        linestyle = "--" if label == "Random" else "-"
-        line_alpha = 0.7 if label == "Random" else 1.0
-        ax.plot(
-            alpha_pct, tp_pct,
-            marker=style["marker"],
-            color=style["color"],
-            linewidth=2.5,
-            markersize=6,
-            label=label,
-            linestyle=linestyle,
-            alpha=line_alpha,
-        )
-
-    ax.set_xlabel("Screening Budget α (%)", fontsize=13)
-    ax.set_ylabel("True Positive Rate (%)", fontsize=13)
-    dataset_name = Path(args.csv).stem
-    ax.set_title(
-        f"Optimal Screening: True Positive Rate vs Screening Budget\n"
-        f"Dataset: {dataset_name} | β = {args.beta:.0%}",
-        fontsize=14, fontweight="bold",
-    )
-    ax.legend(fontsize=11, loc="best")
-    ax.grid(True, alpha=0.3)
-    ax.set_xlim(0, args.beta * 100)
-    ax.set_ylim(0, 105)
-
+    # --- Save JSON artifact ---
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.tight_layout()
-    fig.savefig(output_path, dpi=150, bbox_inches="tight")
-    print(f"\nPlot saved to {output_path}")
-    plt.close(fig)
 
-    # Save data to JSON
-    json_path = output_path.with_suffix(".json")
     results_to_save = {}
     for label, res in all_results.items():
         results_to_save[label] = {
-            "alpha_values": [float(a) for a in res["alpha_values"]],
+            "alpha_values":  [float(a) for a in res["alpha_values"]],
             "true_positives": [int(tp) for tp in res["true_positives"]],
         }
+
     results_to_save["meta"] = {
         "beta": args.beta,
-        "total_positive": total_pos,
-        "total_samples": all_results["Empirical (strata)"]["total_samples"],
+        "total_positive": next(iter(all_results.values()))["total_positive"],
+        "total_samples":  next(iter(all_results.values()))["total_samples"],
         "dataset": args.csv,
     }
-    json_path.write_text(json.dumps(results_to_save, indent=2))
-    print(f"Data saved to {json_path}")
+
+    # Risk scores: predicted probabilities and true labels for the test set
+    results_to_save["risk_scores"] = {
+        name: probs.tolist() for name, probs in model_probs.items()
+    }
+    results_to_save["risk_scores"]["y_test"] = y_test.tolist()
+
+    output_path.write_text(json.dumps(results_to_save, indent=2))
+    print(f"\nData saved to {output_path}")
 
 
 if __name__ == "__main__":
