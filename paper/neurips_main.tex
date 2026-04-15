@@ -39,10 +39,8 @@
 \hypersetup{colorlinks=true, linkcolor=magenta, citecolor=myblue}
 
 % ============================================================
-%  Figures path
-%  paper/neurips/figures is a symlink to ../figures, so
-%  \includegraphics{figures/foo.png} resolves correctly when
-%  compiling from paper/neurips/.
+%  Figures: this file lives in paper/ alongside figures/, so
+%  \includegraphics{figures/foo.png} in body.tex resolves correctly.
 % ============================================================
 
 % ============================================================
@@ -108,16 +106,16 @@
 \begin{document}
 \maketitle
 
-\input{../abstract}
-\input{../body}
+\input{abstract}
+\input{body}
 
 \clearpage
 \bibliographystyle{plain}
-\bibliography{../references}
+\bibliography{references}
 
-\input{../appendix}
+\input{appendix}
 
 \newpage
-\input{checklist}
+\input{neurips/checklist}
 
 \end{document}
