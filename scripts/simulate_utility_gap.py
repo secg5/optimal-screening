@@ -28,9 +28,9 @@ from optimal_screening.analysis import compute_optimal_screening_curve
 
 def main():
     parser = argparse.ArgumentParser(description="Utility gap vs Beta(t,t) parameter at fixed alpha")
-    parser.add_argument("--alpha", type=float, default=0.25, help="Fixed screening budget α (default: 0.25)")
+    parser.add_argument("--alpha", type=float, default=0.35, help="Fixed screening budget α (default: 0.25)")
     parser.add_argument("--beta", type=float, default=0.35, help="Treatment budget β (default: 0.35)")
-    parser.add_argument("--n-sims", type=int, default=3, help="Simulations per parameter value (default: 3)")
+    parser.add_argument("--n-sims", type=int, default=10, help="Simulations per parameter value (default: 3)")
     parser.add_argument("--n-params", type=int, default=50, help="Number of t values on the log grid (default: 50)")
     parser.add_argument("--t-min", type=float, default=0.02, help="Minimum Beta parameter (default: 0.02)")
     parser.add_argument("--t-max", type=float, default=200.0, help="Maximum Beta parameter (default: 200.0)")
