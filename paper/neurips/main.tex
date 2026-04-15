@@ -1,0 +1,123 @@
+\documentclass{article}
+
+% ============================================================
+%  NeurIPS 2026 style
+%  Default (no option) = double-blind submission.
+%  Uncomment the appropriate line before submitting / publishing:
+% ============================================================
+\usepackage{neurips_2026}
+% \usepackage[main]{neurips_2026}           % Main Track (submission)
+% \usepackage[main, final]{neurips_2026}    % Main Track (camera-ready)
+% \usepackage[preprint]{neurips_2026}       % arXiv preprint
+
+% ============================================================
+%  Packages  (mirrors paper/main.tex)
+% ============================================================
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{comment}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{wrapfig}
+\usepackage{booktabs}
+\usepackage{bbm}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{url}
+
+% natbib is loaded by neurips_2026.sty; pass options before it loads
+\PassOptionsToPackage{numbers,compress}{natbib}
+
+\usepackage[pagebackref=true]{hyperref}
+\usepackage{cleveref}
+\definecolor{myblue}{rgb}{0.36, 0.54, 0.66}
+\hypersetup{colorlinks=true, linkcolor=magenta, citecolor=myblue}
+
+% ============================================================
+%  Figures path
+%  paper/neurips/figures is a symlink to ../figures, so
+%  \includegraphics{figures/foo.png} resolves correctly when
+%  compiling from paper/neurips/.
+% ============================================================
+
+% ============================================================
+%  Theorem environments
+% ============================================================
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\newtheorem{remark}{Remark}
+
+% ============================================================
+%  Stylistic redefinitions  (matches paper/main.tex)
+% ============================================================
+\renewcommand{\qedsymbol}{$\blacksquare$}
+\renewcommand{\geq}{\geqslant}
+\renewcommand{\leq}{\leqslant}
+\renewcommand{\subset}{\subseteq}
+\renewcommand{\supset}{\supseteq}
+
+% ============================================================
+%  Shared macros
+% ============================================================
+\newcommand{\EE}{\mathbb{E}}
+\newcommand{\PP}{\mathbb{P}}
+
+% Version flag — false for NeurIPS (no arXiv-only content)
+\newif\ifarxiv
+\arxivfalse
+
+% ============================================================
+%  Title
+% ============================================================
+\title{The Limits of AI-Driven Allocation:\\
+  Optimal Screening under Aleatoric Uncertainty}
+
+% ============================================================
+%  Authors
+%  In default submission mode neurips_2026.sty auto-anonymises.
+%  These names appear only in the camera-ready build.
+% ============================================================
+\author{%
+  Santiago Cortes-Gomez\thanks{Equal contribution.} \\
+  Machine Learning Department \\
+  Carnegie Mellon University \\
+  \texttt{scortesg@cs.cmu.edu}
+  \And
+  Mateo Dulce Rubio\footnotemark[1] \\
+  Center for Data Science \\
+  New York University \\
+  \texttt{mateo.d@nyu.edu}
+  \And
+  Carlos Patino \\
+  Hugging Face
+  \And
+  Bryan Wilder \\
+  Machine Learning Department \\
+  Carnegie Mellon University \\
+  \texttt{bwilder@cs.cmu.edu}
+}
+
+% ============================================================
+\begin{document}
+\maketitle
+
+\input{../abstract}
+\input{../body}
+
+\clearpage
+\bibliographystyle{plain}
+\bibliography{../references}
+
+\input{../appendix}
+
+\newpage
+\input{checklist}
+
+\end{document}
