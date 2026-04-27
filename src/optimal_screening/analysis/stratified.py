@@ -11,7 +11,7 @@ SIMULATION_SIZE = 100_000
 RISK_PRESETS: dict[str, tuple[float, float] | float] = {
     "uniform": (1.0, 1.0),
     "bimodal": (0.1, 0.1),
-    "gaussian": (10.0, 10.0),
+    "unimodal": (10.0, 10.0),
     "delta_half": 0.5,
 }
 
@@ -369,7 +369,7 @@ def compute_optimal_screening_curve(
             empirical probabilities from strata. Useful for comparing LLM predictions
             with empirical baselines.
         simulation: If provided, generate synthetic data from a Beta distribution instead
-            of using real data. Pass a preset name ('uniform', 'bimodal', 'gaussian') or
+            of using real data. Pass a preset name ('uniform', 'bimodal', 'unimodal') or
             a tuple (a, b) of Beta distribution parameters. Uses SIMULATION_SIZE samples.
 
     Returns:
@@ -625,7 +625,7 @@ def compute_random_screening_curve(
         seed: Random seed for reproducible random screening
         use_custom_risk_col: If provided, use this column for risk instead of empirical
         simulation: If provided, generate synthetic data from a Beta distribution instead
-            of using real data. Pass a preset name ('uniform', 'bimodal', 'gaussian') or
+            of using real data. Pass a preset name ('uniform', 'bimodal', 'unimodal') or
             a tuple (a, b) of Beta distribution parameters. Uses SIMULATION_SIZE samples.
 
     Returns:
