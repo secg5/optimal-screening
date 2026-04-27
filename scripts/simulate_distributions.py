@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Simulate optimal screening curves across Beta distribution risk presets and save results to JSON.
 
-For each preset (uniform, bimodal, gaussian, delta_half), runs n_sims independent simulations
+For each preset (uniform, bimodal, unimodal, delta_half), runs n_sims independent simulations
 and records per-simulation TP and precision arrays for optimal, intuitive, and random screening.
 Does NOT produce plots — run plot_figures.py to generate figures from the saved artifact.
 
