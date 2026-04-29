@@ -15,7 +15,7 @@ This tension motivates a natural two-stage design that we formalize and study in
 
 \begin{figure}[h]
 \centering
-\begin{tikzpicture}[scale=1.0]
+\begin{tikzpicture}[scale=0.93]
 
   % ── TOP DIAGRAM ──────────────────────────────────────────────
   \begin{scope}[yshift=1.5cm]
@@ -126,38 +126,7 @@ The magnitude of this gap depends on the distribution of $\mu(X)$ across the pop
 
 We define \textit{screening} as a procedure to directly observe the realized vulnerability status of any unit of interest, resolving aleatoric uncertainty at a cost. Formally, a screening rule is a function $S: \mathcal{X} \to \{0,1\}$, where $S(X) = 1$ indicates that a unit with covariates $X$ is selected for physical verification. A decision-maker with a screening budget $\alpha \in [0, \beta]$ can observe the true outcome $Y$ for a fraction $\alpha$ of the population before the allocation decision is made, converting a stochastic allocation into a certain one for those units. This motivates combining algorithmic targeting with screening to reduce the welfare gap between ex ante and ex post optimal allocation. In the next section, we formalize this two-stage framework and characterize the optimal screening policy.
 
-
-
-\subsection{Notation}
-
-\begin{table}[h]
-\centering
-\begin{tabular}{ll}
-\toprule
-\textbf{Symbol} & \textbf{Definition} \\
-\midrule
-$X \in \mathcal{X}$ & Covariates and feature space. \\
-$Y \in \{0,1\}$ & Vulnerability status indicating benefit from resource. \\
-$\mu(X) = \mathbb{P}(Y=1 \mid X)$ & Bayes-optimal risk score. \\
-$\beta \in (0,1)$ & Fixed allocation budget as fraction of population. \\
-$\alpha \in [0,\beta]$ & Screening budget as fraction of population. \\
-$S: \mathcal{X} \to \{0,1\}$ & Screening rule. \\
-$T: \mathcal{X} \to \{0,1\}$ & Allocation rule for unscreened units based on covariates. \\
-$\pi(X, Y)$ & Two-stage allocation rule. \\
-$\widetilde{q}_\beta$ & $1-\beta$ quantile of $\mu(X)$; pure AI allocation threshold. \\
-$q_\alpha, q_\beta$ & Lower and upper boundaries of the optimal screening band. \\
-$[q_\alpha, q_\beta]$ & Optimal screening band. \\
-$V(\alpha)$ & Allocation value with screening budget $\alpha$ (for fixed $\beta$). \\
-$V^{*}(\alpha)$ & Allocation value under optimal $\alpha$-screening rule (for fixed $\beta$). \\
-$\mathbb{P}_{X,Y}$ & Joint distribution of covariates and outcome. \\
-$F$ & Cumulative distribution function (CDF) of $\mu$. \\ 
-\bottomrule
-\end{tabular}
-\caption{Summary of notation.}
-\label{tab:notation}
-\end{table}
-
-
+A table containing all the notation in this work with the aim of help the reader navigate the article. The table can be found in Appendix \ref{app:notation}
 
 \section{Resource Allocation with Screening}
 
@@ -187,8 +156,9 @@ We study this two-stage framework by first characterizing the optimal policy in 
 
 We first consider the benchmark case of pure algorithmic allocation, where $\alpha = 0$ and screening is unavailable. Thus, all allocation decisions are made ex ante based solely on $\mu(X)$, and the two-stage optimization reduces to
 \begin{align}
-\max_{T:~ \mathcal{X} \to \{0,1\}} &\quad \mathbb{E}[T(X)\mu(X)] \label{eq:objective_no_screen}\\
-\text{s.t.} &\quad \mathbb{E}[T(X)] \leq \beta. \nonumber
+\max_{T:~ \mathcal{X} \to \{0,1\}} &\quad \mathbb{E}[T(X)\mu(X)]  
+\quad\quad \text{s.t.} \quad \mathbb{E}[T(X)] \leq \beta. \nonumber
+\label{eq:objective_no_screen}
 \end{align}
 
 The solution has a simple and intuitive form: allocate the resource to units in decreasing order of their risk score $\mu(X)$ until the budget is exhausted. Analogous threshold rules have been derived for related allocation settings under budget constraints \citep{kitagawa2018should, luedtke2016optimal, fischer2025value}. All proofs are deferred to Appendix~\ref{app:proofs}.
@@ -196,11 +166,11 @@ The solution has a simple and intuitive form: allocate the resource to units in 
 \begin{proposition}[Optimal Allocation Rule without Screening]
 \label{prop:optimal_no_screening}
 The optimal allocation rule for \eqref{eq:objective_no_screen} is
-$$T^*(X) = \mathbf{1}\{\mu(X) > \widetilde{q}_\beta\},$$
+$T^*(X) = \mathbf{1}\{\mu(X) > \widetilde{q}_\beta\},$
 where $\widetilde{q}_\beta$ is the $(1-\beta)$-quantile of the distribution of $\mu(X)$.
 \end{proposition}
 
-We denote the welfare under optimal algorithmic allocation as $V^*(0) = \mathbb{E}[T^*(X)\mu(X)]$, which serves as the baseline against which we measure the gains from screening.
+%We denote the welfare under optimal algorithmic allocation as $V^*(0) = \mathbb{E}[T^*(X)\mu(X)]$, which serves as the baseline against which we measure the gains from screening.
 
 
 
@@ -218,7 +188,9 @@ We revisit the two-stage optimization problem \eqref{eq:full_objective} by subst
 where the first term captures the expected number of vulnerable units among those screened and allocated, and the second term captures the expected number of vulnerable units among unscreened units that receive the resource, where the equality follows from iterated expectations.
 
 The allocation budget constraint also decomposes accordingly: screened units are allocated if and only if $Y=1$, using $\mathbb{E}[S(X)Y]$ of the budget, while unscreened units are allocated via $T(X)$, using $\mathbb{E}[(1-S(X))T(X)]$. The full two-stage optimization problem is therefore
-\begin{align}\label{eq:two_stage_opt}
+\begin{align}
+\small
+\label{eq:two_stage_opt}
 \max_{S: \mathcal{X} \to \{0,1\}, ~ T: \mathcal{X} \to \{0,1\}} \quad 
     & \mathbb{E}[S(X) Y] + \mathbb{E}[(1-S(X)) T(X) \mu(X)] \\
 \text{s.t.}\quad
@@ -235,14 +207,9 @@ The characterization of the optimal screening rule builds on the intuition of Pr
 
 \begin{theorem}[Optimal Screening in Two-Stage Allocation]
 \label{thm:optimal_screening}
-The optimal screening rule is 
-\begin{equation}
-    S^*(X) = \mathbbm{1}\{\mu(X) \in [q_\alpha, q_\beta]\}
-\end{equation}
-and the optimal direct allocation rule is 
-\begin{equation}
-    T^*(X) = \mathbbm{1}\{\mu(X) > q_\beta\},
-\end{equation}
+The optimal screening rule is $S^*(X) = \mathbbm{1}\{\mu(X) \in [q_\alpha, q_\beta]\}$
+and the optimal direct allocation rule is $
+    T^*(X) = \mathbbm{1}\{\mu(X) > q_\beta\}$
 where the thresholds $0 \leq q_\alpha \leq q_\beta \leq 1$ satisfy the screening and allocation budget constraints
 \begin{align}
     F(q_\beta) - F(q_\alpha) &= \alpha \label{eq:screening_budget_constraint}\\
@@ -343,11 +310,7 @@ where $q_\alpha = F^{-1}(F(q_\beta) - \alpha)$ is determined by the screening bu
 
 \begin{theorem}[Value of Screening]
 \label{thm:value_screening}
-The marginal value of the screening budget is
-\begin{equation}
-    \frac{dV^*(\alpha)}{d\alpha} = \frac{q_\alpha(1 - q_\beta)}{1 - q_\beta + q_\alpha} > 0,
-    \label{eq:dV_dalpha}
-\end{equation}
+The marginal value of the screening budget is $\frac{dV^*(\alpha)}{d\alpha} = \frac{q_\alpha(1 - q_\beta)}{1 - q_\beta + q_\alpha} > 0$,
 and $V^*(\alpha)$ is concave in $\alpha$.
 \end{theorem}
 
@@ -368,7 +331,7 @@ While Theorem \ref{thm:optimal_screening} characterizes the structure of the opt
 
 The algorithm partitions the population into three contiguous bands ordered by risk. The top band, containing the highest-risk fraction $\beta - \alpha$ of the population, is fixed and directly allocated without screening. Below it, the algorithm iterates over two bands: a screening band of mass $\alpha$ and an intermediate band of directly allocated units formed from the budget saved by excluding confirmed $Y=0$ units within the screening band. The key insight is that the saved budget depends on the average risk $\rho = \frac{1}{\alpha}\int_{q_\alpha}^{q_\beta}\mu\,dF(\mu)$ within the screening band: the lower the average risk of screened units, the more $Y=0$ units are excluded and the larger the saved budget $\alpha(1-\rho)$. Given an estimate $\rho^{(k)}$, the algorithm fixes the intermediate band mass at $\alpha(1-\rho^{(k)})$, places the screening band immediately below, and recomputes the average risk over the new screening band to obtain $\rho^{(k+1)} = g(\rho^{(k)})$.
 
-This iteration is self-correcting: an overestimate of $\rho$ produces a saved budget that is too small, pushing the screening band into lower-risk territory and pulling $\rho^{(k+1)}$ back down, while an underestimate does the opposite. This opposing response makes $g$ a strictly decreasing function, guaranteeing convergence to a unique fixed point $\rho^* = g(\rho^*)$, from which $q_\beta$ is recovered as the boundary between the intermediate and screening bands. Algorithm~\ref{algo} implements this procedure; existence and uniqueness of $\rho^*$ are established in Theorems~\ref{thm:fixed_point_existence} and~\ref{thm:fixed_point_uniqueness} in Appendix~\ref{app:proofs}.
+This iteration is self-correcting: an overestimate of $\rho$ produces a saved budget that is too small, pushing the screening band into lower-risk territory and pulling $\rho^{(k+1)}$ back down, while an underestimate does the opposite. This opposing response makes $g$ a strictly decreasing function, guaranteeing convergence to a unique fixed point $\rho^* = g(\rho^*)$, from which $q_\beta$ is recovered as the boundary between the intermediate and screening bands. Algorithm~\ref{algo} in the Appendix \ref{app:algorithm} implements this procedure; existence and uniqueness of $\rho^*$ are established in Theorems~\ref{thm:fixed_point_existence} and~\ref{thm:fixed_point_uniqueness} in Appendix~\ref{app:proofs}.
 
 
 %A natural first attempt is to set $q_B = q_T$, placing Band S immediately below Band T. However, this violates the budget constraint~\eqref{eq:budget_savings}: screening units in $[q_T-\alpha, q_T]$ saves budget $m_g > 0$, which requires Band B to occupy $m_g$ mass between $q_B$ and $q_T$; impossible if $q_B = q_T$. A correction is to lower $q_B$ to $q_T - m_g$, using $m_g$ computed from the risks in $[q_T - \alpha, q_T]$. But this shifts Band S to lower-risk territory, making the true $m_g$ larger than the one used, so the constraint is still violated, albeit by a smaller margin. Hence, Repeating this correction produces a converging sequence of estimates for $q_B$.
@@ -380,73 +343,41 @@ This iteration is self-correcting: an overestimate of $\rho$ produces a saved bu
 
 
 %\subsection{Algorithm}
-\begin{algorithm*}[ht]
-  \caption{Fixed-Point Iteration for Optimal Screening and Allocation Assignment}
-  \label{algo}
-  \begin{algorithmic}[1]
-  \Require Population sorted by risk (highest to lowest), allocation budget $\beta$, screening budget $\alpha$
-  \Ensure Band assignments that maximize allocation efficiency
-  \State $\rho_{\text{prev}} \gets 0$ \Comment{Initialize average risk of Band 3}
-  \For{$k = 1$ to $\mathtt{max\_iterations}$}
-      \State \textbf{Compute target mass for each band:}
-      \State $m_1 \gets \beta - \alpha$ \Comment{Band 1: Direct allocation}
-      \State $m_2 \gets \alpha \cdot (1 - \rho_{\text{prev}})$ \Comment{Band 2: Direct allocation from saved budget}
-      \State $m_3 \gets \alpha$ \Comment{Band 3: Screening}
-      \State
-      \State \textbf{Assign individuals to bands by cumulative mass:}
-      \State $i_1 \gets \min\{i : \sum_{j=0}^{i} \frac{1}{n} \geq m_1\}$ \Comment{End of Band 1}
-      \State $i_2 \gets \min\{i : \sum_{j=0}^{i} \frac{1}{n} \geq m_1 + m_2\}$ \Comment{End of Band 2}
-      \State $i_3 \gets \min\{i : \sum_{j=0}^{i} \frac{1}{n} \geq m_1 + m_2 + m_3\}$ \Comment{End of Band 3}
-      \State
-      \State \textbf{Compute average risk in Band 3:}
-      \State $\rho_{\text{curr}} \gets \frac{1}{i_3 - i_2} \sum_{j=i_2}^{i_3-1} \mu_j$ \Comment{$\mu_j$ = risk of individual $j$}
-      \State
-      \If{$|\rho_{\text{curr}} - \rho_{\text{prev}}| < \mathtt{tolerance}$}
-          \State \textbf{break} \Comment{Convergence achieved}
-      \EndIf
-      \State $\rho_{\text{prev}} \gets \rho_{\text{curr}}$ \Comment{Update for next iteration}
-  \EndFor
-  \State
-  \Return Band assignments $(i_1, i_2, i_3)$ with converged $\rho_{\text{prev}}$
-  \end{algorithmic}
-  \end{algorithm*}
+
 
 
 
 
 \section{Experiments}
 
-We validate our theoretical findings and illustrate the practical relevance of optimal screening in resource allocation using both synthetic and real-world data. We first characterize the gains of optimal screening across risk distributions with varying levels of aleatoric uncertainty, then present a real-world application to mine action operations in rural Colombia, where screening is critical to allocate scarce demining teams to communities affected by the internal armed conflict. We additionally present a use case applying the framework to identify low-income individuals using U.S.\ Census demographic data, demonstrating its applicability to income-based eligibility verification in social assistance programs; results are shown in Appendix~\ref{app:acs_income}. Additional experimental results are presented in Appendix \ref{app:more_experiments}.
+We validate our theoretical findings and illustrate the practical relevance of optimal screening in resource allocation using both synthetic and real-world data. We first characterize the gains of optimal screening across risk distributions with varying levels of aleatoric uncertainty, then present a real-world application to mine action operations in rural Colombia to allocate demining teams to communities affected by the internal armed conflict. We additionally present a use case applying the framework to identify low-income individuals using U.S. Census demographic data, demonstrating its applicability to income-based eligibility verification in social assistance programs (Appendix~\ref{app:acs_income}). 
 
-
-\subsection{Empirical Analysis on Synthetic Data}
+\subsection{Empirical Value of Screening under Aleatoric Uncertainty}
 
 Our theoretical results are distribution-free: regardless of the underlying risk distribution, the structure of the optimal screening set and the concavity of the value function  with respect to the screening budget $\alpha$ hold. To illustrate this property, we compute optimal screening sets and screening value in synthetic populations under varying underlying risk distributions. We then show how the shape of the risk distribution, in particular its aleatoric uncertainty, determines how much screening can improve allocation efficiency in practice.
 
-We consider four distributions governing the vulnerability risk in our synthetic population, depicted in Figure \ref{fig:risk_dists}. All four distributions share the same expected fraction of vulnerable units ($\EE[\mu(X)]= 0.5$), so differences in targeting outcomes are driven purely by distributional shape. This allows us to study the limits of purely AI-driven allocation when no screening is employed, and to characterize the benefits of screening on allocation efficiency as aleatoric uncertainty increases. Specifically, we consider four risk distributions ordered by increasing aleatoric uncertainty:
+To characterize how the value of screening varies with the aleatoric uncertainty of the underlying risk distribution, we sweep over the one-parameter family $\mu \sim \text{Beta}(t,t)$. This parametric family is symmetric around $0.5$, supported on $[0,1]$ with $\EE[\mu] = 0.5$, and includes the four distributions studied in the previous section as special cases. Specifically, as $t \to 0$ the distribution becomes bimodal with $\mu(X) \in \{0, 1\}$, and as $t \to \infty$ it converges to the point mass at $1/2$, where all units share the same risk $\mu(X) = 1/2$. These represent the two extremes: one where underlying risk perfectly determines vulnerable units (no aleatoric uncertainty), and one where risk is entirely uninformative about vulnerability status (maximum aleatoric uncertainty).
 
-\begin{itemize}
-    \item \textbf{Bimodal} ($\text{Beta}(0.1, 0.1)$): Mass concentrated near 0 and 1, with high separation between low- and high-risk units and minimal aleatoric uncertainty.
-    \item \textbf{Uniform}: Flat over $[0,1]$ representing moderate uncertainty with random risk level.
-    \item \textbf{Unimodal symmetric} ($\text{Beta}(10,10)$): Concentrated around $0.5$, where most units have intermediate risk and the signal for targeting is weak.
-    \item \textbf{Point mass} ($\delta_{0.5}$): All units have identical risk $\mu(x) = 0.5$, representing the limiting case of maximum aleatoric uncertainty in which no algorithmic targeting is possible.
-\end{itemize}
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.6\linewidth]{figures/risk_distributions.png}
-    \caption{Risk distributions used in simulations. All four share the same mean ($\EE[\mu(X)] = 0.5$) but differ in aleatoric uncertainty, ranging from low (bimodal, with mass concentrated near 0 and 1) to maximum ($\delta_{0.5}$, with all mass at 0.5).}
-    \label{fig:risk_dists}
-\end{figure}
+For each value of $t$, we compute the optimal screening policy via Algorithm \ref{algo} for fixed budgets $\beta = 35\%$ and $\alpha = 35\%$, and report the \textit{utility gap}: $\Delta V^*(\alpha) = V^*(\alpha) - V^*(0)$,
+the percentage-point improvement in recall from optimal screening relative to the no-screening baseline (Proposition \ref{prop:optimal_no_screening}). We report the utility gap as a function of the aleatoric uncertainty in the underlying risk distribution, characterized by the parameter $t$,
+%The experiment is repeated across multiple simulations, and we report the mean and one standard-deviation band. The results for these experiments are summarized
+in Figure \ref{fig:utility_gap_vs_dist}.
 
-For each distribution, we sample $N = 100{,}000$ units with true conditional risks and realized outcomes $Y_i | X_i \sim \text{Bernoulli}(\mu(X_i))$. We fix the resource budget at $\beta = 35\%$ and run Algorithm \ref{algo} to obtain the optimal screening set for varying screening budgets $\alpha \in [0, \beta]$. Since the total number of targeted units is always $\beta = 35\%$, all improvements in allocation efficiency come from better targeting through observed outcomes via screening.\footnote{With $\beta = 35\%$ and prevalence $50\%$, a perfect allocation yields a theoretical recall upper bound of $70\%$ across all risk distributions.} We compare against the optimal no-screening policy (Proposition~\ref{prop:optimal_no_screening}) in Figure~\ref{fig:sim_noscreening}, and against a random screening baseline and a heuristic variant that places the screening band immediately below the top-risk treatment band in Figures~\ref{fig:sim_random}--\ref{fig:sim_intuitive} (Appendix~\ref{app:more_experiments}). The latter comparisons show that screening gains come not only from how much you screen, but from how the screening set is selected.
+The experimental results corroborate a systematic relationship between aleatoric uncertainty and the value of screening: $\Delta V^*(\alpha)$ increases monotonically with $t$. When risk scores are highly informative ($t\to 0$) and vulnerability is nearly deterministic, the marginal value of screening is negligible and algorithmic targeting acts as a near-perfect substitute for traditional screening. However, as aleatoric uncertainty increases and more probability mass concentrates around $0.5$, screening meaningfully improves allocation efficiency by identifying a larger fraction of vulnerable units under the same allocation budget $\beta$. In this realistic regime, screening acts as a complementary strategy to purely AI-driven allocation that targets units with the highest predicted risk without accounting for irreducible aleatoric uncertainty. This complementarity yields maximal gains when all units are equally uncertain. These results provide empirical evidence that algorithmic targeting and screening operate at different stages of uncertainty: prediction provides \textit{ex-ante} risk stratification, while screening enables \textit{ex-post} information acquisition. 
 
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=0.85\linewidth]{paper/figures/precision_optimal_vs_no_screening.png}
-    \caption{Allocation recall by screening budget under optimal screening vs.\ no-screening baseline across risk distributions ($\beta = 35\%$, averaged over 10 simulations).}
-    \label{fig:sim_noscreening}
-\end{figure}
+
+
+
+Appendix \ref{app:simulations}
+
+We consider four distributions governing the vulnerability risk in our synthetic population, depicted in Figure \ref{fig:risk_dists}. All four distributions share the same expected fraction of vulnerable units ($\EE[\mu(X)]= 0.5$), so differences in targeting outcomes are driven purely by distributional shape. This allows us to study the limits of purely AI-driven allocation when no screening is employed, and to characterize the benefits of screening on allocation efficiency as aleatoric uncertainty increases. Specifically, we consider four risk distributions ordered by increasing aleatoric uncertainty. \textbf{Bimodal} ($\text{Beta}(0.1, 0.1)$): Mass concentrated near 0 and 1, with high separation between low- and high-risk units and minimal aleatoric uncertainty. \textbf{Uniform}: Flat over $[0,1]$ representing moderate uncertainty with random risk level. \textbf{Unimodal symmetric} ($\text{Beta}(10,10)$): Concentrated around $0.5$, where most units have intermediate risk and the signal for targeting is weak. \textbf{Point mass} ($\delta_{0.5}$): All units have identical risk $\mu(x) = 0.5$, representing the limiting case of maximum aleatoric uncertainty in which no algorithmic targeting is possible. 
+
+
+For each distribution, we sample $N = 100{,}000$ units with true conditional risks and realized outcomes $Y_i | X_i \sim \text{Bernoulli}(\mu(X_i))$. We fix the resource budget at $\beta = 35\%$ and run Algorithm \ref{algo} to obtain the optimal screening set for varying screening budgets $\alpha \in [0, \beta]$. Since the total number of targeted units is always $\beta = 35\%$, all improvements in allocation efficiency come from better targeting through observed outcomes via screening. We compare against the optimal no-screening policy (Proposition~\ref{prop:optimal_no_screening}) in Figure~\ref{fig:sim_noscreening}.
+
+and against a random screening baseline and a heuristic variant that places the screening band immediately below the top-risk treatment band in Figures~\ref{fig:sim_random}--\ref{fig:sim_intuitive} (Appendix~\ref{app:more_experiments}). The latter comparisons show that screening gains come not only from how much you screen, but from how the screening set is selected.
+
 
 Our results first shed light on the limits of purely algorithmic allocation: without screening, optimal allocation recall ranges from 35 to 70\% as the underlying distribution moves from $\delta_{0.5}$ to the perfectly separating bimodal distribution. That is, even with access to the true risk distribution, targeting efficiency varies substantially with the aleatoric uncertainty of the underlying distribution.
 
@@ -454,46 +385,40 @@ In particular, the bimodal distribution achieves the theoretical recall upper bo
 
 
 
-\subsection{Value of Screening under Aleatoric Uncertainty}
 
-To characterize how the value of screening varies with the aleatoric uncertainty of the underlying risk distribution, we sweep over the one-parameter family $\mu(X) \sim \text{Beta}(t,t)$. This parametric family is symmetric around $0.5$, supported on $[0,1]$ with $\EE[\mu(X)] = 0.5$, and includes the four distributions studied in the previous section as special cases. Specifically, as $t \to 0$ the distribution becomes bimodal with $\mu(X) \in \{0, 1\}$, and as $t \to \infty$ it converges to the point mass at $1/2$, where all units share the same risk $\mu(X) = 1/2$. These represent the two extremes: one where underlying risk perfectly determines vulnerable units (no aleatoric uncertainty), and one where risk is entirely uninformative about vulnerability status (maximum aleatoric uncertainty).
-
-
-For each value of $t$, we compute the optimal screening policy via Algorithm \ref{algo} for fixed budgets $\beta = 35\%$ and $\alpha = 25\%$, and report the \textit{utility gap}:
-$$\Delta V^*(\alpha) = V^*(\alpha) - V^*(0),$$
-the percentage-point improvement in recall from optimal screening relative to the no-screening baseline (Proposition \ref{prop:optimal_no_screening}). We report the utility gap as a function of the aleatoric uncertainty in the underlying risk distribution, characterized by the parameter $t$,
-%The experiment is repeated across multiple simulations, and we report the mean and one standard-deviation band. The results for these experiments are summarized
-in Figure \ref{fig:utility_gap_vs_dist}.
-
-
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=0.8\linewidth]{figures/utility_gap_vs_dist_param.png}
-    \caption{Utility gap $\Delta V^*(\alpha) = V^*(\alpha) - V^*(0)$ between optimal screening and no-screening as a function of the Beta$(t,t)$ concentration parameter $t$ ($\alpha=25\%$, $\beta=35\%$). The horizontal axis (log scale) sweeps $t$ from near-bimodal ($t\to 0$, dashed orange) through uniform ($t=1$, dashed blue) to near point mass at $1/2$ ($t\to\infty$, dashed green).}
-    \label{fig:utility_gap_vs_dist}
-\end{figure}
-
-
-The experimental results corroborate a systematic relationship between aleatoric uncertainty and the value of screening: $\Delta V^*(\alpha)$ increases monotonically with $t$. When risk scores are highly informative ($t\to 0$) and vulnerability is nearly deterministic, the marginal value of screening is negligible and algorithmic targeting acts as a near-perfect substitute for traditional screening. However, as aleatoric uncertainty increases and more probability mass concentrates around $0.5$, screening meaningfully improves allocation efficiency by identifying a larger fraction of vulnerable units under the same allocation budget $\beta$. In this realistic regime, screening acts as a complementary strategy to purely AI-driven allocation that targets units with the highest predicted risk without accounting for irreducible aleatoric uncertainty. This complementarity yields maximal gains when all units are equally uncertain. These results provide empirical evidence that algorithmic targeting and screening operate at different stages of uncertainty: prediction provides \textit{ex-ante} risk stratification, while screening enables \textit{ex-post} information acquisition. 
 
 % \textit{Remark: We can plot where in this plot a bunch of datasets to predict social programs will fall! I think it would have to be in a different plot as these are not beta but compute the utility gap for ~20 datasets. Ideas: fit a beta distribution to each dataset and see where it falls here; or histogram of utility gap across dataset, or x axis being a measure of aleatoric uncertainty.}
 %Idea: run some experiments where screening doesn't fully reveal the outcome but just give \textit{local} information about the screened units. Like an additional feature that you can use for prediction in those units (and collapses to our setting when that signal is $\pm \infty$), and check how this utility gap vs. beta plot would change. Is screening still that informative in this case?
 
 
+
+\begin{figure}[ht]
+    \begin{minipage}[t]{0.49\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/utility_gap_vs_dist_param.png}
+    \caption{Utility gap $\Delta V^*(\alpha) = V^*(\alpha) - V^*(0)$ between optimal screening and no-screening as a function of the Beta$(t,t)$ concentration parameter $t$ ($\alpha=25\%$, $\beta=35\%$). The horizontal axis (log scale) sweeps $t$ from near-bimodal ($t\to 0$, dashed orange) through uniform ($t=1$, dashed blue) to near point mass at $1/2$ ($t\to\infty$, dashed green).}
+    \label{fig:utility_gap_vs_dist}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[t]{0.49\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/screening_tabular_landmines_granada_test.png}
+    \caption{Recall of the two-stage optimal screening allocation as a function of the screening budget $\alpha$ in Granada, Colombia ($\beta = 10\%$). Optimal screening consistently improves recall over the no-screening baseline across all three ML models, while random screening yields negligible gains.}
+    \label{fig:demining_target}
+    \end{minipage}
+\end{figure}
+
+\begin{figure}[ht]
+\end{figure}
+
+
 \subsection{Application to Humanitarian Demining} 
 
-Humanitarian demining is the process of detecting and clearing landmines and other explosive remnants of war from conflict-affected areas so communities can safely reclaim land for economic and environmental development \cite{un_landmines}. A decision-maker (e.g., a national mine action authority or humanitarian demining organization) must allocate limited specialized demining teams across a territory, but first needs to identify which areas are actually contaminated with explosive ordnance. Traditional mine action operations do this by screening the entire territory, collecting information from primary sources to determine contamination status---a costly and time-consuming procedure \cite{Harutyunyan2023OperationalEfficiency}. This has motivated recent proposals to estimate contamination probability from geographic, demographic, and conflict-related variables using machine learning, and use these estimates to prioritize or replace traditional screening. Such systems have shown promising results in directly guiding team allocation in Colombia \cite{dulce2024reland}, Afghanistan \cite{collins28advancements}, and Cambodia \cite{cirillo2024desk}.
+Humanitarian demining is the process of detecting and clearing landmines and other explosive remnants of war from conflict-affected areas so communities can safely reclaim land for economic and environmental development \cite{un_landmines}. A decision-maker (e.g., a national mine action authority or humanitarian demining organization) must allocate limited specialized demining teams across a territory, but first needs to identify which areas are actually contaminated with explosive ordinance. Traditional mine action operations do this by screening the entire territory, collecting information from primary sources to determine contamination status---a costly and time-consuming procedure \cite{Harutyunyan2023OperationalEfficiency}. This has motivated recent proposals to estimate contamination probability from geographic, demographic, and conflict-related variables using machine learning, and use these estimates to prioritize or replace traditional screening. Such systems have shown promising results in directly guiding team allocation in Colombia \cite{dulce2024reland}, Afghanistan \cite{collins28advancements}, and Cambodia \cite{cirillo2024desk}.
 
 We use our framework to study algorithmic allocation of demining teams in Granada, a municipality in rural Colombia heavily affected by the country's internal armed conflict. We use the publicly available dataset from \cite{dulce2024reland}, which contains training data from finalized demining operations in 14 other Colombian municipalities, with 70 predictive features encompassing geographic (e.g., altitude, soil texture, land use), socio-demographic (e.g., distance to settlements, schools, and roads), and conflict-related characteristics (e.g., distance to coca crops and previous landmine reports). We train off-the-shelf machine learning models (logistic regression, random forest, gradient boosting machine) and obtain out-of-sample contamination risk estimates for Granada's 773 spatial units, approximately 10\% of which are labeled as mine-contaminated.
 
 We then apply our optimal screening framework with allocation budget $\beta = 10\%$, matching the contamination rate.\footnote{This implies that an allocation procedure with access to true contamination status would achieve perfect recall.} Figure \ref{fig:demining_target} shows the percentage of landmines detected by the two-stage allocation procedure as a function of $\alpha$. We compare against a random screening baseline that randomly observes contamination status and allocate teams greedily (Proposition \ref{prop:optimal_no_screening}) using prediction from logistic regression, as a realistic benchmark reflecting current operational practices \cite{dulce2024reland}.
-
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=0.85\linewidth]{paper/figures/screening_tabular_landmines_granada_test.png}
-    \caption{Recall of the two-stage optimal screening allocation as a function of the screening budget $\alpha$ in Granada, Colombia ($\beta = 10\%$). Optimal screening consistently improves recall over the no-screening baseline across all three ML models, while random screening yields negligible gains.}
-    \label{fig:demining_target}
-\end{figure}
 
 Our results demonstrate that optimal screening consistently improves recall in real-world allocation settings. In particular, XGBoost achieves the largest gains raising recall from 37\% to nearly 70\% at $\alpha = \beta$. Nevertheless, the monotone improvement with $\alpha$ is consistent across models regardless of their predictive performance, confirming that the framework is model-agnostic. Crucially, the comparison against random screening shows that the benefits of screening are not simply a function of \textit{how much} you screen, but \textit{where}: random screening yields negligible gains (35\% to 39\%), while optimal screening nearly doubles recall for the best-performing model. Unlike the synthetic experiments, here the risk scores are estimated from data, so results reflect both aleatoric uncertainty and estimation error. That optimal screening delivers substantial gains despite imperfect risk estimates suggests the framework is robust to epistemic uncertainty in practice.
 
