@@ -73,12 +73,12 @@ def _format_preset(preset: str, presets_meta: dict) -> str:
 
 
 def _style_ax(ax, title: str, beta: float, y_values=None, legend = True, ylabel: str = "True Positives Identified (%)"):
-    ax.set_xlabel("Screening Budget α (%)", fontsize=15)
-    ax.set_ylabel(ylabel, fontsize=15)
+    ax.set_xlabel("Screening Budget α (%)", fontsize=18)
+    ax.set_ylabel(ylabel, fontsize=18)
     #ax.set_title(title, fontsize=14, fontweight="bold")
     if legend:
         ax.legend(fontsize=12, loc="best")
-    ax.tick_params(axis='both', labelsize=13)
+    ax.tick_params(axis='both', labelsize=14)
     ax.grid(True, alpha=0.3)
     ax.set_xlim(0, beta * 100)
     if y_values:
@@ -103,7 +103,7 @@ def _compact_legend(ax, presets, label):
     labels = (["Distribution"] + [h.get_label() for h in dist_handles] + ["Screening"] + [h.get_label() for h in method_handles] + [""]*pad)
     
     leg = ax.legend(handles=handles, labels=labels, loc="lower right", frameon=True,
-                    fontsize=12, title_fontsize=13, ncol=2, columnspacing=1.5, handlelength=2.5)
+                    fontsize=14, title_fontsize=15, ncol=2, columnspacing=1.5, handlelength=2.5)
     
     # Make section titles bold
     for text in leg.get_texts():
@@ -149,14 +149,14 @@ def plot_simulations(json_path: Path) -> None:
         if isinstance(params, list):
             a, b = params
             ax.plot(x, beta_dist.pdf(x, a, b), linewidth=2.5, color=style["color"],
-                    label=f"{preset} — Beta({a}, {b})")
+                    label=f"{preset.capitalize()} — Beta({a}, {b})")
         else:
-            ax.axvline(x=params, color=style["color"], linewidth=2.5, label=f"{preset} — δ({params})")
-    ax.set_xlabel("Risk score", fontsize=16)
-    ax.set_ylabel("Density", fontsize=16)
+            ax.axvline(x=params, color=style["color"], linewidth=2.5, label=f"{preset.capitalize()} — δ({params})")
+    ax.set_xlabel("Risk score", fontsize=18)
+    ax.set_ylabel("Density", fontsize=18)
     #ax.set_title("Risk Score Distributions", fontsize=15, fontweight="bold")
-    ax.legend(fontsize=14)
-    ax.tick_params(axis='both', labelsize=13)
+    ax.legend(fontsize=15)
+    ax.tick_params(axis='both', labelsize=14)
     ax.grid(True, alpha=0.3)
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 5)
@@ -243,7 +243,7 @@ def plot_simulations(json_path: Path) -> None:
     _compact_legend(ax, presets, label = "No Screening")
     _save(fig, runs_dir / "recall_optimal_vs_no_screening.png")
 
-    prec_ylabel = "Allocation Efficiency (%)"
+    prec_ylabel = "Allocation Precision (%)"
 
     # --- Figure: Precision — Optimal vs Intuitive ---
     # Artifact fields used: optimal_prec_mean/std, intuitive_prec_mean/std
@@ -364,48 +364,50 @@ def plot_utility_gap_vs_dist_param(json_path: Path) -> None:
     """
     data = json.loads(json_path.read_text())
     meta = data["meta"]
+    beta = 35; prevalence = 50 
+    
     t_values  = np.array(data["t_values"])
-    gaps_mean = np.array(data["gaps_mean"])
-    gaps_std  = np.array(data["gaps_std"])
+    gaps_mean = np.array(data["gaps_mean"])*prevalence/beta #difference in precision instead of recall
+    gaps_std  = np.array(data["gaps_std"])*prevalence/beta
 
     print(f"  [utility_gap_vs_dist_param] Utility gap vs Beta(t,t) parameter (paper Fig 4)")
 
     fig, ax = plt.subplots(figsize=(10, 6))
 
     # Mean curve with ±1 std band
-    ax.plot(t_values, gaps_mean, linewidth=2.5, color="steelblue", marker="o", markersize=4, zorder=1)
+    ax.plot(t_values, gaps_mean, linewidth=3, color="blue", marker="o", markersize=4, zorder=1)
     ax.fill_between(t_values, gaps_mean - gaps_std, gaps_mean + gaps_std,
                     alpha=0.4, color="steelblue", zorder=1)
 
     # Reference vertical lines for the named simulation presets
     preset_refs = [
-        (0.1,  "Bimodal (t=0.1)", "orange"),
-        (1.0,  "Uniform (t=1)",   "blue"),
-        (10.0, "Unimodal (t=10)",   "green"),
+        (0.1,  "Bimodal", "tab:orange"),
+        (1.0,  "Uniform",   "tab:blue"),
+        (10.0, "Unimodal",   "tab:green"),
     ]
     for t_ref, label, color in preset_refs:
-        ax.axvline(x=t_ref, color=color, linestyle="--", linewidth=2, alpha=1, label=label)
+        ax.axvline(x=t_ref, color=color, linestyle="--", linewidth=3, alpha=1, label=label)
 
     ax.set_xscale("log")
-    ax.set_xlabel("Beta(t,t) distribution parameter  t", fontsize=15)
-    ax.set_ylabel("Utility Gap (percentage points)", fontsize=15)
-    ax.tick_params(axis='both', labelsize=13)
+    ax.set_xlabel("Beta(t,t) distribution parameter t", fontsize=22)
+    ax.set_ylabel("Utility Gap (percentage points)", fontsize=22)
+    ax.tick_params(axis='both', labelsize=18)
     #ax.set_title(
     #    f"Utility Gap: Optimal vs No Screening\n"
     #    f"α={meta['alpha']:.0%}, β={meta['beta']:.0%}, "
     #    f"{meta['n_sims']} sim{'s' if meta['n_sims'] > 1 else ''} per point",
     #    fontsize=14, fontweight="bold",
     #)
-    leg = ax.legend(loc = 'lower right', title = "Reference Distributions", fontsize=12)
+    leg = ax.legend(loc = 'lower right', fontsize=18)
     leg.get_title().set_weight("bold")
     ax.grid(True, alpha=0.3, which="both")
     ax.set_xlim(meta["t_min"], meta["t_max"])
     ax.set_ylim(bottom=0)
 
     ax.text(meta["t_min"] * 1.3, ax.get_ylim()[1] * 0.9, "← bimodal\n(0 / 1 risk)",
-            fontsize=12, va="top", color="k")
+            fontsize=16, va="top", color="k")
     ax.text(meta["t_max"] * 0.7, ax.get_ylim()[1] * 0.9, "point mass\nat 0.5 →",
-            fontsize=12, va="top", ha="right", color="k")
+            fontsize=16, va="top", ha="right", color="k")
 
     _save(fig, json_path.with_suffix(".png"))
 
@@ -442,19 +444,19 @@ def plot_tabular_screening_curve(json_path: Path) -> None:
         linestyle = "--" if label == "Random" else "-"
         line_alpha = 0.7 if label == "Random" else 1.0
         ax.plot(alpha_pct, tp_pct, marker=style["marker"], color=style["color"],
-                linewidth=2.5, markersize=6, label=label,
+                linewidth=3, markersize=6, label=label,
                 linestyle=linestyle, alpha=line_alpha)
 
-    ax.set_xlabel("Screening Budget α (%)", fontsize=15)
-    ax.set_ylabel(f"Allocation Efficiency (%{metric})", fontsize=15)
+    ax.set_xlabel("Screening Budget α (%)", fontsize=22)
+    ax.set_ylabel(f"Allocation Efficiency (%{metric})", fontsize=21)
     #ax.set_title(
     #    f"Optimal Screening: True Positive Rate vs Screening Budget\n"
     #    f"Dataset: {dataset_name} | β = {beta:.0%}",
     #    fontsize=14, fontweight="bold",
     #)
-    ax.legend(fontsize=12, loc="best")
+    ax.legend(fontsize=18, loc="best")
     ax.grid(True, alpha=0.3)
-    ax.tick_params(axis='both', labelsize=13)
+    ax.tick_params(axis='both', labelsize=18)
     ax.set_xlim(0, beta * 100)
 
     all_tp_pcts = [tp / total_pos * 100 for label in model_keys for tp in data[label]["true_positives"]]
