@@ -2,6 +2,36 @@
 \appendix
 
 
+\section{Notation}
+\label{app:notation}
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Symbol} & \textbf{Definition} \\
+\midrule
+$X \in \mathcal{X}$ & Covariates and feature space. \\
+$Y \in \{0,1\}$ & Vulnerability status indicating benefit from resource. \\
+$\mu(X) = \mathbb{P}(Y=1 \mid X)$ & Bayes-optimal risk score. \\
+$\beta \in (0,1)$ & Fixed allocation budget as fraction of population. \\
+$\alpha \in [0,\beta]$ & Screening budget as fraction of population. \\
+$S: \mathcal{X} \to \{0,1\}$ & Screening rule. \\
+$T: \mathcal{X} \to \{0,1\}$ & Allocation rule for unscreened units based on covariates. \\
+$\pi(X, Y)$ & Two-stage allocation rule. \\
+$\widetilde{q}_\beta$ & $1-\beta$ quantile of $\mu(X)$; pure AI allocation threshold. \\
+$q_\alpha, q_\beta$ & Lower and upper boundaries of the optimal screening band. \\
+$[q_\alpha, q_\beta]$ & Optimal screening band. \\
+$V(\alpha)$ & Allocation value with screening budget $\alpha$ (for fixed $\beta$). \\
+$V^{*}(\alpha)$ & Allocation value under optimal $\alpha$-screening rule (for fixed $\beta$). \\
+$\mathbb{P}_{X,Y}$ & Joint distribution of covariates and outcome. \\
+$F$ & Cumulative distribution function (CDF) of $\mu$. \\ 
+\bottomrule
+\end{tabular}
+\caption{Summary of notation.}
+\label{tab:notation}
+\end{table}
+
+
 \section{Proofs}
 \label{app:proofs}
 
@@ -177,6 +207,83 @@ Positivity follows immediately again by $1 - q_{\beta} + q_{\alpha} > 0$.
     Thus $g$ is strictly decreasing. If $\rho_1 < \rho_2$ were both fixed points, then $\rho_1 = g(\rho_1) > g(\rho_2) = \rho_2$, a contradiction. Hence the fixed point is unique.
 \end{proof}
 
+\section{Optimal screening band computation algorithm}
+\label{app:algorithm}
+\begin{algorithm*}[ht]
+  \caption{Fixed-Point Iteration for Optimal Screening and Allocation Assignment}
+  \label{algo}
+  \begin{algorithmic}[1]
+  \Require Population sorted by risk (highest to lowest), allocation budget $\beta$, screening budget $\alpha$
+  \Ensure Band assignments that maximize allocation efficiency
+  \State $\rho_{\text{prev}} \gets 0$ \Comment{Initialize average risk of Band 3}
+  \For{$k = 1$ to $\mathtt{max\_iterations}$}
+      \State \textbf{Compute target mass for each band:}
+      \State $m_1 \gets \beta - \alpha$ \Comment{Band 1: Direct allocation}
+      \State $m_2 \gets \alpha \cdot (1 - \rho_{\text{prev}})$ \Comment{Band 2: Direct allocation from saved budget}
+      \State $m_3 \gets \alpha$ \Comment{Band 3: Screening}
+      \State
+      \State \textbf{Assign individuals to bands by cumulative mass:}
+      \State $i_1 \gets \min\{i : \sum_{j=0}^{i} \frac{1}{n} \geq m_1\}$ \Comment{End of Band 1}
+      \State $i_2 \gets \min\{i : \sum_{j=0}^{i} \frac{1}{n} \geq m_1 + m_2\}$ \Comment{End of Band 2}
+      \State $i_3 \gets \min\{i : \sum_{j=0}^{i} \frac{1}{n} \geq m_1 + m_2 + m_3\}$ \Comment{End of Band 3}
+      \State
+      \State \textbf{Compute average risk in Band 3:}
+      \State $\rho_{\text{curr}} \gets \frac{1}{i_3 - i_2} \sum_{j=i_2}^{i_3-1} \mu_j$ \Comment{$\mu_j$ = risk of individual $j$}
+      \State
+      \If{$|\rho_{\text{curr}} - \rho_{\text{prev}}| < \mathtt{tolerance}$}
+          \State \textbf{break} \Comment{Convergence achieved}
+      \EndIf
+      \State $\rho_{\text{prev}} \gets \rho_{\text{curr}}$ \Comment{Update for next iteration}
+  \EndFor
+  \State
+  \Return Band assignments $(i_1, i_2, i_3)$ with converged $\rho_{\text{prev}}$
+  \end{algorithmic}
+\end{algorithm*}
+
+\section{Empirical Analysis on Synthetic Data}
+\label{app:simulations}
+
+We consider four distributions governing the vulnerability risk in our synthetic population, depicted in Figure \ref{fig:risk_dists}. All four distributions share the same expected fraction of vulnerable units ($\EE[\mu]= 0.5$), so differences in targeting outcomes are driven purely by distributional shape. This allows us to study the limits of purely AI-driven allocation when no screening is employed, and to characterize the benefits of screening on allocation efficiency as aleatoric uncertainty increases. Specifically, we consider four risk distributions ordered by increasing aleatoric uncertainty. \textbf{Bimodal} ($\text{Beta}(0.1, 0.1)$): Mass concentrated near 0 and 1, with high separation between low- and high-risk units and minimal aleatoric uncertainty. \textbf{Uniform}: Flat over $[0,1]$ representing moderate uncertainty with random risk level. \textbf{Unimodal symmetric} ($\text{Beta}(10,10)$): Concentrated around $0.5$, where most units have intermediate risk and the signal for targeting is weak. \textbf{Point mass} ($\delta_{0.5}$): All units have identical risk $\mu = 0.5$, representing the limiting case of maximum aleatoric uncertainty in which no algorithmic targeting is possible. 
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.6\linewidth]{figures/risk_distributions.png}
+    \caption{Risk distributions used in simulations. All four share the same mean ($\EE[\mu] = 0.5$) but differ in aleatoric uncertainty, ranging from low (bimodal, with mass concentrated near 0 and 1) to maximum ($\delta_{0.5}$, with all mass at 0.5).}
+    \label{fig:risk_dists}
+\end{figure}
+
+
+
+For each distribution, we sample $N = 100{,}000$ units with true conditional risks and realized outcomes $Y_i | \mu_i \sim \text{Bernoulli}(\mu_i)$. We fix the resource budget at $\beta = 35\%$ and run Algorithm \ref{algo} to obtain the optimal screening set for varying screening budgets $\alpha \in [0, \beta]$. We report allocation precision, defined as the fraction of allocated units that are truly vulnerable (TP/$\beta$). Since the total number of targeted units is fixed to $\beta = 35\%$, all improvements in allocation efficiency come from better targeting through observed outcomes via screening.
+
+We compare against the optimal no-screening policy (Proposition~\ref{prop:optimal_no_screening}) in Figure~\ref{fig:sim_noscreening}. We further compare the optimal screening strategy against random screening, which selects units for physical verification uniformly at random (Figure \ref{fig:sim_random}), and a heuristic variant that places the screening band immediately below the pure algorithmic allocation threshold (Figure \ref{fig:sim_intuitive}). These comparisons illustrate that the efficiency gains from screening depend not only on the total amount of screening capacity deployed, but critically on where in the score distribution screening is concentrated.
+
+\begin{figure}[ht]
+        \centering
+        \includegraphics[width=0.72\linewidth]{figures/precision_optimal_vs_no_screening.png}
+        \caption{Allocation precision by screening budget $\alpha$ under optimal screening vs. no-screening baseline across risk distributions ($\beta = 35\%$). Lines show averages over 10 simulations; shaded regions indicate $\pm$ one standard deviation.}
+        \label{fig:sim_noscreening}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.72\textwidth]{paper/figures/precision_optimal_vs_random.png}
+    \caption{Allocation precision by screening budget $\alpha$ under optimal screening vs. random screening baseline across risk distributions ($\beta = 35\%$). Lines show averages over 10 simulations; shaded regions indicate $\pm$ one standard deviation.}
+    \label{fig:sim_random}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.72\textwidth]{paper/figures/precision_optimal_vs_heuristic.png}
+    \caption{Allocation precision by screening budget $\alpha$ under optimal screening vs. heuristic top-adjacent screening across risk distributions ($\beta = 35\%$). Lines show averages over 10 simulations; shaded regions indicate $\pm$ one standard deviation.}
+    \label{fig:sim_intuitive}
+\end{figure}
+
+Our results first shed light on the limits of purely algorithmic allocation: without screening, optimal allocation precision ranges from 50 to 100\% as the underlying distribution moves from $\delta_{0.5}$ to the perfectly separating bimodal distribution. That is, even with access to the true risk distribution, targeting efficiency varies substantially with the aleatoric uncertainty of the underlying distribution. In particular, the bimodal distribution achieves perfect precision \emph{without any screening}: when risk is well-separated, algorithmic targeting alone suffices for full allocation efficiency. However, for the remaining distributions, optimal screening with $\alpha = \beta = 35\%$ raises the positive predictive value from 82\% to 98\% for the uniform, from 61\% to 83\% for the unimodal symmetric, and from 50\% to 75\% for the point mass at $0.5$. In the latter case, notably, screening recovers substantial efficiency even though the risk scores carry no targeting information whatsoever. 
+
+
+
 
 
 \section{Application to Income-Based Eligibility Screening (ACS Census Data)}
@@ -196,21 +303,5 @@ Figure~\ref{fig:acs_income} shows the true positive rate as a function of the sc
 \end{figure}
 
 
-\section{Additional empirical results}
-\label{app:more_experiments}
 
-We compare the optimal screening strategy characterized in Theorem \ref{thm:optimal_screening} against two benchmarks: random screening which selects units for physical verification uniformly at random (Figure \ref{fig:sim_random}), and a heuristic variant that places the screening band immediately below the pure algorithmic allocation threshold (Figure \ref{fig:sim_intuitive}). These comparisons illustrate that the efficiency gains from screening depend not only on the total amount of screening capacity deployed, but critically on where in the score distribution screening is concentrated.
 
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=0.72\textwidth]{figures/optimal_vs_random.png}
-    \caption{Allocation recall by screening budget under optimal screening vs. random screening baseline across risk distributions ($\beta = 35\%$, averaged over 10 simulations).}
-    \label{fig:sim_random}
-\end{figure}
-
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=0.72\textwidth]{figures/optimal_vs_intuitive.png}
-    \caption{Allocation recall by screening budget under optimal screening vs. heuristic top-adjacent screening across risk distributions ($\beta = 35\%$, averaged over 10 simulations).}
-    \label{fig:sim_intuitive}
-\end{figure}
