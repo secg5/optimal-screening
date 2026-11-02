@@ -1,4 +1,3 @@
-
 \appendix
 
 
@@ -14,11 +13,11 @@ $X \in \mathcal{X}$ & Covariates and feature space. \\
 $Y \in \{0,1\}$ & Vulnerability status indicating benefit from resource. \\
 $\mu(X) = \mathbb{P}(Y=1 \mid X)$ & Bayes-optimal risk score. \\
 $\beta \in (0,1)$ & Fixed allocation budget as fraction of population. \\
-$\alpha \in [0,\beta]$ & Screening budget as fraction of population. \\
+$\alpha \in (0,\beta)$ & Screening budget as fraction of population. \\
 $S: \mathcal{X} \to \{0,1\}$ & Screening rule. \\
 $T: \mathcal{X} \to \{0,1\}$ & Allocation rule for unscreened units based on covariates. \\
 $\pi(X, Y)$ & Two-stage allocation rule. \\
-$\widetilde{q}_\beta$ & $1-\beta$ quantile of $\mu(X)$; pure AI allocation threshold. \\
+$\widetilde{q}_\beta$ & $1-\beta$ quantile of $\mu(X)$; purely AI allocation threshold. \\
 $q_\alpha, q_\beta$ & Lower and upper boundaries of the optimal screening band. \\
 $[q_\alpha, q_\beta]$ & Optimal screening band. \\
 $V(\alpha)$ & Allocation value with screening budget $\alpha$ (for fixed $\beta$). \\
@@ -36,7 +35,7 @@ $F$ & Cumulative distribution function (CDF) of $\mu$. \\
 \label{app:proofs}
 
 \begin{proof}[Proof of Proposition~\ref{prop:optimal_no_screening} (Optimal Allocation Rule without Screening)]
-We proceed by contradiction. Let $q^* = q_{1-\beta}$ denote the $(1-\beta)$-quantile of $\mu(X)$, and suppose $T$ is an optimal allocation rule that differs from the threshold rule $T^*(X) = \mathbf{1}\{\mu(X) > q^*\}$. Since $T \neq T^*$ and both exhaust exactly budget $\beta$, they must differ on a set of positive measure. In particular, There exists a unit $x_0$ allocated by $T^*$ but not by $T$, i.e., $\mu(x_0) > q^*$ and $T(x_0) = 0$. Conversely, since both rules exhaust the same budget $\beta$ but $T$ does not allocate $x_0$, it must allocate some unit $x_1$ that $T^*$ does not, i.e., $\mu(x_1) \leq q^*$ and $T(x_1) = 1$. In particular it follows that $\mu(x_0) > q^* \geq \mu(x_1)$, so $\mu(x_0) > \mu(x_1)$.
+We proceed by contradiction. Let $q^* = q_{1-\beta}$ denote the $(1-\beta)$-quantile of $\mu(X)$, and suppose $T$ is an optimal allocation rule that differs from the threshold rule $T^*(X) = \mathbf{1}\{\mu(X) > q^*\}$. Since $T \neq T^*$ and both exhaust exactly budget $\beta$, they must differ on a set of positive measure. In particular, there exists a unit $x_0$ allocated by $T^*$ but not by $T$, i.e., $\mu(x_0) > q^*$ and $T(x_0) = 0$. Conversely, since both rules exhaust the same budget $\beta$ but $T$ does not allocate $x_0$, it must allocate some unit $x_1$ that $T^*$ does not, i.e., $\mu(x_1) \leq q^*$ and $T(x_1) = 1$. In particular it follows that $\mu(x_0) > q^* \geq \mu(x_1)$, so $\mu(x_0) > \mu(x_1)$.
 
 Define $\tilde{T}$ to agree with $T$ everywhere except at $x_0$ and $x_1$, specifically:
 $$\tilde{T}(x_0) = 1, \qquad \tilde{T}(x_1) = 0.$$
@@ -84,7 +83,7 @@ The first term is non-positive since $\mu \leq 1$; the second is strictly positi
 
 \begin{proof}[Proof of Theorem~\ref{thm:optimal_screening} (Optimal Screening in Two-Stage Allocation)]
 
-We first show that the optimal screening set $S^*(X)$ lies entirely below the optimal direct allocation set $T^*(X)$. With this, the second-stage allocation for unscreened units reduces to a no-screening optimization problem with a threshold rule solution. Finally, we show that the two optimal sets are contiguous, with the screening band sitting immediately below the direct allocation band, and that the boundaries are uniquely determined by the budget constraints.
+To prove the result, we first show that the optimal screening set $S^*(X)$ lies entirely below the optimal direct allocation set $T^*(X)$. With this, the second-stage allocation for unscreened units reduces to a no-screening optimization problem with a threshold rule solution. Finally, we show that the two optimal sets are contiguous, with the screening band sitting immediately below the direct allocation band, and that the boundaries are uniquely determined by the budget constraints.
 
 
 \textit{Step 1: No directly allocated unit lies below a screened one.} Suppose for contradiction that under the optimal policy, unit $z$ with $\mu(z) < \mu(z')$ is directly allocated while unit $z'$ is screened. Consider the alternative policy that swaps their roles: screen $z$ and directly allocate $z'$. This swap preserves the screening budget constraint since $\mathbb{E}[S(X)]$ is unchanged. The direct contribution to the objective from these two units is unchanged since both screened and directly allocated units contribute $\mu(X)$ in expectation. However, the allocation budget used by the screened unit changes from $\mu(z')$ to $\mu(z) < \mu(z')$, saving $\mu(z') - \mu(z) > 0$ of allocation budget. This extra budget can be used to extend the direct allocation band to additional units with positive risk, strictly increasing the objective. This contradicts optimality of the original policy. Hence at optimality, no directly allocated unit has lower risk than any screened unit, i.e., the screening set lies entirely below the direct allocation set.
@@ -109,35 +108,28 @@ Differentiating with respect to $q_b$, using $\frac{dq_a}{dq_b} = \frac{f(q_b)}{
 \begin{equation}
     \frac{dV}{dq_b} = q_b f(q_b) - q_a f(q_b) - q_\beta f(q_b)(q_b - q_a) = f(q_b)(q_b - q_a)(1 - q_\beta) > 0,
 \end{equation}
-since $f(q_b) > 0$, $q_b > q_a$, and $q_\beta < 1$. Hence $V$ is strictly increasing in $q_b$, so the optimal screening interval is pushed as high as possible. The upper boundary is therefore $q_b = q_\beta$, with $q_\alpha = F^{-1}(F(q_\beta) - \alpha)$ from the screening budget constraint.
+since $q_b > q_a$ and $q_\beta < 1$, for $\alpha, \beta > 0$, and $f > 0$ from having full support on $[0,1]$. Hence $V$ is strictly increasing in $q_b$ and the optimal screening interval is pushed as high as possible. An alternative approach is presented in the proof of Proposition \ref{prop:convexity} which directly shows that the gains from screening higher-risk units are larger than the reduction in direct allocation value from a smaller available budget.
+
+The upper boundary is therefore $q_b = q_\beta$, and $q_\alpha = F^{-1}(F(q_\beta) - \alpha)$ from the screening budget constraint.
 \end{proof}
 
-\begin{proposition}[Interval Structure of Optimal Rules]
+\begin{proposition}[Interval Structure of Optimal Screening]
 \label{prop:convexity}
-The optimal screening rule $S^*$ and the optimal allocation rule $T^*$ each have an interval structure in the risk score space, i.e., they select units of the form $\mathbbm{1}\{\mu(X) \in [q_a, q_b]\}$ for some quantiles $0 \leq q_a \leq q_b \leq 1$.
+Let $\alpha \in (0,\beta)$ and $\beta \in (0,1)$ with $\alpha + \beta < 1$. The optimal screening rule $S^*$ has an interval structure in the risk score space of the form $S^*(X) = \mathbbm{1}\{\mu(X) \in [q_a, q_b]\}$ for some quantiles $0 < q_a \leq q_b < 1$.
 \end{proposition}
 
-\begin{proof}[Proof of Proposition~\ref{prop:convexity} (Convexity of Optimal Sets)]
-We prove convexity of the screening set; the argument for the allocation set is identical. Suppose by contradiction that $S^*$ is not convex. Then there exist units $x_a, x_b$ with $\mu(x_a) < \mu(x_b)$, both screened, and a unit $x_m$ with $\mu(x_a) < \mu(x_m) < \mu(x_b)$ that is \emph{not} screened---a gap inside the screening set. Note that $x_m$ is also not directly allocated from Step 1 in the proof of Theorem \ref{thm:optimal_screening}.
+\begin{proof}[Proof of Proposition~\ref{prop:convexity} (Interval Structure of Optimal Screening)]
+Suppose by contradiction that there is a gap in the optimal screening set $S^*$. That is, there exist units $x_a, x_b$ with $\mu(x_a) < \mu(x_b)$, both screened, and a unit $x_m$ with $\mu(x_a) < \mu(x_m) < \mu(x_b)$ that is \emph{not} screened. Note that $x_m$ is also not directly allocated from Step 1 in the proof of Theorem \ref{thm:optimal_screening}.
 
-Consider swapping $x_a$ out of the screening set and replacing it with $x_m$, keeping all else equal. This maintains the screening budget. 
-However, since $\mu(x_m) > \mu(x_a)$, the screened set now covers a unit with strictly higher risk, yielding strictly more expected positives from screening:
-$$\mathbb{E}[S(X) Y] \text{ increases by } \mu(x_m) - \mu(x_a) > 0.$$
-This contradicts the optimality of $S^*$. Hence the optimal screening set must be an interval in the risk space.
+Consider swapping $x_a$ out of the screening set and replacing it with $x_m$, keeping all else equal, and define this rule as $\widetilde{S}$, satisfying the screening budget $\EE[S^*] = \EE[\widetilde{S}] = \alpha$. Since $\mu(x_m) > \mu(x_a)$, $\widetilde{S}$ now covers a unit with strictly higher risk, yielding strictly more expected positives from screening:
+$$\mathbb{E}[\widetilde{S}Y] - \mathbb{E}[S^* Y] = \mu(x_m) - \mu(x_a) > 0.$$
+However, the expected saved budget decreases by $\mu(x_m) - \mu(x_a)$, reducing the budget available for direct allocation. Define $q^* = q_{1-\beta+\EE[S^*Y]}$ and $\widetilde{q} = q_{1-\beta+\EE[\widetilde{S}Y]}$ as the optimal threshold rules for the direct allocation set from Proposition \ref{prop:optimal_no_screening}, from screening sets $S^*$ and $\widetilde{S}$, respectively. We have that the change in contribution from direct allocation is then
+$$\int_{q^*}^1\mu dF(\mu) - \int_{\widetilde{q}}^1\mu dF(\mu) = \int_{q^*}^{\widetilde{q}}\mu dF(\mu) \leq \widetilde{q}(\mu(x_m) - \mu(x_a)) < (\mu(x_m) - \mu(x_a)),$$
+where the first inequality follows from $F(\widetilde{q}) - F(q^*) = \EE[\widetilde{S}Y] - \EE[S^*Y] = \mu(x_m) - \mu(x_a)$, and the second from $\widetilde{q} < 1$ provided $\alpha + \beta < 1$. 
+
+Therefore, the gains from screening higher-risk units exceed the reduction in contribution from direct allocation given a smaller available budget. That is, the net change in allocation efficiency is strictly positive, contradicting the optimality of $S^*$. Hence the optimal screening set is an interval in the risk space.
+
 \end{proof}
-
-
-\begin{corollary}
-\label{cor:uniform}
-    Assume the risk is uniformly distributed, $\mu(X) \sim \text{Unif}[0, 1]$. The optimal screening threshold is given analytically by:
-    $$q_\beta = \frac{1-\beta-\alpha^2/2}{1-\alpha},$$
-    and $q_\alpha = q_\beta - \alpha$.
-\end{corollary}
-
-
-%\begin{proof}
-%TODO (MDR corollary 1 and 2)
-%\end{proof}
 
 
 
@@ -151,84 +143,124 @@ $$\frac{\partial q_{\alpha}}{\partial q_{\beta}} = \frac{f(q_\beta)}{f(q_{\alpha
 \frac{\partial q_{\alpha}}{\partial \alpha} = -\frac{1}{f(q_{\alpha})}.$$
 
 To derive $\frac{dq_{\beta}}{d\alpha}$, define the budget function
-$$ G(q_{\beta}, \alpha) \equiv \int_{q_{\alpha}}^{q_{\beta}} \mu dF(\mu) + 1 - F(q_{\beta}) - 1 =0.$$
+$$ G(q_{\beta}, \alpha) \equiv \int_{q_{\alpha}}^{q_{\beta}} \mu dF(\mu) + 1 - F(q_{\beta}) - \beta =0.$$
 Applying Leibniz's rule to differentiate $G$ with respect to $q_{\beta}$:
 $$\frac{\partial G}{\partial q_{\beta}} = q_{\beta} f(q_{\beta}) - q_{\alpha} f(q_{\alpha}) \frac{\partial q_{\alpha}}{\partial q_{\beta}} - f(q_{\beta}) = f(q_{\beta})\bigl(q_{\beta} - q_{\alpha} - 1\bigr).$$
 Differentiating $G$ with respect to $\alpha$:
 $$\frac{\partial G}{\partial \alpha} = -q_{\alpha} f(q_{\alpha}) \frac{\partial q_{\alpha}}{\partial \alpha} = q_{\alpha}.$$
 By the implicit function theorem:
 $$\frac{dq_{\beta}}{d\alpha} = -\frac{\partial G / \partial \alpha}{\partial G / \partial q_{\beta}} = -\frac{q_{\alpha}}{f(q_{\beta})(q_{\beta} - q_{\alpha} - 1)} = \frac{q_{\alpha}}{f(q_{\beta})(1 - q_{\beta} + q_{\alpha})}.$$
-This derivative is always positive as $1 \geq q_{\beta} \geq  q_{\alpha} \geq 0$. %That is, as budget increases the upper limit of the screening interval also increases (and the lower limit decreases from its partial derivative being always negative).
+This derivative is always positive as $1 > q_{\beta} \geq  q_{\alpha} > 0$. %That is, as budget increases the upper limit of the screening interval also increases (and the lower limit decreases from its partial derivative being always negative).
 
 Finally, replacing this result for $dq_{\beta}/d\alpha$ in $dV^*/d\alpha$:
 $$\frac{dV^*}{d\alpha} = -q_{\alpha} {f(q_{\alpha})} \frac{1}{f(q_{\alpha})}\left(f(q_{\beta})\frac{dq_{\beta}}{d\alpha} - 1\right)= -q_{\alpha}\left(\frac{q_{\alpha}}{1 - q_{\beta} + q_{\alpha}} - 1\right) = \frac{q_{\alpha}(1 - q_{\beta})}{1 - q_{\beta} + q_{\alpha}}.$$
-Positivity follows immediately again by $1 - q_{\beta} + q_{\alpha} > 0$.
+Positivity follows immediately again by $1 - q_{\beta} + q_{\alpha} > 0$, from $q_\alpha, q_\beta \in (0,1)$.
 
-%TODO: MDR second deriative is < 0.
+
+To establish concavity, we differentiate the expression for $dV^*/d\alpha$ with respect to $\alpha$. Substituting the expressions for $dq_\alpha/d\alpha$
+and $dq_\beta/d\alpha$ established above:
+$$\frac{d^2V^*}{d\alpha^2} = -\frac{(1-q_\beta)^3 f(q_\beta) + q_\alpha^3 f(q_\alpha)}{f(q_\alpha)f(q_\beta)(1-q_{\beta} + q_{\alpha})^3} < 0,$$
+where the inequality follows since $q_\alpha, q_\beta \in (0,1)$. Hence $V^*(\alpha)$ is concave in $\alpha$, formalizing a law of diminishing returns to screening.
+
 \end{proof}
 
-\begin{theorem}[Existence of Fixed Point]\label{thm:fixed_point_existence}
-    Assume the risk distribution $F$ is continuous and strictly increasing on its support, with $\alpha \in (0, \beta)$ and $\beta + \alpha \leq 1$. Then the update function $g: [0,1] \to [0,1]$ has a fixed point.
-\end{theorem}
 
-\begin{proof}[Proof of Theorem~\ref{thm:fixed_point_existence}]
-    Consider the population version of the algorithm. The band thresholds are determined by:
-    \begin{align*}
-        %q_T & = F^{-1}(\beta - \alpha) %not used\\
-        q_{\beta} & = F^{-1}(\beta - \alpha \rho) \\
-        q_{\alpha} & = F^{-1}(\beta + \alpha - \alpha \rho)
-    \end{align*}
-    where $F$ is the CDF of the risk distribution and $\rho$ is the average risk in the Screening Band. The update function computes:
-    \begin{align*}
-        g(\rho) & = \frac{1}{q_{\alpha} - q_{\beta}}\int_{q_{\beta}}^{q_{\alpha}} \mu \, dF(\mu) \\
-        %& = \frac{F(q_{\beta}) - F(q_{\alpha})}{q_{\alpha} - q_{\beta}} \\
-        & = \frac{1}{F^{-1}(\beta + \alpha - \alpha \rho) - F^{-1}(\beta - \alpha \rho)} \int_{q_{\beta}}^{q_{\alpha}} \mu \, dF(\mu).
-    \end{align*}
-    %where the last equality uses $F(q_S) - F(q_B) = \alpha$.
 
-    Since $F$ is continuous and strictly increasing, $F^{-1}$ exists and is continuous. The arguments $\beta - \alpha\rho$ and $\beta + \alpha - \alpha\rho$ lie in $(0,1)$ for $\rho \in [0,1]$ under our assumptions, so $g$ is well-defined. As a composition of continuous functions, $g$ is continuous.
+\begin{proof}[Proof of Corollary~\ref{cor:at_the_margin}]
 
-    The average risk over any interval of positive mass lies within the support of $F$, we have $g: [0,1] \to [0,1]$. Hence,
-    by Brouwer's fixed point theorem, as a consequence of $g$ being continuous and $[0,1]$ compact and convex, there exists $\rho^* \in [0,1]$ such that $g(\rho^*) = \rho^*$.
+Following the proof of Theorem \ref{thm:value_screening}, we have that
+$$\frac{dq_{\beta}}{d\alpha} = \frac{q_{\alpha}}{f(q_{\beta})(1 - q_{\beta} + q_{\alpha})},$$
+which is always positive given $0 < q_{\alpha} \leq  q_{\beta} < 1$. That is, as the screening budget increases, the upper limit of the screening interval also increases.
+
+Moreover, from the budget constraint $q_{\alpha} = F^{-1}(F(q_{\beta}(\alpha)) - \alpha)$ we have
+$$\frac{dq_{\alpha}}{d\alpha} = \frac{1}{f(q_{\alpha})}\left(f(q_{\beta})\frac{dq_{\beta}}{d\alpha} - 1\right) = \frac{1}{f(q_{\alpha})}\left(\frac{q_{\alpha}}{1 - q_{\beta} + q_{\alpha}} - 1\right) = \frac{1}{f(q_{\alpha})}\left(\frac{q_{\beta} - 1}{1 - q_{\beta} + q_{\alpha}}\right),$$
+which is always negative for $q_{\beta} < 1$. That is, as the screening budget grows, the lower limit of the screening interval decreases.
+
+To establish that the purely algorithmic allocation threshold $\widetilde{q}_{\beta}$ falls within the optimal screening band, note that when $\alpha = 0$ the screening set collapses to $q_{\alpha} = q_{\beta} = \widetilde{q}_{\beta}$. Then, for $\alpha > 0$, $q_{\alpha}$ decreases and $q_{\beta}$ increases, so  $\widetilde{q}_{\beta} \in [q_{\alpha},  q_{\beta}]$ and the screening set selects units at the margin of algorithmic allocation around $\widetilde{q}_{\beta}$.
 \end{proof}
 
-\begin{theorem}[Uniqueness of Fixed Point]\label{thm:fixed_point_uniqueness}
-    Under the assumptions of Theorem~\ref{thm:fixed_point_existence}, the fixed point is unique.
-\end{theorem}
 
-\begin{proof}[Proof of Theorem~\ref{thm:fixed_point_uniqueness}]
-    We show that $g$ is strictly decreasing, which implies at most one fixed point.
 
-    As $\rho$ increases, both $q_{\beta}(\rho) = F^{-1}(\beta - \alpha\rho)$ and $q_{\alpha}(\rho) = F^{-1}(\beta + \alpha - \alpha\rho)$ decrease, shifting the screening interval leftward in the risk space. Since $F$ is strictly increasing, lower quantiles correspond to lower risk values.
+\begin{corollary}
+\label{cor:uniform}
+    Assume the risk is uniformly distributed, $\mu \sim \text{Unif}[0, 1]$. Then the optimal screening thresholds admit the closed-form expressions:
+    $$q_\beta = \frac{1-\beta-\alpha^2/2}{1-\alpha}, \qquad q_\alpha = q_\beta - \alpha.$$
+\end{corollary}
 
-    For $\rho_1 < \rho_2$, the interval $[q_{\beta}(\rho_2), q_{\alpha}(\rho_2)]$ lies strictly to the left of $[q_{\beta}(\rho_1), q_{\alpha}(\rho_1)]$. Both intervals have mass $\alpha$, but the left-shifted interval covers lower-risk individuals, so:
-    $$g(\rho_2) = \frac{1}{\alpha}\int_{q_{\beta}(\rho_2)}^{q_{\alpha}(\rho_2)} \mu \, dF(\mu) < \frac{1}{\alpha}\int_{q_{\beta}(\rho_1)}^{q_{\alpha}(\rho_1)} \mu \, dF(\mu) = g(\rho_1)$$
 
-    Thus $g$ is strictly decreasing. If $\rho_1 < \rho_2$ were both fixed points, then $\rho_1 = g(\rho_1) > g(\rho_2) = \rho_2$, a contradiction. Hence the fixed point is unique.
+\begin{proof}
+Under uniform risk $\mu \sim \text{Unif}[0, 1]$, the screening constraint implies
+$$F(q_{\alpha}) = F(q_{\beta}) - \alpha \quad\Longrightarrow\quad q_{\alpha} = q_{\beta} - \alpha.$$
+
+Therefore, the allocation constraint \eqref{eq:budget_constraints} becomes 
+\begin{align*}
+    \beta = \int_{q_{\alpha}}^{q_{\beta}} \mu dF(\mu) + 1 - F(q_{\beta}) = \frac{1}{2}q_{\beta}^2 - \frac{1}{2}(q_{\beta} - \alpha)^2 + 1 - q_{\beta}.
+\end{align*}
+Solving for $q_{\beta}$ yields the result.
 \end{proof}
 
-\section{Optimal screening band computation algorithm}
+
+
+
+% \begin{theorem}[Existence of Fixed Point]\label{thm:fixed_point_existence}
+%     Assume the risk distribution $F$ is continuous and strictly increasing on its support, with $\alpha \in (0, \beta)$ and $\beta + \alpha < 1$. Then the update function $g: [0,1] \to [0,1]$ has a fixed point.
+% \end{theorem}
+
+% \begin{proof}[Proof of Theorem~\ref{thm:fixed_point_existence}]
+%     Consider the population version of the algorithm. The allocation budget constraint of Theorem~\ref{thm:optimal_screening}, combined with the average screening risk $\rho = \frac{1}{\alpha}\int_{q_\alpha}^{q_\beta}\mu\,dF(\mu)$, determines the band thresholds:
+%     \begin{align*}
+%         q_{\beta}(\rho) & = F^{-1}(1 - \beta + \alpha \rho) \\
+%         q_{\alpha}(\rho) & = F^{-1}(1 - \beta - \alpha + \alpha \rho)
+%     \end{align*}
+%     where $F$ is the CDF of the risk distribution. These satisfy $q_\alpha < q_\beta$ and $F(q_\beta) - F(q_\alpha) = \alpha$, consistent with the screening budget constraint. The update function is the average risk over the screening band:
+%     \begin{align*}
+%         g(\rho) & = \frac{1}{\alpha}\int_{q_{\alpha}(\rho)}^{q_{\beta}(\rho)} \mu \, dF(\mu).
+%     \end{align*}
+
+%     Since $F$ is continuous and strictly increasing, $F^{-1}$ exists and is continuous. Under $\alpha \in (0,\beta)$ and $\beta + \alpha < 1$, the arguments $1 - \beta + \alpha\rho$ and $1 - \beta - \alpha + \alpha\rho$ lie in $(0,1)$ for all $\rho \in [0,1]$, so $g$ is well-defined. As a composition of continuous functions, $g$ is continuous.
+
+%     The average risk over any interval of positive mass lies within the support of $F$, so $g: [0,1] \to [0,1]$. Hence,
+%     by Brouwer's fixed point theorem, as a consequence of $g$ being continuous and $[0,1]$ compact and convex, there exists $\rho^* \in [0,1]$ such that $g(\rho^*) = \rho^*$.
+% \end{proof}
+
+% \begin{theorem}[Uniqueness of Fixed Point]\label{thm:fixed_point_uniqueness}
+%     Under the assumptions of Theorem~\ref{thm:fixed_point_existence}, the fixed point is unique.
+% \end{theorem}
+
+% \begin{proof}[Proof of Theorem~\ref{thm:fixed_point_uniqueness}]
+%     We show that $g$ is strictly decreasing, which implies at most one fixed point.
+
+%     As $\rho$ increases, both $q_{\beta}(\rho) = F^{-1}(1 - \beta + \alpha\rho)$ and $q_{\alpha}(\rho) = F^{-1}(1 - \beta - \alpha + \alpha\rho)$ decrease, shifting the screening interval leftward in the risk space. Since $F$ is strictly increasing, lower quantiles correspond to lower risk values.
+
+%     For $\rho_1 < \rho_2$, the interval $[q_{\alpha}(\rho_2), q_{\beta}(\rho_2)]$ lies strictly to the left of $[q_{\alpha}(\rho_1), q_{\beta}(\rho_1)]$. Both intervals have mass $\alpha$, but the left-shifted interval covers lower-risk individuals, so:
+%     $$g(\rho_2) = \frac{1}{\alpha}\int_{q_{\alpha}(\rho_2)}^{q_{\beta}(\rho_2)} \mu \, dF(\mu) < \frac{1}{\alpha}\int_{q_{\alpha}(\rho_1)}^{q_{\beta}(\rho_1)} \mu \, dF(\mu) = g(\rho_1)$$
+
+%     Thus $g$ is strictly decreasing. If $\rho_1 < \rho_2$ were both fixed points, then $\rho_1 = g(\rho_1) > g(\rho_2) = \rho_2$, a contradiction. Hence the fixed point is unique.
+% \end{proof}
+
+\section{Algorithm for Computing the Optimal Screening Quantiles}
+
 \label{app:algorithm}
 \begin{algorithm*}[ht]
-  \caption{Fixed-Point Iteration for Optimal Screening and Allocation Assignment}
+  \caption{Fixed-Point Algorithm for Optimal Screening and Allocation Assignment}
   \label{algo}
   \begin{algorithmic}[1]
-  \Require Population sorted by risk (highest to lowest), allocation budget $\beta$, screening budget $\alpha$
+  \Require Population sorted by increasing risk, allocation budget $\beta$, screening budget $\alpha$.
   \Ensure Band assignments that maximize allocation efficiency
-  \State $\rho_{\text{prev}} \gets 0$ \Comment{Initialize average risk of Band 3}
+  \State $\rho_{\text{prev}} \gets 0$ \Comment{Initialize average risk of Screening Band}
   \For{$k = 1$ to $\mathtt{max\_iterations}$}
       \State \textbf{Compute target mass for each band:}
-      \State $m_1 \gets \beta - \alpha$ \Comment{Band 1: Direct allocation}
-      \State $m_2 \gets \alpha \cdot (1 - \rho_{\text{prev}})$ \Comment{Band 2: Direct allocation from saved budget}
-      \State $m_3 \gets \alpha$ \Comment{Band 3: Screening}
+      \State $m_{alloc} \gets \beta - \alpha$ \Comment{Direct Allocation Band}
+      \State $m_{res} \gets \alpha \cdot (1 - \rho_{\text{prev}})$ \Comment{Residual Allocation Band from saved budget}
+      \State $m_{screen} \gets \alpha$ \Comment{Screening Band}
       \State
-      \State \textbf{Assign individuals to bands by cumulative mass:}
-      \State $i_1 \gets \min\{i : \sum_{j=0}^{i} \frac{1}{n} \geq m_1\}$ \Comment{End of Band 1}
-      \State $i_2 \gets \min\{i : \sum_{j=0}^{i} \frac{1}{n} \geq m_1 + m_2\}$ \Comment{End of Band 2}
-      \State $i_3 \gets \min\{i : \sum_{j=0}^{i} \frac{1}{n} \geq m_1 + m_2 + m_3\}$ \Comment{End of Band 3}
+      \State \textbf{Assign units to bands by cumulative mass:}
+      \State $i_{alloc} \gets \min\{i : \sum_{j=i}^{n} \frac{1}{n} \geq m_{alloc}\}$ \Comment{Start of Direct Allocation Band}
+      \State $i_{res} \gets \min\{i : \sum_{j=i}^{n} \frac{1}{n} \geq m_{alloc} + m_{res}\}$ \Comment{Start of Residual Allocation Band}
+      \State $i_{screen} \gets \min\{i : \sum_{j=i}^{n} \frac{1}{n} \geq m_{alloc} + m_{res} + m_{screen}\}$ \Comment{Start of Screening Band}
       \State
-      \State \textbf{Compute average risk in Band 3:}
-      \State $\rho_{\text{curr}} \gets \frac{1}{i_3 - i_2} \sum_{j=i_2}^{i_3-1} \mu_j$ \Comment{$\mu_j$ = risk of individual $j$}
+      \State \textbf{Recompute average risk in Screening Band:}
+      \State $\rho_{\text{curr}} \gets \frac{1}{i_{res} - i_{screen}} \sum_{j=i_{screen}}^{i_{res}-1} \mu_j$ \Comment{$\mu_j$ = risk of unit $j$}
       \State
       \If{$|\rho_{\text{curr}} - \rho_{\text{prev}}| < \mathtt{tolerance}$}
           \State \textbf{break} \Comment{Convergence achieved}
@@ -236,14 +268,56 @@ Positivity follows immediately again by $1 - q_{\beta} + q_{\alpha} > 0$.
       \State $\rho_{\text{prev}} \gets \rho_{\text{curr}}$ \Comment{Update for next iteration}
   \EndFor
   \State
-  \Return Band assignments $(i_1, i_2, i_3)$ with converged $\rho_{\text{prev}}$
+  \Return Band assignments $(i_{alloc}, i_{res}, i_{screen})$ with converged $\rho_{\text{prev}}$
   \end{algorithmic}
 \end{algorithm*}
+
+\begin{theorem}[Fixed Point: Existence, Uniqueness, and Convergence of Algorithm \ref{algo}]\label{thm:fixed_point}
+    Let $\alpha \in (0, \beta)$ and $\beta + \alpha < 1$. The update function  $g(\rho) = \EE[\mu \mid \mu \in [q_{\alpha}(\rho), q_{\beta}(\rho)]]$ of Algorithm \ref{algo} is a contraction on $[0, 1]$ with nonnegative Lipschitz constant
+    $$c_F := F^{-1}(1-\beta+\alpha) - F^{-1}(1-\beta-\alpha) < 1.$$
+    By Banach's fixed point theorem, there exists a unique $\rho^* \in [0,1]$ with $g(\rho^*) = \rho^*$, and Algorithm \ref{algo} converges for any $\rho^{(0)} \in [0,1]$:
+    $$|\rho^{(k)} - \rho^*| \leq c_F^k\,|\rho^{(0)} - \rho^*|.$$
+\end{theorem}
+
+
+\begin{proof}[Proof of Theorem~\ref{thm:fixed_point}]
+    %We will proceed by first proving that the function $g$ is continuous. 
+    %Under $\alpha \in (0,\beta)$ and $\beta+\alpha < 1$, both arguments of $F^{-1}$ lie strictly in $(0,1)$ for all $\rho \in [0,1]$, so $g$ is well-defined, continuous, 
+    
+    Define the update function $g$ as the average risk over the screening band:
+    $$g(\rho) = \frac{1}{\alpha}\int_{q_{\alpha}(\rho)}^{q_{\beta}(\rho)} \mu \, dF(\mu),$$
+    where the band thresholds
+    \begin{align*}
+        q_{\beta}(\rho) &= F^{-1}(1 - \beta + \alpha\rho), \\
+        q_{\alpha}(\rho) &= F^{-1}(1 - \beta - \alpha + \alpha\rho),
+    \end{align*}
+    are determined by the budget constraints of Theorem~\ref{thm:optimal_screening} and the average screening risk $\rho$, satisfying $q_\alpha < q_\beta$ and $F(q_\beta) - F(q_\alpha) = \alpha$. 
+
+    First note that since $g(\rho)$ is an average of $\mu \in [0,1]$, we have that $g(\rho) \in [0,1]$ for all $\rho \in [0,1]$, and $g$ maps $[0,1]$ into $[0,1]$. 
+    
+    We now show that $g$ is a contraction. Let $\rho_1 < \rho_2$, with corresponding screening bands $[q_{\alpha}(\rho_1), q_{\beta}(\rho_1)]$ and $[q_{\alpha}(\rho_2), q_{\beta}(\rho_2)]$ of $F$-mass $\alpha$. Given that $F^{-1}$ is nondecreasing and $\rho_2 - \rho_1 \leq 1$, we have  $q_{\alpha}(\rho_2) = F^{-1}(1 - \beta - \alpha(1-\rho_2)) \leq F^{-1}(1 - \beta + \alpha\rho_1) = q_{\beta}(\rho_1)$. That is, the two intervals always overlap (or touch at the boundary).
+     
+    The overlapping region $[q_{\alpha}(\rho_2), q_{\beta}(\rho_1)]$ cancels in the difference, yielding 
+    $$g(\rho_2) - g(\rho_1) = \frac{1}{\alpha}\left[\int_{q_\beta(\rho_1)}^{q_\beta(\rho_2)}\mu\,dF(\mu) - \int_{q_\alpha(\rho_1)}^{q_\alpha(\rho_2)}\mu\,dF(\mu)\right].$$
+    Both integrals are over intervals of $F$-mass $\alpha(\rho_2-\rho_1)$. Bounding by the supremum and infimum of each region:
+    \begin{align*}
+        \int_{q_\beta(\rho_1)}^{q_\beta(\rho_2)}\mu\,dF(\mu) &\leq q_\beta(\rho_2)\cdot\alpha(\rho_2-\rho_1) \leq F^{-1}(1-\beta+\alpha)\cdot\alpha(\rho_2-\rho_1),\\
+        \int_{q_\alpha(\rho_1)}^{q_\alpha(\rho_2)}\mu\,dF(\mu) &\geq q_\alpha(\rho_1)\cdot\alpha(\rho_2-\rho_1) \geq F^{-1}(1-\beta-\alpha)\cdot\alpha(\rho_2-\rho_1),
+    \end{align*}
+    where $F^{-1}(1-\beta+\alpha)$ and $F^{-1}(1-\beta-\alpha)$ correspond to $q_{\beta}(1)$ and $q_{\alpha}(0)$, respectively. Subtracting and dividing by $\alpha$:
+    $$0 \leq g(\rho_2) - g(\rho_1) \leq c_F(\rho_2-\rho_1),$$
+    where $c_{F} = F^{-1}(1-\beta+\alpha) - F^{-1}(1-\beta-\alpha).$ Since $\alpha < \beta$ implies $F^{-1}(1-\beta+\alpha) < 1$, and $\beta+\alpha < 1$ implies $F^{-1}(1-\beta-\alpha) > 0$, we have $c_F < 1$. The first inequality $g(\rho_2) - g(\rho_1) \geq 0$ follows because the first integral dominates the second, establishing that $g$ is monotone increasing. 
+    
+    Hence $|g(\rho_1)-g(\rho_2)| \leq c_F|\rho_1-\rho_2|$ and $g$ is a contraction on the complete metric space $([0,1], |\cdot|)$. The result follows from Banach's fixed point theorem.
+\end{proof}
+
+
+
 
 \section{Empirical Analysis on Synthetic Data}
 \label{app:simulations}
 
-We consider four distributions governing the vulnerability risk in our synthetic population, depicted in Figure \ref{fig:risk_dists}. All four distributions share the same expected fraction of vulnerable units ($\EE[\mu]= 0.5$), so differences in targeting outcomes are driven purely by distributional shape. This allows us to study the limits of purely AI-driven allocation when no screening is employed, and to characterize the benefits of screening on allocation efficiency as aleatoric uncertainty increases. Specifically, we consider four risk distributions ordered by increasing aleatoric uncertainty. \textbf{Bimodal} ($\text{Beta}(0.1, 0.1)$): Mass concentrated near 0 and 1, with high separation between low- and high-risk units and minimal aleatoric uncertainty. \textbf{Uniform}: Flat over $[0,1]$ representing moderate uncertainty with random risk level. \textbf{Unimodal symmetric} ($\text{Beta}(10,10)$): Concentrated around $0.5$, where most units have intermediate risk and the signal for targeting is weak. \textbf{Point mass} ($\delta_{0.5}$): All units have identical risk $\mu = 0.5$, representing the limiting case of maximum aleatoric uncertainty in which no algorithmic targeting is possible. 
+We consider four distributions governing the vulnerability risk in our synthetic population, depicted in Figure \ref{fig:risk_dists}. All four distributions share the same expected fraction of vulnerable units ($\EE[\mu]= 0.5$), so differences in targeting outcomes are driven purely by distributional shape. This allows us to study the limits of purely AI-driven allocation when no screening is employed, and to characterize the benefits of screening on allocation efficiency as aleatoric uncertainty increases. Specifically, we consider four risk distributions ordered by increasing aleatoric uncertainty. \textbf{Bimodal} ($\text{Beta}(0.1, 0.1)$): Mass concentrated near 0 and 1, with high separation between low- and high-risk units and minimal aleatoric uncertainty. \textbf{Uniform}: Flat over $[0,1]$ representing moderate uncertainty with random risk level. \textbf{Unimodal bell-shaped} ($\text{Beta}(10,10)$): Concentrated around $0.5$, where most units have intermediate risk and the signal for targeting is weak. \textbf{Point mass} ($\delta_{0.5}$): All units have identical risk $\mu = 0.5$, representing the limiting case of maximum aleatoric uncertainty in which no algorithmic targeting is possible. 
 
 
 \begin{figure}[h]
@@ -254,53 +328,37 @@ We consider four distributions governing the vulnerability risk in our synthetic
 \end{figure}
 
 
+For each distribution, we sample $N = 100{,}000$ units with true conditional risks and realized outcomes $Y_i\mid \mu_i \sim \text{Bernoulli}(\mu_i)$. We fix the resource budget at $\beta = 35\%$ and run Algorithm \ref{algo} to obtain the optimal screening set for varying screening budgets $\alpha \in [0, \beta]$. We report allocation precision, defined as the fraction of allocated units that are truly vulnerable (TP/$\beta$). Since the total number of targeted units is fixed to $\beta = 35\%$, all improvements in allocation efficiency come from better targeting through observed outcomes via screening.\footnote{All computations were performed on a Lenovo laptop equipped with an Intel Core Ultra 9 258H CPU and 32 GB of RAM.}
 
-For each distribution, we sample $N = 100{,}000$ units with true conditional risks and realized outcomes $Y_i | \mu_i \sim \text{Bernoulli}(\mu_i)$. We fix the resource budget at $\beta = 35\%$ and run Algorithm \ref{algo} to obtain the optimal screening set for varying screening budgets $\alpha \in [0, \beta]$. We report allocation precision, defined as the fraction of allocated units that are truly vulnerable (TP/$\beta$). Since the total number of targeted units is fixed to $\beta = 35\%$, all improvements in allocation efficiency come from better targeting through observed outcomes via screening.
+We compare against the optimal no-screening policy (Proposition~\ref{prop:optimal_no_screening}) in Figure~\ref{fig:sim_noscreening}. We further compare the optimal screening strategy against random screening, which selects units for physical verification uniformly at random (Figure \ref{fig:more_sim}, left), and a heuristic variant that places the screening band immediately below the purely algorithmic allocation threshold (Figure \ref{fig:more_sim} right). These comparisons illustrate that the efficiency gains from screening depend not only on the total amount of screening capacity deployed, but critically on where in the score distribution screening is concentrated.
 
-We compare against the optimal no-screening policy (Proposition~\ref{prop:optimal_no_screening}) in Figure~\ref{fig:sim_noscreening}. We further compare the optimal screening strategy against random screening, which selects units for physical verification uniformly at random (Figure \ref{fig:sim_random}), and a heuristic variant that places the screening band immediately below the pure algorithmic allocation threshold (Figure \ref{fig:sim_intuitive}). These comparisons illustrate that the efficiency gains from screening depend not only on the total amount of screening capacity deployed, but critically on where in the score distribution screening is concentrated.
-
-\begin{figure}[ht]
-        \centering
-        \includegraphics[width=0.72\linewidth]{figures/precision_optimal_vs_no_screening.png}
-        \caption{Allocation precision by screening budget $\alpha$ under optimal screening vs. no-screening baseline across risk distributions ($\beta = 35\%$). Lines show averages over 10 simulations; shaded regions indicate $\pm$ one standard deviation.}
-        \label{fig:sim_noscreening}
-\end{figure}
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.72\textwidth]{paper/figures/precision_optimal_vs_random.png}
-    \caption{Allocation precision by screening budget $\alpha$ under optimal screening vs. random screening baseline across risk distributions ($\beta = 35\%$). Lines show averages over 10 simulations; shaded regions indicate $\pm$ one standard deviation.}
-    \label{fig:sim_random}
+    \includegraphics[width=0.49\textwidth]{paper/figures/precision_optimal_vs_random.png}
+    %\caption{Allocation precision by screening budget $\alpha$ under optimal screening vs. random screening baseline across risk distributions ($\beta = 35\%$). Lines show averages over 10 simulations; shaded regions indicate $\pm$ one standard deviation.}
+\hfill
+    \includegraphics[width=0.49\textwidth]{paper/figures/precision_optimal_vs_heuristic.png}
+    \caption{Allocation precision by screening budget $\alpha$ under optimal screening vs. random screening (left) and heuristic top-adjacent screening (right) across risk distributions ($\beta = 35\%$). Lines show averages over 10 simulations; shaded regions indicate $\pm$ one standard deviation.}
+    \label{fig:more_sim}
 \end{figure}
 
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=0.72\textwidth]{paper/figures/precision_optimal_vs_heuristic.png}
-    \caption{Allocation precision by screening budget $\alpha$ under optimal screening vs. heuristic top-adjacent screening across risk distributions ($\beta = 35\%$). Lines show averages over 10 simulations; shaded regions indicate $\pm$ one standard deviation.}
-    \label{fig:sim_intuitive}
-\end{figure}
-
-Our results first shed light on the limits of purely algorithmic allocation: without screening, optimal allocation precision ranges from 50 to 100\% as the underlying distribution moves from $\delta_{0.5}$ to the perfectly separating bimodal distribution. That is, even with access to the true risk distribution, targeting efficiency varies substantially with the aleatoric uncertainty of the underlying distribution. In particular, the bimodal distribution achieves perfect precision \emph{without any screening}: when risk is well-separated, algorithmic targeting alone suffices for full allocation efficiency. However, for the remaining distributions, optimal screening with $\alpha = \beta = 35\%$ raises the positive predictive value from 82\% to 98\% for the uniform, from 61\% to 83\% for the unimodal symmetric, and from 50\% to 75\% for the point mass at $0.5$. In the latter case, notably, screening recovers substantial efficiency even though the risk scores carry no targeting information whatsoever. 
 
 
 
 
 
-\section{Application to Income-Based Eligibility Screening (ACS Census Data)}
-\label{app:acs_income}
 
-\paragraph{Dataset.}
-We use the 2018 American Community Survey (ACS) Public Use Microdata Sample, accessed via the \texttt{folktables} benchmark \citep{ding2021retiring}. The dataset contains approximately 1.6 million individual records drawn from the U.S. Census Bureau's annual survey of socioeconomic conditions. Each record includes ten demographic and labor-market features: age, class of worker, educational attainment, marital status, occupation code, place of birth, relationship to household head, usual hours worked per week, sex, and race. The binary outcome is whether an individual's total personal income exceeds \$50{,}000 per year, a threshold commonly used in means-testing and program eligibility studies. Approximately 37\% of individuals in the dataset meet this criterion. We split the data evenly (50/50) into training and test sets, yielding roughly 806{,}000 test instances, and fix the allocation budget at $\beta = 30\%$.
+% \section{Application to Income-Based Eligibility Screening (ACS Census Data)}
+% \label{app:acs_income}
 
-\paragraph{Results.}
-Figure~\ref{fig:acs_income} shows the true positive rate as a function of the screening budget $\alpha$ for three standard classifiers (logistic regression, random forest, XGBoost) and a random screening baseline. Without any screening ($\alpha = 0$), the no-screening baselines achieve recall ranging from 60\% (logistic regression) to 65\% (XGBoost). Optimal screening raises recall substantially across all models when compared to the random screening baseline, thus confirming that the gains are driven by the placement of the screening band rather than its size alone. The consistent improvement across all three models further demonstrates that the framework is model-agnostic.
+% \paragraph{Dataset.}
+% We use the 2018 American Community Survey (ACS) Public Use Microdata Sample, accessed via the \texttt{folktables} benchmark \citep{ding2021retiring}. The dataset contains approximately 1.6 million individual records drawn from the U.S. Census Bureau's annual survey of socioeconomic conditions. Each record includes ten demographic and labor-market features: age, class of worker, educational attainment, marital status, occupation code, place of birth, relationship to household head, usual hours worked per week, sex, and race. The binary outcome is whether an individual's total personal income exceeds \$50{,}000 per year, a threshold commonly used in means-testing and program eligibility studies. Approximately 37\% of individuals in the dataset meet this criterion. We split the data evenly (50/50) into training and test sets, yielding roughly 806{,}000 test instances, and fix the allocation budget at $\beta = 30\%$.
 
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=0.72\textwidth]{figures/screening_acs2018.png}
-    \caption{True positive rate by screening budget under optimal screening for the ACS 2018 income dataset ($\beta = 30\%$, 50\% test split). Optimal screening substantially outperforms random screening across all models.}
-    \label{fig:acs_income}
-\end{figure}
+% \paragraph{Results.}
+% Figure~\ref{fig:acs_income} shows the true positive rate as a function of the screening budget $\alpha$ for three standard classifiers (logistic regression, random forest, XGBoost) and a random screening baseline. Without any screening ($\alpha = 0$), the no-screening baselines achieve recall ranging from 60\% (logistic regression) to 65\% (XGBoost). Optimal screening raises recall substantially across all models when compared to the random screening baseline, thus confirming that the gains are driven by the placement of the screening band rather than its size alone. The consistent improvement across all three models further demonstrates that the framework is model-agnostic.
+
+
 
 
 
